@@ -18,17 +18,17 @@ type Quadratic = a. {
 
 type Duple = a. (a, a)
 // naïve quadratic formula
-roots: Quadratic -> Duple Num = { a b c }.
+roots: Quadratic -> Duple Num = { a, b, c }.
     ±: typeof (+). (± -b (sqrt $ b ** 2 - 4 * a * c)) / (2 * a)
     | f. (f (-), f (+))
 
 // branching quadratic formula
-roots: Quadratic -> List Num = { a b c }.
+roots: Quadratic -> List Num = { a, b, c }.
     {
         b2 = b * b
         ac4 = 4 * a * c
         f = ±: typeof (+). (± -b (sqrt $ b2 - ac4)) / (2 * a)
-    } | { b2 ac4 f }. cond [
+    } | { b2, ac4, f }. cond [
         (b2 < ac4, Nil)
         (b2 == ac4, of $ -b / (2 * a))
         (otherwise, [f (-), f (+)])

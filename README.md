@@ -49,7 +49,7 @@ type Person = {
 ```
 type Quadratic = { a: Num, b: Num, c: Num }
 y: Quadratic -> Num -> Num
-y = { a b c } x. a * x ** 2 + b * x + c
+y = { a, b, c } x. a * x ** 2 + b * x + c
 ```
 ### Advantages of structural typing
 Structural typing enables convenient subtype polymorphism, and
