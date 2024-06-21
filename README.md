@@ -74,7 +74,7 @@ type StructuralNone = StructuralMaybe () - StructuralSome ()
 ```
 Top and bottom too.
 ```
-type noop a = (a & *) + never
+type Id = a. (a & unknown) + never
 ```
 
 Time complexity for property access is currently undefined.
