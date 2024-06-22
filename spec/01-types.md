@@ -6,7 +6,7 @@ Value constructors (functions) are typed as:
 Num -> Num
 ```
 
-Type constructors are typed as:
+Type constructors are written as:
 ```
 a. (a, a)
 ```
@@ -16,9 +16,9 @@ Parametric polymorphism using both:
 type Id = a. a -> a
 ```
 
-The special type symbol `*` is equal to `unknown` in input position and `never` in output position.
+The special type symbol `*` is equal to `never` in input position and `unknown` in output position.
 
-The supertype of all functions is
+A supertype of all functions is
 ```
 * -> *
 ```
@@ -59,7 +59,7 @@ type TypeConstructor = FunctionNode {
 
 Type constructor constraints can be TypeExpressions or a type constructor.
 
-The superconstraint of all type constructors is
+A superconstraint for all type constructors is
 ```
 * => *
 ```
