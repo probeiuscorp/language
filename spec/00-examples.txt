@@ -10,7 +10,7 @@ line = slope. x. slope * x + 2
 line = slope x. slope * x + 2
 
 // type alias of record
-type Quadratic = a. {
+type Quadratic = {
     a: Num
     b: Num
     c: Num
