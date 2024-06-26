@@ -13,12 +13,12 @@
 ## Differentiating anonymous functions, member access and composition
 First attempt to match as anonymous function:
 ```
-| <ident> . <whitespace> <expression>
-| <ident> :
+| <ident> "." <whitespace> <expression>
+| <ident> ":"
 ```
 Then as member access:
 ```
-. <ident>
+"." <ident>
 ```
 Otherwise, match normally (which will probably end as composition)
 
