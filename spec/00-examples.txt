@@ -16,7 +16,9 @@ type Quadratic = {
     c: Num
 }
 
+// type constructor
 type Duple = a. (a, a)
+
 // naïve quadratic formula
 roots: Quadratic -> Duple Num = { a, b, c }.
     ±: typeof (+). (± -b (sqrt $ b ** 2 - 4 * a * c)) / (2 * a)
