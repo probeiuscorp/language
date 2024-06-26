@@ -38,3 +38,23 @@ fmap (.x)
 // c
 fmap (. x)
 ```
+
+## Infix functions
+If an expression starts with a newline, then an infix function and then
+inline whitespace, that infix function will be ignored.
+
+```
+<newline> <symbol-identifier> <inline-whitespace>
+```
+
+```
+type StructuralMaybe = a.
+    + { type: 'some', data: a }
+    + { type: 'none' }
+```
+
+is equal to
+
+```
+type StructuralMaybe = a. ((+) { type: 'some', data: a } { type: 'none' })
+```
