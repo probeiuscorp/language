@@ -30,6 +30,6 @@ roots: Quadratic -> List Num = { a, b, c }.
         f = ±: typeof (+). (± -b (sqrt $ bb - ac4)) / (2 * a)
     } | { bb, ac4, f }. cond [
         (bb < ac4, Nil)
-        (bb == ac4, of $ -b / (2 * a))
+        (bb == ac4, of $ f const)
         (otherwise, [f (-), f (+)])
     ]
