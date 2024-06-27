@@ -46,12 +46,12 @@ Import a specifier to put all of the module's exported identifiers in scope.
 <tr>
 <td>
 
-`some-file.<extension>`
+`importer.<extension>`
 
 </td>
 <td>
 
-`importer.<extension>`
+`some-file.<extension>`
 
 </td>
 </tr>
@@ -59,16 +59,16 @@ Import a specifier to put all of the module's exported identifiers in scope.
 <td>
 
 ```
-export main = putStrLn "Hello, world"    
-export type Pair = a. (a, a)
+import ./some-file                       
+export { main }
 ```
 
 </td>
 <td>
 
 ```
-import ./some-file                       
-export { main }
+export main = putStrLn "Hello, world"    
+export type Pair = a. (a, a)
 ```
 
 </td>
