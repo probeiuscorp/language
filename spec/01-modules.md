@@ -13,7 +13,7 @@ I mostly like ECMAScript's modules, except for
 - placing the module specifier after the import list
 
 ## Exporting
-Add `export` modifier before identifier:
+Add `export` modifier before declarations:
 ```
 export main = putStrLn "Hello, world"
 export type Pair = a. (a, a)
@@ -25,7 +25,7 @@ export main: IO ()
 main = putStrLn "Hello, world"
 ```
 
-Identifiers can be (re-)exported:
+Bindings can be (re-)exported:
 ```
 export { main, Pair }
 ```
@@ -40,7 +40,7 @@ export {
 
 ## Importing
 
-Import a specifier to put all of the module's exported identifiers in scope.
+Import a specifier to put all of the module's exported bindings in scope.
 
 <table>
 <tr>
