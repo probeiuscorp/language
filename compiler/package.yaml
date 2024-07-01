@@ -20,6 +20,10 @@ description:         Please see the README on GitHub at <https://github.com/prob
 
 dependencies:
 - base >= 4.7 && < 5
+- hspec
+- hspec-contrib
+- QuickCheck
+- HUnit
 
 ghc-options:
 - -Wall
