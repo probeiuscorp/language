@@ -23,6 +23,7 @@ source-repository head
 
 library
   exposed-modules:
+      Compiler.Tokenizer
       Lib
   other-modules:
       Paths_compiler
@@ -30,7 +31,11 @@ library
       src
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
-      base >=4.7 && <5
+      HUnit
+    , QuickCheck
+    , base >=4.7 && <5
+    , hspec
+    , hspec-contrib
   default-language: Haskell2010
 
 executable compiler-exe
@@ -41,8 +46,12 @@ executable compiler-exe
       app
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      HUnit
+    , QuickCheck
+    , base >=4.7 && <5
     , compiler
+    , hspec
+    , hspec-contrib
   default-language: Haskell2010
 
 test-suite compiler-test
@@ -54,6 +63,10 @@ test-suite compiler-test
       test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      HUnit
+    , QuickCheck
+    , base >=4.7 && <5
     , compiler
+    , hspec
+    , hspec-contrib
   default-language: Haskell2010
