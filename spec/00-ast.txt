@@ -34,10 +34,10 @@ type RecordMember = Body. {
     value: Body
 }
 
-type Common = { Body, Constraint }.
+type Common = Body.
     + Function {
         binding: ValidIdentifer
-        constraint: Maybe Constraint
+        constraint: Maybe TypeExpression
         body: Body
     }
     + Application {
@@ -60,15 +60,12 @@ type FunctionType = a. {
 }
 
 type Expression =
-    + Common { Body: Expression, Constraint: TypeExpression }
+    + Common Expression
 
 type TypeExpression =
-    + Common { Body: TypeExpression, Constraint: TypeConstraintExpression }
+    + Common TypeExpression
     + Typeof {
         expression: Expression
     }
     + FunctionType TypeExpression
 
-type TypeConstraintExpression =
-    + TypeExpression
-    + FunctionType TypeConstraintExpression
