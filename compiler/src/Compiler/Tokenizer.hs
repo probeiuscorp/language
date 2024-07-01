@@ -1,23 +1,27 @@
 module Compiler.Tokenizer (tokenize, Token(Token), TokenKind(..), content, kind) where
-import Data.Char (isDigit, isAlphaNum, isSpace, isAlpha)
+import Data.Char (isDigit, isAlphaNum, isSpace)
+import Data.Function ((&))
 import Data.List.NonEmpty (NonEmpty((:|)), nonEmpty)
 import qualified Data.List.NonEmpty as NE
+import Data.Maybe (fromMaybe)
 
 data TokenKind =
     InlineWhitespace | EOL |
     LetterIdentifier | SymbolIdentifier |
-    NumberLiteral deriving (Eq, Show)
+    NumberLiteral | StringLiteral String deriving (Eq, Show)
 data Token = Token
     { kind :: TokenKind
     , content :: String
     } deriving (Eq, Show)
 
+mapFirst :: (a -> b) -> (a, c) -> (b, c)
+mapFirst f (a, c) = (f a, c)
+
 matchSpan :: TokenKind -> (Char -> Bool) -> NonEmpty Char -> (Token, String)
-matchSpan kind isMatch str =
-    let (content, rest) = NE.span isMatch str in (Token {
-        kind = kind,
-        content = content
-    }, rest)
+matchSpan kind isMatch str = NE.span isMatch str & mapFirst (\content -> Token {
+    kind = kind,
+    content = content
+})
 
 isSymbol :: Char -> Bool
 isSymbol ch = not $ isDigit ch || isAlphaNum ch || isSpace ch
@@ -31,6 +35,10 @@ readToken str@(ch:|rest)
         content = pure ch
     }, rest)
     | isSpace ch    = matchSpan InlineWhitespace isSpace str
+    | '"' == ch     = matchStringLiteral rest & mapFirst (\parsed -> Token {
+        kind = StringLiteral parsed,
+        content = parsed -- FIXME: this should contain the source of the string
+    })
     | otherwise     = matchSpan SymbolIdentifier isSymbol str
 
 tokenize :: String -> [Token]
@@ -38,3 +46,25 @@ tokenize str = case nonEmpty str of
     Just a -> let (token, rest) = readToken a in
         token:tokenize rest
     Nothing -> []
+
+matchStringLiteral :: String -> (String, String)
+matchStringLiteral ('\\':xs) = matchEscapeSequence xs
+matchStringLiteral ('"':xs)  = ([], xs)
+matchStringLiteral (x:xs)    = matchStringLiteral xs & mapFirst (x:)
+matchStringLiteral []        = error "Unterminated string"
+
+matchEscapeSequence :: String -> (String, String)
+matchEscapeSequence ('u':xs) = undefined
+matchEscapeSequence (x:xs)   = (pure $ fromMaybe (error $ "unknown escape sequence: " ++ [x]) $ matchEscape x, xs)
+matchEscapeSequence []       = ([], [])
+
+matchEscape :: Char -> Maybe Char
+matchEscape '\\' = Just '\\'
+matchEscape 'n' = Just '\n'
+matchEscape 't' = Just '\t'
+matchEscape 'r' = Just '\r'
+matchEscape 'c' = Just '\f'
+matchEscape 'a' = Just '\a'
+matchEscape 'b' = Just '\b'
+matchEscape 'v' = Just '\v'
+matchEscape _   = Nothing
