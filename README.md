@@ -10,6 +10,14 @@ A pure, functional programming language inspired by Haskell, with these design g
 4. Remove do notation
 5. Remove `in` and `where` expressions
 
+## Non-Goals
+
+### Respecting precedent
+
+For example, `Maybe`'s constructors are `Some` and `None`. I like `Maybe` more than
+`Option` since it is more distinctive (more searchable, filters down autosuggest more).
+I like `Some` and `None` and I dislike `Just` and `Nothing`.
+
 ## Structural typing
 Add structurally typed records inspired by TypeScript.
 
