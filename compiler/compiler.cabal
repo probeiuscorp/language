@@ -27,7 +27,6 @@ library
       Compiler.Parser
       Compiler.Tokenizer
       Compiler.Zipper
-      Lib
   other-modules:
       Paths_compiler
   hs-source-dirs:
