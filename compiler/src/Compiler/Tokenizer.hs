@@ -1,4 +1,4 @@
-module Compiler.Tokenizer (tokenize, Token(Token), TokenKind(..), content, kind) where
+module Compiler.Tokenizer (tokenize, Token(Token), TokenKind(..), content, kind, catTokens, mapFirst) where
 import Data.Char (isDigit, isAlphaNum, isSpace)
 import Data.Function ((&))
 import Data.List.NonEmpty (NonEmpty((:|)), nonEmpty)
@@ -13,6 +13,9 @@ data Token = Token
     { kind :: TokenKind
     , content :: String
     } deriving (Eq, Show)
+
+catTokens :: [Token] -> String
+catTokens = foldr ((++) . content) mempty
 
 mapFirst :: (a -> b) -> (a, c) -> (b, c)
 mapFirst f (a, c) = (f a, c)
