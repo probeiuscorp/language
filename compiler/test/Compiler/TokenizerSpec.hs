@@ -31,3 +31,18 @@ spec = describe "Compiler.Tokenizer" $ do
       , symbol ")"
       , symbol "("
       ]
+  it "should tokenize math symbols alone" $ do
+    tokenize "∀x. x + x==2x" `shouldBe`
+      [ Token { kind = SymbolIdentifier, content = "∀" }
+      , Token { kind = LetterIdentifier, content = "x" }
+      , Token { kind = SymbolIdentifier, content = "." }
+      , Token { kind = InlineWhitespace, content = " " }
+      , Token { kind = LetterIdentifier, content = "x" }
+      , Token { kind = InlineWhitespace, content = " " }
+      , Token { kind = SymbolIdentifier, content = "+" }
+      , Token { kind = InlineWhitespace, content = " " }
+      , Token { kind = LetterIdentifier, content = "x" }
+      , Token { kind = SymbolIdentifier, content = "==" }
+      , Token { kind = NumberLiteral, content = "2" }
+      , Token { kind = LetterIdentifier, content = "x" }
+      ]
