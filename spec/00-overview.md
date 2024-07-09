@@ -58,3 +58,18 @@ is equal to
 ```
 type StructuralMaybe = a. ((+) { type: 'some', data: a } { type: 'none' })
 ```
+
+## Destructuring
+Destructuring is used in
+- import lists
+- record destructuring
+
+Identifiers may be separated by a comma, newline or both. `as` can be used to choose
+a different binding.
+```
+import react { lazy as lazyComponent }
+
+type Ellipse = { a: Num, b: Num }
+area: Ellipse -> Num
+area = { a as semiminor, b as semimajor }. pi * semiminor * semimajor
+```
