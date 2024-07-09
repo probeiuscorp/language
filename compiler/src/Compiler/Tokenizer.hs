@@ -26,8 +26,11 @@ matchSpan kind isMatch str = NE.span isMatch str & mapFirst (\content -> Token {
     content = content
 })
 
+isParenthesis :: Char -> Bool
+isParenthesis ch = ch == '(' || ch == ')'
+
 isSymbol :: Char -> Bool
-isSymbol ch = not $ isDigit ch || isAlphaNum ch || isSpace ch
+isSymbol ch = not $ isDigit ch || isAlphaNum ch || isSpace ch || isParenthesis ch
 
 readToken :: NonEmpty Char -> (Token, String)
 readToken str@(ch:|rest)
@@ -42,6 +45,14 @@ readToken str@(ch:|rest)
         kind = StringLiteral parsed,
         content = parsed -- FIXME: this should contain the source of the string
     })
+    | '(' == ch     = (Token {
+        kind = SymbolIdentifier,
+        content = "("
+    }, rest)
+    | ')' == ch     = (Token {
+        kind = SymbolIdentifier,
+        content = ")"
+    }, rest)
     | otherwise     = matchSpan SymbolIdentifier isSymbol str
 
 tokenize :: String -> [Token]
