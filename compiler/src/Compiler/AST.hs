@@ -25,7 +25,8 @@ data Expression =
 data TypeExpression =
     TypeConstructor Abstraction |
     TypeApplication TypeExpressionCallArgs |
-    TypeIdentifier ValidIdentifier deriving (Eq, Show)
+    TypeIdentifier ValidIdentifier |
+    TypeofExpression Expression deriving (Eq, Show)
 
 data Associativity = LeftAssociative | RightAssociative
     deriving (Eq, Show)
