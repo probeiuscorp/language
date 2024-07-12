@@ -14,8 +14,6 @@ maintainer:     caleb.stimpson@gmail.com
 copyright:      2024 Caleb Stimpson
 license:        MIT
 build-type:     Simple
-extra-source-files:
-    README.md
 
 source-repository head
   type: git
