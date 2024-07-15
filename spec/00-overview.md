@@ -60,16 +60,32 @@ type StructuralMaybe = a. ((+) { type: 'some', data: a } { type: 'none' })
 ```
 
 ## Destructuring
-Destructuring is used in
-- import lists
-- record destructuring
+Valid destructuring on left side
 
-Identifiers may be separated by a comma, newline or both. `as` can be used to choose
-a different binding.
+1. Constructors
+```
+(x:xs). undefined
+(Tree x y). undefined
+(Rect { x, y } (Point x' y')). undefined
+```
+
+2. Record
+```
+{ a, b, c }. undefined
+```
+
+Use `as` to destructure member.
+```
+{ a as semiminor, intercept as { x, y }}. undefined
+```
+
+Record destructuring is also used in import lists.
+
 ```
 import react { lazy as lazyComponent }
+```
 
-type Ellipse = { a: Num, b: Num }
-area: Ellipse -> Num
-area = { a as semiminor, b as semimajor }. pi * semiminor * semimajor
+3. Identifier
+```
+x
 ```
