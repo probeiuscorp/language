@@ -1,4 +1,4 @@
-module Compiler.Zipper (Zipper(..), start, peek, left, right, eat, eatOne, isDone, match, matchCond) where
+module Compiler.Zipper (Zipper(..), start, peek, left, right, eat, eatOne, isDone, match, matchCond, filterMaybe) where
 
 import Compiler.Tokenizer (mapFirst)
 
@@ -39,8 +39,8 @@ matchLoop _ m = m
 match :: (a -> Maybe b) -> Zipper a -> ([b], Zipper a)
 match f z = mapFirst reverse $ matchLoop f ([], z)
 
-filterMatch :: (a -> Bool) -> a -> Maybe a
-filterMatch f a = if f a then Just a else Nothing
+filterMaybe :: (a -> Bool) -> a -> Maybe a
+filterMaybe f a = if f a then Just a else Nothing
 
 matchCond :: (a -> Bool) -> Zipper a -> ([a], Zipper a)
-matchCond f z = mapFirst reverse $ matchLoop (filterMatch f) ([], z)
+matchCond f z = mapFirst reverse $ matchLoop (filterMaybe f) ([], z)
