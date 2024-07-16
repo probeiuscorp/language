@@ -10,6 +10,7 @@ import Data.Maybe (fromJust, fromMaybe)
 import Control.Applicative (Alternative((<|>)))
 import Data.Functor ((<&>))
 import Control.Arrow ((>>>))
+import Data.Char (isSpace)
 
 type Tokens = Z.Zipper Token
 data ParseError = ParseError String Token deriving (Eq, Show)
@@ -19,6 +20,22 @@ type ParseParser a = Tokens -> ParseResult (a, Tokens)
 
 parseFail :: String -> Tokens -> ParseError
 parseFail message tokens = ParseError message $ fromJust $ Z.peek tokens
+
+isInlineWhitespace :: Char -> Bool
+isInlineWhitespace '\n' = False
+isInlineWhitespace ch   = isSpace ch
+
+splitDeclarations :: Z.Zipper Char -> [String]
+splitDeclarations z = case Z.eatOne $ Z.eat (/= '\n') z of
+  (Z.Zipper bt (ch:xs)) -> if doesDeclarationContinue ch
+    then splitDeclarations $ Z.Zipper (ch:bt) xs
+    else reverse bt : splitDeclarations (Z.Zipper [ch] xs)
+  (Z.Zipper bt _) -> [reverse bt]
+
+doesDeclarationContinue :: Char -> Bool
+doesDeclarationContinue ')' = True
+doesDeclarationContinue '}' = True
+doesDeclarationContinue ch  = isInlineWhitespace ch
 
 parseDeclaration :: ParseParser AST.TopLevelDeclaration
 parseDeclaration tokens = fromMaybe (Left $ parseFail (printf "Unexpected token") tokens) $
