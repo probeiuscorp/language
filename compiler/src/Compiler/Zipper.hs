@@ -1,4 +1,4 @@
-module Compiler.Zipper (Zipper(..), start, peek, left, right, eat, isDone, match, matchCond) where
+module Compiler.Zipper (Zipper(..), start, peek, left, right, eat, eatOne, isDone, match, matchCond) where
 
 import Compiler.Tokenizer (mapFirst)
 
@@ -18,6 +18,9 @@ right _                  = Nothing
 left :: Zipper a -> Maybe (a, Zipper a)
 left (Zipper (x:xs) ft) = Just (x, Zipper xs $ x:ft)
 left _                  = Nothing
+
+eatOne :: Zipper a -> Zipper a
+eatOne z = maybe z snd $ right z
 
 eat :: (a -> Bool) -> Zipper a -> Zipper a
 eat predicate z = maybe z (\(x, zr) -> if predicate x
