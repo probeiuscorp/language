@@ -1,5 +1,23 @@
 # Types
 
+## Union, difference and intersection
+These are the only given type constructors.
+
+1. Given types
+```
+unknown & a == a
+unknown + a == unknown
+
+never & a == never
+never + a == a
+```
+
+2. Functions
+```
+(a -> c) + (b -> d) == (a & b) -> c + d
+(a -> c) & (b -> d) == (a + b) -> c & d
+```
+
 ## Type constructors
 Value constructors (functions) are typed as:
 ```
