@@ -78,7 +78,7 @@ type StructuralMaybe = a. {
     type: 'none'
 }
 type StructuralSome = a. StructuralMaybe a & { type: 'some' }
-type StructuralNone = StructuralMaybe () - StructuralSome ()
+type StructuralNone = StructuralMaybe () \ StructuralSome ()
 ```
 Top and bottom too.
 ```
@@ -90,6 +90,5 @@ Time complexity for property access is currently undefined.
 ## Ideas needing consideration
 1. Recommended practice for orphan instances
 2. Optional fields in records
-3. Type union and difference operators. `|` is taken for the pipe function, and neither
-union or difference are divisible as `+` and `-` would imply. Which means they're also not
-inverses of each other.
+3. Type union operator. `|` is taken for the pipe function, and union is not
+divisible as `+` would imply.
