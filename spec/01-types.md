@@ -1,9 +1,17 @@
 # Types
 
-## Union, difference and intersection
-These are the only given type constructors.
+## Given type constructors
+These are the only given type constructors, along with some compelling reasoning
+that they are given.
 
-1. Given types
+- `&` Intersection: At least one binary function must be given to relate types. I am
+considering giving union instead as that may simplify complement.
+- `¬` Complement: Should be a given since it defines what `unknown` is and includes.
+- `~` \<unnamed>: Should be a given since it defines how the types interact. With
+some more thought, I have decided that the entire type system is defined in `~`.
+
+## Union, difference and intersection
+1. `unknown` and `never`
 ```
 unknown & a == a
 unknown + a == unknown
