@@ -89,3 +89,9 @@ type Monad = m: * => *. {
     bind: a b. (a -> m b) -> m a -> m b
 }
 ```
+
+### Intersection of type constructors
+If `a` and `b` are both type constructors, `a & b` will never be considered as
+`never` by `~`. When invoked, `a & b` will invoke `a` and `b` with its argument
+and return the intersection of both. `a & b` will accept the union of the inputs
+accepted by `a` and `b`.
