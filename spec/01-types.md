@@ -37,11 +37,6 @@ Type constructors are written as:
 a. (a, a)
 ```
 
-Parametric polymorphism using both:
-```
-type Id = a. a -> a
-```
-
 The special type symbol `*` is equal to `never` in input position and `unknown` in output position.
 
 A supertype of all functions is

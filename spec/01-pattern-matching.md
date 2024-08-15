@@ -13,7 +13,7 @@ mapMaybe = f. match {
 
 It evaluates to a function, so the `mapMaybe` above infers as:
 ```
-mapMaybe: a. b. f: a -> b. f -> (Some a + None) -> (Some b + None)
+mapMaybe: forall a b f: (a -> b). f -> (Some a + None) -> (Some b + None)
 ```
 
 This currying, data-last friendly syntax subsumes:
