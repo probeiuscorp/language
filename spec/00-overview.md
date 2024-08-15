@@ -39,6 +39,15 @@ fmap (.x)
 fmap (. x)
 ```
 
+## Unary operators
+Unless a unary operator is separated from its expression by any whitespace, it
+will be applied first, with highest precedence.
+
+```
+pow -b 3
+type (Union ~k ~~k)
+```
+
 ## Infix functions
 If an expression starts with a newline, then an infix function and then
 inline whitespace, that infix function will be ignored.
