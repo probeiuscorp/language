@@ -11,9 +11,9 @@ spec = describe "Compiler.Parser" $ do
   describe "splitDeclarations" $ do
     let testDeclarations = splitDeclarations . Z.start
     it "empty string" $ do
-      testDeclarations "" `shouldBe` [""]
+      testDeclarations "" `shouldBe` []
     it "just newlines" $ do
-      testDeclarations "\n\n\n\n\n\n" `shouldBe` ["\n", "\n\n", "\n\n", "\n"]
+      testDeclarations "\n\n\n\n\n\n" `shouldBe` []
     it "should continue if inline whitespace" $ do
       testDeclarations "pair = a.\n\t(a, a)" `shouldBe` ["pair = a.\n\t(a, a)"]
     it "should continue if closing brace" $ do

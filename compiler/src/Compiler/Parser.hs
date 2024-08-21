@@ -26,7 +26,7 @@ isInlineWhitespace '\n' = False
 isInlineWhitespace ch   = isSpace ch
 
 splitDeclarations :: Z.Zipper Char -> [String]
-splitDeclarations z = case Z.eatOne $ Z.eat (/= '\n') z of
+splitDeclarations z = filter (not . all isSpace) $ case Z.eatOne $ Z.eat (/= '\n') z of
   (Z.Zipper bt (ch:xs)) -> if doesDeclarationContinue ch
     then splitDeclarations $ Z.Zipper (ch:bt) xs
     else reverse bt : splitDeclarations (Z.Zipper [ch] xs)
