@@ -87,8 +87,12 @@ type Id = a. (a & unknown) + never
 
 Time complexity for property access is currently undefined.
 
-## Ideas needing consideration
+## Concerns
 1. Recommended practice for orphan instances
 2. Optional fields in records
 3. Type union operator. `|` is taken for the pipe function, and union is not
 divisible as `+` would imply.
+
+## Ideas
+1. Transparent RPC
+2. Algebraic effects
