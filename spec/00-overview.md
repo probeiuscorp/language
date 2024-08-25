@@ -5,6 +5,49 @@
 ## Records
 
 ## Typeclasses
+A typeclass is declared like so:
+```
+export class Eq a
+    areEq: a -> a -> Bool
+```
+
+Typeclass parameters can be constrained.
+```
+class Functor f: * => *
+    fmap: forall a b. (a -> b) -> f a -> f b
+```
+
+Typeclass members can be given a default implementation.
+```
+class Monoid a
+    mempty: a
+    mappend: a -> a -> a
+    mconcat: List a -> a
+    mconcat = foldr mappend mempty
+```
+
+Only nominal types may be instances of typeclasses. Each nominal type may only
+have one instance of each typeclass.
+```
+type Maybe = a. Some a + None
+instance Functor Maybe
+    fmap = f. match {
+        Some a = Some $ f a
+        None = None
+    }
+```
+
+Typeclasses work mostly independently from the rest of the type system. Considering
+`Monoid` again, from the rest of the type system's perspective, it's equal to:
+```
+mempty: forall a: Monoid. a
+mappend: forall a: Monoid. a -> a -> a
+mconcat: forall a: Monoid. List a -> a
+```
+where `Monoid` is a type which happens to have complete intersections with types
+such as `List`.
+
+There is no supertype for all typeclasses.
 
 ## Structural interactions
 
