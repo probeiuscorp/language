@@ -77,3 +77,6 @@ isNever (Type {
   typeConstructors = TypeConstructors con
 }) = null ns && null rs && isNothing con
 isNever _ = False
+
+unionType :: Type -> Type -> Type
+unionType a b = complementType $ intersectType (complementType a) (complementType b)
