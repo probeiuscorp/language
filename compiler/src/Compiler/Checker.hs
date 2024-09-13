@@ -8,6 +8,7 @@ import qualified Data.Map.Strict as Map
 import Data.Function (on)
 import Control.Monad (join, liftM2)
 import Data.Maybe (isNothing)
+import Compiler.Zipper (filterMaybe)
 
 inferType :: AST.Expression -> Type
 inferType = undefined
@@ -22,9 +23,19 @@ intersectType a b = Type {
 intersectRecords :: TypeRecord -> TypeRecord -> TypeRecord
 intersectRecords (TypeRecord as) (TypeRecord bs) =
   TypeRecord $ join (liftM2 intersectPositiveRecords as bs)
+intersectRecords (TypeRecordComplement as) (TypeRecordComplement bs) =
+  TypeRecordComplement $ as ++ bs
+intersectRecords (TypeRecord as) (TypeRecordComplement bs) = intersectPositiveWithNegative as bs
+intersectRecords (TypeRecordComplement as) (TypeRecord bs) = intersectPositiveWithNegative bs as
 
 intersectPositiveRecords :: TypeRecordGroup -> TypeRecordGroup -> [TypeRecordGroup]
 intersectPositiveRecords a b = pure $ Map.intersectionWith intersectType a b
+intersectPositiveWithNegative :: TypeRecordGroups -> TypeRecordGroups -> TypeRecord
+intersectPositiveWithNegative poss negs = TypeRecord $ (\pos -> foldr intersectOneNegativeWithOnePositive pos negs) <$> poss
+intersectOneNegativeWithOnePositive :: TypeRecordGroup -> TypeRecordGroup -> TypeRecordGroup
+intersectOneNegativeWithOnePositive neg pos = Map.differenceWith aExceptB pos neg
+aExceptB :: Type -> Type -> Maybe Type
+aExceptB a b = filterMaybe (not . isNever) $ intersectType a $ complementType b
 
 intersectConstructors :: TypeConstructors -> TypeConstructors -> TypeConstructors
 intersectConstructors (TypeConstructors a) (TypeConstructors b) =
