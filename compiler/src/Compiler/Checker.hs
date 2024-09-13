@@ -7,6 +7,7 @@ import qualified Data.Set as Set
 import qualified Data.Map.Strict as Map
 import Data.Function (on)
 import Control.Monad (join, liftM2)
+import Data.Maybe (isNothing)
 
 inferType :: AST.Expression -> Type
 inferType = undefined
@@ -42,4 +43,9 @@ complementType :: Type -> Type
 complementType = undefined
 
 isNever :: Type -> Bool
-isNever = undefined
+isNever (Type {
+  typeNominal = TypeNominal ns,
+  typeRecords = TypeRecord rs,
+  typeConstructors = TypeConstructors con
+}) = null ns && null rs && isNothing con
+isNever _ = False
