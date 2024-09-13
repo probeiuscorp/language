@@ -40,7 +40,24 @@ intersectConstructorFunctions :: (Type -> Type) -> (Type -> Type) -> (Type -> Ty
 intersectConstructorFunctions a b x = intersectType (a x) (b x)
 
 complementType :: Type -> Type
-complementType = undefined
+complementType (Type {
+  typeNominal = typeNominal,
+  typeRecords = typeRecords,
+  typeConstructors = typeConstructors
+}) = Type {
+  typeNominal = complementNominal typeNominal,
+  typeRecords = complementRecords typeRecords,
+  typeConstructors = complementConstructors typeConstructors
+}
+complementNominal :: TypeNominal -> TypeNominal
+complementNominal (TypeNominal a) = TypeNominalComplement a
+complementNominal (TypeNominalComplement a) = TypeNominal a
+complementRecords :: TypeRecord -> TypeRecord
+complementRecords (TypeRecord a) = TypeRecordComplement a
+complementRecords (TypeRecordComplement a) = TypeRecord a
+complementConstructors :: TypeConstructors -> TypeConstructors
+complementConstructors (TypeConstructors a) = TypeConstructorsComplement a
+complementConstructors (TypeConstructorsComplement a) = TypeConstructors a
 
 isNever :: Type -> Bool
 isNever (Type {
