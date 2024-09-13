@@ -40,15 +40,18 @@ aExceptB a b = filterMaybe (not . isNever) $ intersectType a $ complementType b
 intersectConstructors :: TypeConstructors -> TypeConstructors -> TypeConstructors
 intersectConstructors (TypeConstructors a) (TypeConstructors b) =
   TypeConstructors $ liftA2 intersectConstructorFunctions a b
-intersectConstructors (TypeConstructors a) (TypeConstructorsComplement b) =
-  undefined
-intersectConstructors a@(TypeConstructorsComplement _) b@(TypeConstructors _) =
-  intersectConstructors b a
+intersectConstructors (TypeConstructors a) (TypeConstructorsComplement b) = differenceConstructors a b
+intersectConstructors (TypeConstructorsComplement a) (TypeConstructors b) = differenceConstructors b a
 intersectConstructors (TypeConstructorsComplement a) (TypeConstructorsComplement b) =
-  undefined
+  TypeConstructorsComplement $ liftA2 intersectConstructorComplementFunctions a b
 
 intersectConstructorFunctions :: (Type -> Type) -> (Type -> Type) -> (Type -> Type)
 intersectConstructorFunctions a b x = intersectType (a x) (b x)
+intersectConstructorComplementFunctions :: (Type -> Type) -> (Type -> Type) -> (Type -> Type)
+intersectConstructorComplementFunctions a b x = unionType (a x) (b x)
+differenceConstructors :: Maybe (Type -> Type) -> Maybe (Type -> Type) -> TypeConstructors
+differenceConstructors m@(Just _) Nothing = TypeConstructors m
+differenceConstructors _ _ = TypeConstructors Nothing
 
 complementType :: Type -> Type
 complementType (Type {
