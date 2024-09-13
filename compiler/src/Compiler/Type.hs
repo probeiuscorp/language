@@ -29,10 +29,11 @@ data TypeNominal
   | TypeNominalComplement (Set.Set NominalType)
   deriving (Eq, Show)
 
-type TypeRecordFields = [Map.Map String Type]
+type TypeRecordGroup = Map.Map String Type;
+type TypeRecordGroups = [TypeRecordGroup]
 data TypeRecord
-  = TypeRecord TypeRecordFields
-  | TypeRecordComplement TypeRecordFields
+  = TypeRecord TypeRecordGroups
+  | TypeRecordComplement TypeRecordGroups
   deriving (Eq, Show)
 
 data TypeConstructors

@@ -3,17 +3,28 @@ module Compiler.Checker where
 import qualified Compiler.AST as AST
 import Compiler.Type
 import Control.Applicative (Applicative(liftA2))
+import qualified Data.Set as Set
+import qualified Data.Map.Strict as Map
 import Data.Function (on)
+import Control.Monad (join, liftM2)
 
 inferType :: AST.Expression -> Type
 inferType = undefined
 
 intersectType :: Type -> Type -> Type
 intersectType a b = Type {
-  typeNominal = undefined,
-  typeRecords = undefined,
+  typeNominal = TypeNominal Set.empty,
+  typeRecords = (intersectRecords `on` typeRecords) a b,
   typeConstructors = (intersectConstructors `on` typeConstructors) a b
 }
+
+intersectRecords :: TypeRecord -> TypeRecord -> TypeRecord
+intersectRecords (TypeRecord as) (TypeRecord bs) =
+  TypeRecord $ join (liftM2 intersectPositiveRecords as bs)
+
+intersectPositiveRecords :: TypeRecordGroup -> TypeRecordGroup -> [TypeRecordGroup]
+intersectPositiveRecords a b = pure $ Map.intersectionWith intersectType a b
+
 intersectConstructors :: TypeConstructors -> TypeConstructors -> TypeConstructors
 intersectConstructors (TypeConstructors a) (TypeConstructors b) =
   TypeConstructors $ liftA2 intersectConstructorFunctions a b
