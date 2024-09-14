@@ -15,10 +15,20 @@ inferType = undefined
 
 intersectType :: Type -> Type -> Type
 intersectType a b = Type {
-  typeNominal = TypeNominal Set.empty,
+  typeNominal = (intersectNominals `on` typeNominal) a b,
   typeRecords = (intersectRecords `on` typeRecords) a b,
   typeConstructors = (intersectConstructors `on` typeConstructors) a b
 }
+
+compose2 :: (c -> d) -> (a -> b -> c) -> a -> b -> d
+compose2 f g a b = f $ g a b
+intersectNominals :: TypeNominal -> TypeNominal -> TypeNominal
+intersectNominals (TypeNominal a) (TypeNominal b) = TypeNominal $ Set.intersection a b
+intersectNominals (TypeNominal a) (TypeNominalComplement b) = differenceNominals a b
+intersectNominals (TypeNominalComplement a) (TypeNominal b) = differenceNominals b a
+intersectNominals (TypeNominalComplement a) (TypeNominalComplement b) = TypeNominalComplement $ Set.union a b
+differenceNominals :: Set.Set NominalType -> Set.Set NominalType -> TypeNominal
+differenceNominals = compose2 TypeNominal Set.difference
 
 intersectRecords :: TypeRecord -> TypeRecord -> TypeRecord
 intersectRecords (TypeRecord as) (TypeRecord bs) =
@@ -82,4 +92,4 @@ isNever (Type {
 isNever _ = False
 
 unionType :: Type -> Type -> Type
-unionType a b = complementType $ intersectType (complementType a) (complementType b)
+unionType = compose2 complementType (intersectType `on` complementType)
