@@ -4,11 +4,9 @@
 These are the only given type constructors, along with some compelling reasoning
 that they are given.
 
-- `&` Intersection: At least one binary function must be given to relate types. I am
-considering giving union instead as that may simplify complement.
-- `¬` Complement: Should be a given since it defines what `unknown` is and includes.
-- `~` \<unnamed>: Should be a given since it defines how the types interact. With
-some more thought, I have decided that the entire type system is defined in `~`.
+- `&` Intersection: At least one binary function must be given to relate types.
+- `¬` (U+00ac) Complement: Should be a given since it defines what `unknown` is and includes.
+- `~` \<unnamed>: Should be a given since it defines how the types interact. `~` is unary and will evaluate to `unknown` if its argument is `never`, and otherwise will evaluate to `never`.
 
 ## Union, difference and intersection
 1. `unknown` and `never`
