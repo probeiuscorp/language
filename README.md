@@ -3,6 +3,12 @@ A pure, functional programming language inspired most by Haskell, but a bit by T
 Notable differences from Haskell:
 - Sound, [axiomatic](spec/01-types.md#given-type-constructors) type system with **subtyping**, **higher kinded type** synonyms, and infix type constructors.
 - A focus on anonymous functions, with concise syntax for both value functions and type constructors.
+```
+id = a. a
+type id = a. a
+S = x y z. x z $ y z
+type S = x y z. x z $ y z
+```
 - A focus on minimizing language features. For example, do-notation as well as `in` and `where` expressions are dropped.
 - (Speculative) Algebraic effects to address the configuration problem.
 - ECMAScript-like [module system](spec/01-modules.md).
