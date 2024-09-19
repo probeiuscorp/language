@@ -5,33 +5,30 @@
 line = x. 3x + 2
 
 // binary function
-line = slope. x. slope * x + 2
+line = m. x. mx + 2
 // simplify
-line = slope x. slope * x + 2
+line = m x. mx + 2
 
 // type alias of record
 type Quadratic = {
-    a: Num
-    b: Num
-    c: Num
+    a: Double
+    b: Double
+    c: Double
 }
 
 // type constructor
 type Pair = a. (a, a)
 
 // naïve quadratic formula
-roots: Quadratic -> Pair Num = { a, b, c }.
-    ±: typeof (+). (± -b (sqrt $ b ** 2 - 4 * a * c)) / (2 * a)
+roots: Quadratic -> Pair Double = { a, b, c }.
+    pm: typeof (+). (-b `pm` (sqrt $ bb - 4ac)) / (2a)
     | f. (f (-), f (+))
 
 // branching quadratic formula
 roots: Quadratic -> List Num = { a, b, c }.
-    {
-        bb = b * b
-        ac4 = 4 * a * c
-        f = ±: typeof (+). (± -b (sqrt $ bb - ac4)) / (2 * a)
-    } | { bb, ac4, f }. cond [
-        (bb < ac4, Nil)
-        (bb == ac4, of $ f const)
+    pm: typeof (+). (-b `pm` (sqrt $ bb - 4ac)) / (2a)
+    | f. cond [
+        (bb < 4ac, Nil)
+        (bb == 4ac, of $ f const)
         (otherwise, [f (-), f (+)])
     ]
