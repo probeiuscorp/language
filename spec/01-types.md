@@ -62,7 +62,7 @@ type FunctionNodeArgument = {
     Body: *
     Constraint: *
 }
-// For demonstration purposes. Unconstrained destructured type members default to `*`.
+// For demonstration purposes. Unconstrained destructured type members would default to `*`.
 type FunctionNode = { Body, Constraint }: FunctionNodeArgument. {
     parameterName: String
     constraint: Constraint
@@ -74,19 +74,17 @@ type ValueConstructor = FunctionNode {
 }
 type TypeConstructor = FunctionNode {
     Body: TypeExpression
-    Constraint: TypeConstraintExpression
+    Constraint: TypeExpression
 }
 ```
 
-Type constructor constraints can be TypeExpressions or a type constructor.
-
-A superconstraint for all type constructors is
+A supertype for all type constructors is
 ```
 * => *
 ```
 
 ```
-type Monad = m: * => *. {
+type Monad = m: (* => *). {
     of: a. a -> m a
     join: a. m $ m a -> m a
     bind: a b. (a -> m b) -> m a -> m b
