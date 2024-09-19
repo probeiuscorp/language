@@ -1,11 +1,11 @@
 A pure, functional programming language inspired most by Haskell, but a bit by TypeScript.
 
 Notable differences from Haskell:
-- Sound, axiomatic type system with **subtyping**, **higher kinded type** synonyms, and infix type constructors.
+- Sound, [axiomatic](spec/01-types.md#given-type-constructors) type system with **subtyping**, **higher kinded type** synonyms, and infix type constructors.
 - A focus on anonymous functions, with concise syntax for both value functions and type constructors.
 - A focus on minimizing language features. For example, do-notation as well as `in` and `where` expressions are dropped.
 - (Speculative) Algebraic effects to address the configuration problem.
-- ECMAScript-like module system
+- ECMAScript-like [module system](spec/01-modules.md).
 
 Notable features kept from Haskell:
 - Lazy evaluation
@@ -16,7 +16,7 @@ Worth mentioning:
 - Emphasis on pipe operator `|` (type `∀a b. a -> (a -> b) -> b`)
 - List types are `List a` instead of `[a]`
 - "Batteries-included" prelude
-- Point-free pattern matching by default (see Haskell's `\case`)
+- Point-free [pattern matching](spec/01-pattern-matching.md) by default (see Haskell's `\case`)
 
 ## Non-Goals
 
