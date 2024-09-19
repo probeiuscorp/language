@@ -1,14 +1,22 @@
-A pure, functional programming language inspired by Haskell, with these design goals:
- - add structural typing
- - minimize language features
- - change some of Haskell's "missteps"
+A pure, functional programming language inspired most by Haskell, but a bit by TypeScript.
 
-## Intentional deviations from Haskell
-1. Conciser anonymous functions: `x. x` instead of `\x -> x`
-2. ECMAScript-like module system
-3. List types are `List a` instead of `[a]`
-4. Remove do notation
-5. Remove `in` and `where` expressions
+Notable differences from Haskell:
+- Sound, axiomatic type system with **subtyping**, **higher kinded type** synonyms, and infix type constructors.
+- A focus on anonymous functions, with concise syntax for both value functions and type constructors.
+- A focus on minimizing language features. For example, do-notation as well as `in` and `where` expressions are dropped.
+- (Speculative) Algebraic effects to address the configuration problem.
+- ECMAScript-like module system
+
+Notable features kept from Haskell:
+- Lazy evaluation
+- Typeclassing
+- Curried by default
+
+Worth mentioning:
+- Emphasis on pipe operator `|` (type `∀a b. a -> (a -> b) -> b`)
+- List types are `List a` instead of `[a]`
+- "Batteries-included" prelude
+- Point-free pattern matching by default (see Haskell's `\case`)
 
 ## Non-Goals
 
@@ -37,9 +45,12 @@ person = {
 ```
 ageWhenJoined = person.customerStatus.joined - person.birthdate
 // Speculative
-withNewAge = update person {
+withNewAge = person | update {
     name = const 'Alex Generic I'
     birthdate = (+1)
+    customerStatus = update {
+        loyaltyPoints = (+30)
+    }
 }
 ```
 3. Typing
@@ -49,14 +60,14 @@ type Person = {
     birthdate: Date
     customerStatus: {
         joined: Date
-        loyaltyPoints: Num
+        loyaltyPoints: Int
     }
 }
 ```
 4. Destructuring
 ```
-type Quadratic = { a: Num, b: Num, c: Num }
-y: Quadratic -> Num -> Num
+type Quadratic = { a: Double, b: Double, c: Double }
+y: Quadratic -> Double -> Double
 y = { a, b, c } x. a * x ** 2 + b * x + c
 ```
 ### Advantages of structural typing
@@ -64,8 +75,8 @@ Structural typing enables convenient subtype polymorphism, and
 tighter functions which don't require unused fields.
 ```
 type Line = {
-    slope: Num
-    intercept: Num
+    slope: Double
+    intercept: Double
 }
 slope l: Pick Line 'slope'. l.slope
 ```
