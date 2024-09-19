@@ -9,6 +9,13 @@ that they are given.
 - `~` \<unnamed>: Should be a given since it defines how the types interact. `~` is unary and will evaluate to `unknown` if its argument is `never`, and otherwise will evaluate to `never`.
 
 ## Union, difference and intersection
+```
+// Union
+(+) = a b. ¬(¬a & ¬b)
+// Difference
+(\) = a b. a & ¬b
+```
+
 1. `unknown` and `never`
 ```
 unknown & a == a
