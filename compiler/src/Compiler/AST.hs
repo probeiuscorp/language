@@ -56,6 +56,7 @@ data DeclarationModule = DeclarationModule
 data TopLevelDeclaration
   = ImportDeclaration String ImportListing
   | ExportDeclaration Destructuring
+  | DataDeclaration String [TypeExpression]
   | ValueDeclaration DeclarationModule (Maybe Expression) (Maybe TypeExpression)
   | TypeDeclaration DeclarationModule TypeExpression
   deriving (Eq, Show)
