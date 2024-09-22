@@ -5,14 +5,15 @@ import Data.List.NonEmpty (NonEmpty((:|)), nonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe (fromMaybe)
 
-data TokenKind =
-    InlineWhitespace | EOL |
-    LetterIdentifier | SymbolIdentifier |
-    NumberLiteral | StringLiteral String deriving (Eq, Show)
+data TokenKind
+  = InlineWhitespace | EOL
+  | LetterIdentifier | SymbolIdentifier
+  | NumberLiteral | StringLiteral String
+  deriving (Eq, Show)
 data Token = Token
-    { kind :: TokenKind
-    , content :: String
-    } deriving (Eq, Show)
+  { kind :: TokenKind
+  , content :: String
+  } deriving (Eq, Show)
 
 catTokens :: [Token] -> String
 catTokens = foldr ((++) . content) mempty
@@ -22,8 +23,8 @@ mapFirst f (a, c) = (f a, c)
 
 matchSpan :: TokenKind -> (Char -> Bool) -> NonEmpty Char -> (Token, String)
 matchSpan kind isMatch str = NE.span isMatch str & mapFirst (\content -> Token {
-    kind = kind,
-    content = content
+  kind = kind,
+  content = content
 })
 
 isParenthesis :: Char -> Bool
@@ -34,32 +35,32 @@ isSymbol ch = not $ isDigit ch || isAlphaNum ch || isSpace ch || isParenthesis c
 
 readToken :: NonEmpty Char -> (Token, String)
 readToken str@(ch:|rest)
-    | isDigit ch    = matchSpan NumberLiteral isDigit str
-    | isAlphaNum ch = matchSpan LetterIdentifier isAlphaNum str
-    | '\n' == ch    = (Token {
-        kind = EOL,
-        content = pure ch
-    }, rest)
-    | isSpace ch    = matchSpan InlineWhitespace isSpace str
-    | '"' == ch     = matchStringLiteral rest & mapFirst (\parsed -> Token {
-        kind = StringLiteral parsed,
-        content = parsed -- FIXME: this should contain the source of the string
-    })
-    | '(' == ch     = (Token {
-        kind = SymbolIdentifier,
-        content = "("
-    }, rest)
-    | ')' == ch     = (Token {
-        kind = SymbolIdentifier,
-        content = ")"
-    }, rest)
-    | otherwise     = matchSpan SymbolIdentifier isSymbol str
+  | isDigit ch    = matchSpan NumberLiteral isDigit str
+  | isAlphaNum ch = matchSpan LetterIdentifier isAlphaNum str
+  | '\n' == ch    = (Token {
+    kind = EOL,
+    content = pure ch
+  }, rest)
+  | isSpace ch    = matchSpan InlineWhitespace isSpace str
+  | '"' == ch     = matchStringLiteral rest & mapFirst (\parsed -> Token {
+    kind = StringLiteral parsed,
+    content = parsed -- FIXME: this should contain the source of the string
+  })
+  | '(' == ch     = (Token {
+    kind = SymbolIdentifier,
+    content = "("
+  }, rest)
+  | ')' == ch     = (Token {
+    kind = SymbolIdentifier,
+    content = ")"
+  }, rest)
+  | otherwise     = matchSpan SymbolIdentifier isSymbol str
 
 tokenize :: String -> [Token]
 tokenize str = case nonEmpty str of
-    Just a -> let (token, rest) = readToken a in
-        token:tokenize rest
-    Nothing -> []
+  Just a -> let (token, rest) = readToken a in
+    token:tokenize rest
+  Nothing -> []
 
 matchStringLiteral :: String -> (String, String)
 matchStringLiteral ('\\':xs) = matchEscapeSequence xs
