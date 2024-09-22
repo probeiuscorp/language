@@ -21,8 +21,8 @@ spec = describe "Compiler.Tokenizer" $ do
       , Token { kind = SymbolIdentifier, content = ")" }
       , Token { kind = EOL, content = "\n" }
       ]
+  let symbol a = Token { kind = SymbolIdentifier, content = a }
   it "should tokenize parenthesis alone" $ do
-    let symbol a = Token { kind = SymbolIdentifier, content = a }
     tokenize ")::())(" `shouldBe`
       [ symbol ")"
       , symbol "::"
@@ -30,6 +30,15 @@ spec = describe "Compiler.Tokenizer" $ do
       , symbol ")"
       , symbol ")"
       , symbol "("
+      ]
+  it "should tokenize braces alone" $ do
+    tokenize "}::{)}{" `shouldBe`
+      [ symbol "}"
+      , symbol "::"
+      , symbol "{"
+      , symbol ")"
+      , symbol "}"
+      , symbol "{"
       ]
   it "should tokenize math symbols alone" $ do
     tokenize "∀x. x + x==2x" `shouldBe`
