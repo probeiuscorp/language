@@ -67,9 +67,6 @@ parseImportListOnly = const Nothing
 parseExportDeclaration :: ParseMatcher AST.TopLevelDeclaration
 parseExportDeclaration = undefined
 
-isWhitespace :: Token -> Bool
-isWhitespace token = kind token == InlineWhitespace || kind token == EOL
-
 eatWhitespace :: Tokens -> Tokens
 eatWhitespace = Z.eat isWhitespace
 

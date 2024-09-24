@@ -1,4 +1,4 @@
-module Compiler.Tokenizer (tokenize, Token(Token), TokenKind(..), content, kind, catTokens, mapFirst) where
+module Compiler.Tokenizer (tokenize, Token(Token), TokenKind(..), content, kind, isWhitespace, catTokens, mapFirst) where
 import Data.Char (isDigit, isAlphaNum, isSpace)
 import Data.Function ((&))
 import Data.List.NonEmpty (NonEmpty((:|)), nonEmpty)
@@ -14,6 +14,9 @@ data Token = Token
   { kind :: TokenKind
   , content :: String
   } deriving (Eq, Show)
+
+isWhitespace :: Token -> Bool
+isWhitespace token = kind token == InlineWhitespace || kind token == EOL
 
 catTokens :: [Token] -> String
 catTokens = foldr ((++) . content) mempty
