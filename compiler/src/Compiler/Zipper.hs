@@ -1,4 +1,4 @@
-module Compiler.Zipper (Zipper(..), todo, done, start, peek, left, right, eat, eatOne, Compiler.Zipper.drop, isDone, match, matchCond, filterMaybe) where
+module Compiler.Zipper (Zipper(..), todo, done, start, peek, peekl, left, right, eat, eatOne, Compiler.Zipper.drop, isDone, match, matchCond, filterMaybe) where
 
 import Compiler.Tokenizer (mapFirst)
 
@@ -16,6 +16,10 @@ done (Zipper a _) = a
 peek :: Zipper a -> Maybe a
 peek (Zipper _ (x:_)) = Just x
 peek _                = Nothing
+
+peekl :: Zipper a -> Maybe a
+peekl (Zipper (x:_) _) = Just x
+peekl _                = Nothing
 
 right :: Zipper a -> Maybe (a, Zipper a)
 right (Zipper bt (x:xs)) = Just (x, Zipper (x:bt) xs)
