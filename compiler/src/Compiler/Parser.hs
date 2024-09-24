@@ -35,6 +35,7 @@ splitDeclarations z = filter (not . all isSpace) $ case Z.eatOne $ Z.eat (/= '\n
 doesDeclarationContinue :: Char -> Bool
 doesDeclarationContinue ')' = True
 doesDeclarationContinue '}' = True
+doesDeclarationContinue ']' = True
 doesDeclarationContinue ch  = isInlineWhitespace ch
 
 parseDeclaration :: ParseParser AST.TopLevelDeclaration
