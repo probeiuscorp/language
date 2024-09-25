@@ -33,6 +33,7 @@ matchSpan kind isMatch str = NE.span isMatch str & mapFirst (\content -> Token {
 shouldTokenizeAlone :: Char -> Bool
 shouldTokenizeAlone ch =
   ch == '(' || ch == ')' ||
+  ch == '[' || ch == ']' ||
   ch == '{' || ch == '}'
 
 isSymbol :: Char -> Bool
