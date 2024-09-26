@@ -1,4 +1,4 @@
-module Compiler.Zipper (Zipper(..), todo, done, start, peek, peekl, left, right, eat, eatOne, Compiler.Zipper.drop, isDone, match, matchCond, filterMaybe) where
+module Compiler.Zipper (Zipper(..), todo, done, start, restart, peek, peekl, left, right, eat, eatOne, Compiler.Zipper.drop, isDone, match, matchCond, filterMaybe) where
 
 import Compiler.Tokenizer (mapFirst)
 
@@ -6,6 +6,9 @@ data Zipper a = Zipper [a] [a] deriving (Eq, Show)
 
 start :: [a] -> Zipper a
 start = Zipper []
+
+restart :: Zipper a -> Zipper a
+restart (Zipper _ ft) = Zipper [] ft
 
 todo :: Zipper a -> [a]
 todo (Zipper _ a) = a
