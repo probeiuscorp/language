@@ -1,8 +1,10 @@
+{-# LANGUAGE DeriveFunctor #-}
+
 module Compiler.Zipper (Zipper(..), todo, done, start, restart, peek, peekl, left, right, eat, eatOne, Compiler.Zipper.drop, isDone, match, matchCond, filterMaybe) where
 
 import Compiler.Tokenizer (mapFirst)
 
-data Zipper a = Zipper [a] [a] deriving (Eq, Show)
+data Zipper a = Zipper [a] [a] deriving (Eq, Show, Functor)
 
 start :: [a] -> Zipper a
 start = Zipper []
