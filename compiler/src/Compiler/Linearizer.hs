@@ -11,6 +11,8 @@ type Tokens = Z.Zipper Token
 type Linearization = GLinearization Token
 type Linearized = GLinearized Token
 type GLinearization a = [GLinearized a]
+-- | All (GLinearization a) positions contain reversed lists except for the
+-- first position of LinFunction.
 data GLinearized a
   = LinFunction (GLinearization a) (GLinearization a)
   | LinBrackets (GLinearization a)
@@ -20,6 +22,9 @@ data GLinearized a
   | LinToken a
   deriving (Eq, Show, Functor)
 
+-- | Linearizing sorts out productions which require seeking. Mostly it is for
+-- handling function expressions, but while it's here, it may as well handle
+-- closing pairs too.
 linearize :: Tokens -> Linearization
 linearize z = fst $ linearizeL z []
 
@@ -36,6 +41,7 @@ linearizeOrClose exitSeq z l = maybe (error "unclosed group") (\(t, zr) ->
 type Continue = Linearization -> (Linearization, Tokens)
 matchHead :: (Tokens -> Continue) -> (Token, Tokens) -> Continue
 matchHead continue (t, zr) l = let con = content t in if
+  | (con == "." && matchesFunction zr) -> (linearizeFunction, zrr_f)
   | con == "(" -> pair LinParens ")"
   | con == "{" -> pair LinBraces "}"
   | con == "[" -> pair LinBrackets "]"
@@ -44,3 +50,16 @@ matchHead continue (t, zr) l = let con = content t in if
     pair construct exitSeq =
       let (linearizedContents, tokensAfter) = linearizeOrClose exitSeq zr []
       in continue tokensAfter (construct linearizedContents : l)
+    -- Linearizing functions
+    (Z.Zipper lParams lPreParams) = Z.eat shouldBeMadeParam $ Z.start l
+    (lBody, zrr_f) = continue zr []  -- Provide empty Linearization so `lBody` doesn't contain params
+    linearizeFunction = LinFunction lParams lBody : lPreParams
+
+matchesFunction :: Tokens -> Bool
+matchesFunction zr = (isWhitespace <$> (z >>= Z.peekl)) == Just False && (isWhitespace <$> Z.peek zr) == Just True
+  where z = snd <$> Z.left zr
+
+shouldBeMadeParam :: Linearized -> Bool
+shouldBeMadeParam (LinToken t) = kind t /= SymbolIdentifier
+shouldBeMadeParam (LinFunction _ _ ) = False
+shouldBeMadeParam _ = True
