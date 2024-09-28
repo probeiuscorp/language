@@ -5,7 +5,6 @@ module Compiler.Linearizer (linearize, Linearized, GLinearized(..)) where
 
 import Compiler.Tokenizer
 import qualified Compiler.Zipper as Z
-import Data.Bifunctor (Bifunctor(first))
 
 type Tokens = Z.Zipper Token
 
@@ -18,14 +17,14 @@ data GLinearized a
   | LinBraces (GLinearization a)
   | LinParens (GLinearization a)
   | LinTuple [GLinearization a]
-  | LinTokens [a]
+  | LinToken a
   deriving (Eq, Show, Functor)
 
 linearize :: Tokens -> Linearization
 linearize z = fst $ linearizeL z []
 
 linearizeL :: Tokens -> Continue
-linearizeL z l = maybe ([], Z.start []) (flip (matchHead linearizeL) l) $ Z.right z
+linearizeL z l = maybe (l, Z.start []) (flip (matchHead linearizeL) l) $ Z.right z
 
 linearizeOrClose :: String -> Tokens -> Continue
 linearizeOrClose exitSeq z l = maybe (error "unclosed group") (\(t, zr) ->
@@ -40,12 +39,8 @@ matchHead continue (t, zr) l = let con = content t in if
   | con == "(" -> pair LinParens ")"
   | con == "{" -> pair LinBraces "}"
   | con == "[" -> pair LinBrackets "]"
-  | otherwise -> first (addToken t) $ continue zr l
+  | otherwise -> continue zr (LinToken t : l)
   where
-    pair construct exitSeq = let
-      (linearizedContents, tokensAfter) = linearizeOrClose exitSeq zr []
-      (linearizedAfter, zrr) = continue tokensAfter []
-      in (construct linearizedContents : linearizedAfter, zrr)
-    addToken :: Token -> [Linearized] -> [Linearized]
-    addToken t (LinTokens ts : ft) = LinTokens (t:ts) : ft
-    addToken t xs = LinTokens [t] : xs
+    pair construct exitSeq =
+      let (linearizedContents, tokensAfter) = linearizeOrClose exitSeq zr []
+      in continue tokensAfter (construct linearizedContents : l)
