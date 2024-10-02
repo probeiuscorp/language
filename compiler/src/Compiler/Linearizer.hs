@@ -18,7 +18,6 @@ data GLinearized a
   | LinBrackets (GLinearization a)
   | LinBraces (GLinearization a)
   | LinParens (GLinearization a)
-  | LinTuple [GLinearization a]
   | LinToken a
   deriving (Eq, Show, Functor)
 
