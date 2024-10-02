@@ -21,11 +21,18 @@ data GLinearized a
   | LinToken a
   deriving (Eq, Show, Functor)
 
+fixOrder :: GLinearized a -> GLinearized a
+fixOrder (LinFunction params body) = LinFunction params $ reverse body
+fixOrder (LinBrackets body) = LinBrackets $ reverse body
+fixOrder (LinBraces body) = LinBraces $ reverse body
+fixOrder (LinParens body) = LinParens $ reverse body
+fixOrder linearized = linearized
+
 -- | Linearizing sorts out productions which require seeking. Mostly it is for
 -- handling function expressions, but while it's here, it may as well handle
 -- closing pairs too.
 linearize :: Tokens -> Linearization
-linearize z = fst $ linearizeL z []
+linearize z = reverse $ fixOrder <$> fst (linearizeL z [])
 
 linearizeL :: Tokens -> Continue
 linearizeL z l = maybe (l, Z.start []) (flip (matchHead linearizeL) l) $ Z.right z
