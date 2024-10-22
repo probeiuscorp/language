@@ -1,7 +1,7 @@
 {-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE DeriveFunctor #-}
 
-module Compiler.Linearizer (linearize, Linearized, GLinearized(..)) where
+module Compiler.Linearizer (linearize, Linear, Linearized, GLinearized(..)) where
 
 import Compiler.Tokenizer
 import qualified Compiler.Zipper as Z
@@ -10,6 +10,7 @@ type Tokens = Z.Zipper Token
 
 type Linearization = GLinearization Token
 type Linearized = GLinearized Token
+type Linear = Z.Zipper Linearized
 type GLinearization a = [GLinearized a]
 -- | All (GLinearization a) positions contain reversed lists except for the
 -- first position of LinFunction.
