@@ -4,18 +4,26 @@ type ValidIdentifier = String
 
 data Destructuring
   = DestructBind ValidIdentifier
-  | DestructCons (ValidIdentifier, [Destructuring])
+  | DestructNominal (ValidIdentifier, [Destructuring])
   | DestructRecord [(ValidIdentifier, Destructuring)]
   deriving (Eq, Show)
-data Expression
-  = ExFunction [Destructuring] Expression
-  | ExApplication Expression Expression
-  | ExIdentifier ValidIdentifier
-  | ExStringLiteral String
-  | ExNumberLiteral Double
-  | ExRecord [(String, Expression)]
+
+-- | Terms are isomorphic with the source as-written (except for whitespace)
+data Term
+  = TermFunction [Destructuring] Term
+  | TermApplication Term Term
+  | TermIdentifier ValidIdentifier
+  | TermRecord [(String, Maybe Term)]
   deriving (Eq, Show)
 data TypeExpression = TypeExpression deriving (Eq, Show)
+
+-- | Expressions are isomorphic with the compiled form
+data Expression
+  = ExFunction Destructuring Expression
+  | ExApplication Expression Expression
+  | ExIdentifier ValidIdentifier
+  | ExRecord [(String, Expression)]
+  deriving (Eq, Show)
 
 data Associativity = LeftAssociative | RightAssociative deriving (Eq, Show)
 data InfixDeclaration = InfixDeclaration
@@ -26,8 +34,8 @@ data InfixDeclaration = InfixDeclaration
 
 data ImportListing
   = ImportAll
-  | ImportOnly [(ValidIdentifier, Expression)]
-  | ImportHiding [(ValidIdentifier, Expression)]
+  | ImportOnly [(ValidIdentifier, ValidIdentifier)]
+  | ImportHiding [(ValidIdentifier, ValidIdentifier)]
   | ImportAs ValidIdentifier
   deriving (Eq, Show)
 
@@ -37,8 +45,8 @@ data DeclarationModule = DeclarationModule
   } deriving (Eq, Show)
 data TopLevelDeclaration
   = ImportDeclaration String ImportListing
-  | ExportDeclaration [(ValidIdentifier, Expression)]
+  | ExportDeclaration [(ValidIdentifier, Term)]
   | DataDeclaration ValidIdentifier [TypeExpression]
-  | ValueDeclaration DeclarationModule (Maybe Expression) (Maybe TypeExpression)
+  | ValueDeclaration DeclarationModule (Maybe Term) (Maybe TypeExpression)
   | TypeDeclaration DeclarationModule TypeExpression
   deriving (Eq, Show)
