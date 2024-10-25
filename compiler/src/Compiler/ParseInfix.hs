@@ -52,25 +52,24 @@ treeificateLinear s@(z, state) = maybe s (\(term, zr) -> treeificateLinear (zr, 
             _ -> finishStack stack
 
 collapseStack :: (Op, Int) -> Operand -> Operand
-collapseStack (op, precedence) stack = let (terms, stackr) = collapseWhile stack in
-  Operand (foldDirection fn terms) stackr
+collapseStack (op, precedence) stack = uncurry Operand $ collapseWhile stack []
   where
-    fn :: AST.Term -> AST.Term -> AST.Term
-    fn = case op of
-      OpFn ident -> flip $ AST.TermApplication . AST.TermApplication (AST.TermIdentifier ident)
-      OpApplication -> flip AST.TermApplication
-    foldDirection = case opAssociativity op of
-      AST.LeftAssociative -> foldr1
-      AST.RightAssociative -> foldl1
-    collapseWhile :: Operand -> (NE.NonEmpty AST.Term, Operator)
-    collapseWhile (Operand term n@(Operator nextOp xs)) = if
+    fold term terms = (case opAssociativity op of
+      AST.LeftAssociative -> foldl1
+      AST.RightAssociative -> foldr1
+      ) (case op of
+        OpFn ident -> AST.TermApplication . AST.TermApplication (AST.TermIdentifier ident)
+        OpApplication -> AST.TermApplication
+        ) (term:terms)
+    collapseWhile :: Operand -> [AST.Term] -> (AST.Term, Operator)
+    collapseWhile (Operand term n@(Operator nextOp xs)) terms = if
       -- Keep collapsing
-      | op == nextOp -> first (term NE.<|) $ collapseWhile xs
+      | op == nextOp -> collapseWhile xs $ term:terms
       -- Collapse next group too
       | opPrecedence nextOp > precedence -> undefined
       -- Done
-      | otherwise -> (pure term, n)
-    collapseWhile (Operand term StackDone) = (pure term, StackDone)
+      | otherwise -> (fold term terms, n)
+    collapseWhile (Operand term StackDone) terms = (fold term terms, StackDone)
 
 peekOperator :: Operand -> Maybe Op
 peekOperator (Operand _ (Operator op _)) = Just op
