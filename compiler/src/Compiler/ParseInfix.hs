@@ -60,8 +60,8 @@ collapseStack (op, precedence) stack = let (terms, stackr) = collapseWhile stack
       OpFn ident -> flip $ AST.TermApplication . AST.TermApplication (AST.TermIdentifier ident)
       OpApplication -> flip AST.TermApplication
     foldDirection = case opAssociativity op of
-      AST.LeftAssociative -> foldl1
-      AST.RightAssociative -> foldr1
+      AST.LeftAssociative -> foldr1
+      AST.RightAssociative -> foldl1
     collapseWhile :: Operand -> (NE.NonEmpty AST.Term, Operator)
     collapseWhile (Operand term n@(Operator nextOp xs)) = if
       -- Keep collapsing
