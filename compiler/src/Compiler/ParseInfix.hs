@@ -21,12 +21,15 @@ data InfixStack = OperatorStack Operator | OperandStack Operand
 
 parseInfix :: Linear -> AST.Term
 parseInfix z = let (zr, stack) = treeificateLinear (z, OperatorStack StackDone) in case stack of
-  OperandStack operand -> case peekOperator operand of
-    Just op -> case collapseStack (op, opPrecedence op) operand of
-      Operand term StackDone -> term
-      _ -> error "there was stuff still on the stack"
-    Nothing -> error "how did we get here?"
+  OperandStack operand -> collapseStep operand
   _ -> error "unclosed function"
+  where
+    collapseStep :: Operand -> AST.Term
+    collapseStep operand = case peekOperator operand of
+      Just op -> case collapseStack op operand of
+        Operand term StackDone -> term
+        operand' -> collapseStep operand'
+      Nothing -> error "how did we get here?"
 
 type ParseState = (Linear, InfixStack)
 treeificateLinear :: ParseState -> ParseState
@@ -48,12 +51,13 @@ treeificateLinear s@(z, state) = maybe s (\(term, zr) -> treeificateLinear (zr, 
           finishStack stack = OperatorStack (Operator (OpFn ident) stack)
           in case peekOperator stack of
             Just op | opPrecedence op > opPrecedence (OpFn ident) ->
-              finishStack $ collapseStack (op, opPrecedence op) stack
+              finishStack $ collapseStack op stack
             _ -> finishStack stack
 
-collapseStack :: (Op, Int) -> Operand -> Operand
-collapseStack (op, precedence) stack = uncurry Operand $ collapseWhile stack []
+collapseStack :: Op -> Operand -> Operand
+collapseStack op stack = uncurry Operand $ collapseWhile stack []
   where
+    precedence = opPrecedence op
     fold term terms = (case opAssociativity op of
       AST.LeftAssociative -> foldl1
       AST.RightAssociative -> foldr1
@@ -66,7 +70,7 @@ collapseStack (op, precedence) stack = uncurry Operand $ collapseWhile stack []
       -- Keep collapsing
       | op == nextOp -> collapseWhile xs $ term:terms
       -- Collapse next group too
-      | opPrecedence nextOp > precedence -> undefined
+      | opPrecedence nextOp > precedence -> collapseWhile (collapseStack nextOp (Operand term n)) terms
       -- Done
       | otherwise -> (fold term terms, n)
     collapseWhile (Operand term StackDone) terms = (fold term terms, StackDone)
@@ -90,6 +94,7 @@ opPrecedence :: Op -> Int
 opPrecedence OpApplication = 10
 opPrecedence (OpFn "$") = 1
 opPrecedence (OpFn "-") = 4
+opPrecedence (OpFn "*") = 6
 opPrecedence _ = 6
 
 opAssociativity :: Op -> AST.Associativity
