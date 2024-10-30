@@ -90,9 +90,9 @@ A supertype for all type constructors is
 
 ```
 type Monad = m: (* => *). {
-    of: a. a -> m a
-    join: a. m $ m a -> m a
-    bind: a b. (a -> m b) -> m a -> m b
+    of: ∀a. a -> m a
+    join: ∀a. m $ m a -> m a
+    bind: ∀a b. (a -> m b) -> m a -> m b
 }
 ```
 
