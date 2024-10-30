@@ -9,6 +9,7 @@ import qualified Compiler.Zipper as Z
 import qualified Data.List.NonEmpty as NE
 import Data.Bifunctor (Bifunctor(first))
 import Data.Char (isAlphaNum)
+import Data.Function (on)
 
 data Op = OpFn String | OpApplication
   deriving (Eq, Show)
@@ -54,25 +55,29 @@ treeificateLinear s@(z, state) = maybe s (\(term, zr) -> treeificateLinear (zr, 
               finishStack $ collapseStack op stack
             _ -> finishStack stack
 
+type Terms = [(AST.Term, Op)]
 collapseStack :: Op -> Operand -> Operand
 collapseStack op stack = uncurry Operand $ collapseWhile stack []
   where
-    precedence = opPrecedence op
-    fold term terms = (case opAssociativity op of
-      AST.LeftAssociative -> foldl1
-      AST.RightAssociative -> foldr1
-      ) (case op of
-        OpFn ident -> AST.TermApplication . AST.TermApplication (AST.TermIdentifier ident)
-        OpApplication -> AST.TermApplication
-        ) (term:terms)
-    collapseWhile :: Operand -> [AST.Term] -> (AST.Term, Operator)
+    append op = case op of
+      OpFn ident -> AST.TermApplication . AST.TermApplication (AST.TermIdentifier ident)
+      OpApplication -> AST.TermApplication
+    fold :: AST.Term -> Terms -> AST.Term
+    fold term [] = term
+    fold term ((t, op):xs) = case opAssociativity op of
+      AST.LeftAssociative -> fold (append op term t) xs
+      AST.RightAssociative -> append op term (fold t xs)
+    collapseWhile :: Operand -> Terms -> (AST.Term, Operator)
     collapseWhile (Operand term n@(Operator nextOp xs)) terms = if
       -- Keep collapsing
-      | op == nextOp -> collapseWhile xs $ term:terms
+      | ord == EQ -> if ((==) `on` opAssociativity) op nextOp
+        then collapseWhile xs $ (term, nextOp):terms
+        else error "cannot mix operations with different associativity and of same precedence"
       -- Collapse next group too
-      | opPrecedence nextOp > precedence -> collapseWhile (collapseStack nextOp (Operand term n)) terms
+      | ord == GT -> collapseWhile (collapseStack nextOp (Operand term n)) terms
       -- Done
       | otherwise -> (fold term terms, n)
+      where ord = (compare `on` opPrecedence) nextOp op
     collapseWhile (Operand term StackDone) terms = (fold term terms, StackDone)
 
 peekOperator :: Operand -> Maybe Op
@@ -94,6 +99,8 @@ opPrecedence :: Op -> Int
 opPrecedence OpApplication = 10
 opPrecedence (OpFn "$") = 1
 opPrecedence (OpFn "-") = 4
+opPrecedence (OpFn "^") = 8
+opPrecedence (OpFn "^^") = 8
 opPrecedence _ = 6
 
 opAssociativity :: Op -> AST.Associativity

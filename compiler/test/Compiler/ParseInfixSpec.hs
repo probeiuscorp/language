@@ -25,6 +25,8 @@ spec = describe "parseInfix" $ do
   test "right associativity" "a $ b $ c $ d"
   test "left associativity" "a - b - c - d"
   test "application" "a b c d"
+  test "left associative same precedence" "a / b / c * d * e / f"
+  test "right associative same precedence" "a ^ b ^^ c ^ d ^^ e ^^ f"
   test "mixed 1" "a b $ c d $ e"
   test "mixed 2" "d0 - d1 - d2 * a * b $ x y z"
   test "mixed 3" "d * a $ b b0 b1 $ c $ d x y z - e - f $ g"
