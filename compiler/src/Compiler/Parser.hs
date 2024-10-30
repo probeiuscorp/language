@@ -11,6 +11,7 @@ import Control.Applicative (Alternative((<|>)))
 import Data.Functor ((<&>))
 import Control.Arrow ((>>>))
 import Data.Char (isSpace)
+import Compiler.Linearizer (Linear, GLinearized (..))
 
 type Tokens = Z.Zipper Token
 data ParseError = ParseError String Token deriving (Eq, Show)
@@ -87,5 +88,10 @@ expectKeyword keyword tokens = maybe e Right $ matchKeyword keyword tokens
 parseLetterIdentifier :: ParseParser AST.ValidIdentifier
 parseLetterIdentifier tokens = Right ("Hooks", tokens)
 
-parseExpression :: [Token] -> (AST.Expression, [Token])
-parseExpression (Token { kind = StringLiteral content }:xs) = (AST.StringLiteral content, xs)
+parseOneTerm :: Linear -> Maybe (AST.Term, Linear)
+parseOneTerm z = Z.right z >>= (\(term, zr) -> case term of
+  (LinToken t) | isWhitespace t -> parseOneTerm zr
+  (LinToken t) | kind t == LetterIdentifier || kind t == SymbolIdentifier -> Just (AST.TermIdentifier $ content t, zr)
+  (LinBraces l) -> undefined
+  l -> error $ "term not supported yet: " ++ show l
+  )

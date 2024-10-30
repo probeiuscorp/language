@@ -4,12 +4,12 @@ module Compiler.ParseInfix (parseInfix) where
 
 import qualified Compiler.AST as AST
 import Compiler.Linearizer (Linear, Linearized, GLinearized(..))
-import Compiler.Tokenizer
 import qualified Compiler.Zipper as Z
 import qualified Data.List.NonEmpty as NE
 import Data.Bifunctor (Bifunctor(first))
 import Data.Char (isAlphaNum)
 import Data.Function (on)
+import Compiler.Parser (parseOneTerm)
 
 data Op = OpFn String | OpApplication
   deriving (Eq, Show)
@@ -87,13 +87,6 @@ peekOperator _ = Nothing
 isInfixOp :: AST.Term -> Maybe String
 isInfixOp (AST.TermIdentifier ident) | not $ all isAlphaNum ident = Just ident
 isInfixOp _ = Nothing
-
-parseOneTerm :: Linear -> Maybe (AST.Term, Linear)
-parseOneTerm z = Z.right z >>= (\(term, zr) -> case term of
-  (LinToken t) | isWhitespace t -> parseOneTerm zr
-  (LinToken t) | kind t == LetterIdentifier || kind t == SymbolIdentifier -> Just (AST.TermIdentifier $ content t, zr)
-  l -> error $ "term not supported yet: " ++ show l
-  )
 
 opPrecedence :: Op -> Int
 opPrecedence OpApplication = 10
