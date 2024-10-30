@@ -94,11 +94,12 @@ opPrecedence :: Op -> Int
 opPrecedence OpApplication = 10
 opPrecedence (OpFn "$") = 1
 opPrecedence (OpFn "-") = 4
-opPrecedence (OpFn "*") = 6
 opPrecedence _ = 6
 
 opAssociativity :: Op -> AST.Associativity
 opAssociativity OpApplication = AST.LeftAssociative
 opAssociativity (OpFn "$") = AST.RightAssociative
 opAssociativity (OpFn "-") = AST.LeftAssociative
+opAssociativity (OpFn "*") = AST.LeftAssociative
+opAssociativity (OpFn "/") = AST.LeftAssociative
 opAssociativity _ = AST.RightAssociative
