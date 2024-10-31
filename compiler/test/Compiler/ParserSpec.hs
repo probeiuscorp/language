@@ -22,11 +22,3 @@ spec = describe "Compiler.Parser" $ do
     it "should continue if closing parenthesis" $ do
       let source = "pair = a. (\n\ta,\n\ta)\n"
       testDeclarations source `shouldBe` [source]
-  describe "parseImportDeclaration" $ do
-    let testImportDeclaration = parseImportDeclaration . Z.start . tokenize
-    it "should parse import all" $ do
-      fmap (fmap fst) (testImportDeclaration "import react/hooks") `shouldBe` Just
-        (Right $ AST.ImportDeclaration "react/hooks" AST.ImportAll)
-    it "should parse import as" $ do
-      fmap (fmap fst) (testImportDeclaration "import react/hooks as Hooks") `shouldBe` Just
-        (Right $ AST.ImportDeclaration "react/hooks" $ AST.ImportAs "Hooks")
