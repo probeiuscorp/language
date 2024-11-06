@@ -9,7 +9,6 @@ import qualified Data.List.NonEmpty as NE
 import Data.Bifunctor (Bifunctor(first))
 import Data.Char (isAlphaNum)
 import Data.Function (on)
-import Compiler.Parser (parseOneTerm)
 
 data Op = OpFn String | OpApplication
   deriving (Eq, Show)
@@ -20,8 +19,9 @@ data Operand = Operand AST.Term Operator
 data InfixStack = OperatorStack Operator | OperandStack Operand
   deriving (Eq, Show)
 
-parseInfix :: Linear -> AST.Term
-parseInfix z = let (zr, stack) = treeificateLinear (z, OperatorStack StackDone) in case stack of
+type ParseOneTerm = Linear -> Maybe (AST.Term, Linear)
+parseInfix :: ParseOneTerm -> Linear -> AST.Term
+parseInfix pt z = let (zr, stack) = treeificateLinear pt (z, OperatorStack StackDone) in case stack of
   OperandStack operand -> collapseStep operand
   _ -> error "unclosed function"
   where
@@ -30,8 +30,8 @@ parseInfix z = let (zr, stack) = treeificateLinear (z, OperatorStack StackDone) 
     collapseStep operand@(Operand term (Operator op _)) = collapseStep $ collapseStack op operand
 
 type ParseState = (Linear, InfixStack)
-treeificateLinear :: ParseState -> ParseState
-treeificateLinear s@(z, state) = maybe s (\(term, zr) -> treeificateLinear (zr, addTerm term)) $ parseOneTerm z
+treeificateLinear :: ParseOneTerm -> ParseState -> ParseState
+treeificateLinear pt s@(z, state) = maybe s (\(term, zr) -> treeificateLinear pt (zr, addTerm term)) $ pt z
   where
     addTerm :: AST.Term -> InfixStack
     addTerm term = case (state, isInfixOp term) of

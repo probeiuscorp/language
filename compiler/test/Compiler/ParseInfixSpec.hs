@@ -20,7 +20,7 @@ prettyPrintTerm indent (AST.TermIdentifier ident) = ident
 prettyPrintTerm indent term = show term
 
 spec = describe "parseInfix" $ do
-  let prettyParseInfix = prettyPrintTerm "" . parseInfix . Z.start . linearize . Z.start . tokenize
+  let prettyParseInfix = prettyPrintTerm "" . parseInfix parseOneTerm . Z.start . linearize . Z.start . tokenize
   let test msg source = it msg $ defaultGolden ("parseInfix/" ++ msg) $ source ++ "\n\x2500\x2500\x2500\n" ++ prettyParseInfix source ++ "\n"
   test "right associativity" "a $ b $ c $ d"
   test "left associativity" "a - b - c - d"
