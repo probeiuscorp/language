@@ -1,15 +1,15 @@
-module Compiler.ParserSpec (spec) where
+module Compiler.ParseSpec (spec) where
 
 import Test.Hspec
 import Test.Hspec.Golden (defaultGolden)
-import Compiler.Parser
+import Compiler.Parse
 import qualified Compiler.AST as AST
 import qualified Compiler.Zipper as Z
 import Compiler.Tokenizer (tokenize)
 import Compiler.Linearizer (linearize)
 
 spec :: SpecWith ()
-spec = describe "Compiler.Parser" $ do
+spec = describe "Compiler.Parse" $ do
   describe "splitDeclarations" $ do
     let testDeclarations = splitDeclarations . Z.start
     it "empty string" $ do
@@ -26,7 +26,7 @@ spec = describe "Compiler.Parser" $ do
       testDeclarations source `shouldBe` [source]
   describe "parseParens" $ do
     let prettyParseParens = show . parseParens . Z.start . linearize . Z.start . tokenize
-    let test msg source = it msg $ defaultGolden ("parser/parseParens/" ++ msg) $ source ++ "\n\x2500\x2500\x2500\n" ++ prettyParseParens source ++ "\n"
+    let test msg source = it msg $ defaultGolden ("parse/parseParens/" ++ msg) $ source ++ "\n\x2500\x2500\x2500\n" ++ prettyParseParens source ++ "\n"
     test "single group" "(this)"
     test "tree group" "(this that there)"
     test "tuple 2" "(this, that)"

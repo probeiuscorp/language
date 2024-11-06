@@ -4,7 +4,7 @@ import Test.Hspec
 import Test.Hspec.Golden (defaultGolden)
 import qualified Compiler.Zipper as Z
 import qualified Compiler.AST as AST
-import Compiler.Parser
+import Compiler.Parse
 import Compiler.Tokenizer (tokenize)
 import Compiler.Linearizer (linearize)
 import Compiler.ParseInfix (parseInfix)

@@ -1,4 +1,4 @@
-module Compiler.Parser where
+module Compiler.Parse where
 
 import Compiler.Tokenizer
 import qualified Compiler.AST as AST
