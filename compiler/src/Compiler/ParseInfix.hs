@@ -26,11 +26,8 @@ parseInfix z = let (zr, stack) = treeificateLinear (z, OperatorStack StackDone) 
   _ -> error "unclosed function"
   where
     collapseStep :: Operand -> AST.Term
-    collapseStep operand = case peekOperator operand of
-      Just op -> case collapseStack op operand of
-        Operand term StackDone -> term
-        operand' -> collapseStep operand'
-      Nothing -> error "how did we get here?"
+    collapseStep (Operand term StackDone) = term
+    collapseStep operand@(Operand term (Operator op _)) = collapseStep $ collapseStack op operand
 
 type ParseState = (Linear, InfixStack)
 treeificateLinear :: ParseState -> ParseState
