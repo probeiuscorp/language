@@ -1,0 +1,3 @@
+(Cons x xs)
+───
+TermApplication (TermApplication (TermIdentifier "Cons") (TermIdentifier "x")) (TermIdentifier "xs")

@@ -6,8 +6,16 @@ import qualified Compiler.Zipper as Z
 import Data.Char (isSpace)
 import Compiler.Linearizer (Linear, Linearized, GLinearized (..))
 import Compiler.ParseInfix (parseInfix)
+import Control.Monad.State (State, MonadState (state, get), evalState)
+import Data.Functor ((<&>))
+import Data.Maybe (fromMaybe)
+import Data.Bifunctor (Bifunctor(first))
 
 type Tokens = Z.Zipper Token
+
+(<<$>>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)
+(<<$>>) f = (fmap f <$>)
+infixl 4 <<$>>
 
 isInlineWhitespace :: Char -> Bool
 isInlineWhitespace '\n' = False
@@ -25,6 +33,47 @@ doesDeclarationContinue ')' = True
 doesDeclarationContinue '}' = True
 doesDeclarationContinue ']' = True
 doesDeclarationContinue ch  = isInlineWhitespace ch
+
+type ParseState = State Linear
+
+right :: ParseState Linearized
+right = state $ fromMaybe (error "Unexpected end of input") . Z.right
+
+eatWhitespace :: ParseState Bool
+eatWhitespace = state $ go False
+  where
+    go hadWhitespace z = fromMaybe (hadWhitespace, z) $ Z.right z >>= \(l, zr) -> case l of
+      (LinToken t) | isWhitespace t -> Just $ go True zr
+      _ -> Nothing
+
+many :: ParseState (Maybe a) -> ParseState [a]
+many match = go []
+  where
+    go xs = match >>= \case
+      Just x -> go $ x:xs
+      Nothing -> pure xs
+
+exhaustively :: ParseState a -> ParseState [a]
+exhaustively match = reverse <$> go []
+  where
+    go xs = do
+      z <- get
+      if Z.isDone z
+        then pure xs
+        else match >>= go . (:xs)
+
+unexpected :: ParseState a
+unexpected = pure $ error "Did not get what expected"
+
+expect :: ParseState (Maybe a) -> ParseState a
+expect = (>>= \case
+  Just x -> pure x
+  Nothing -> unexpected)
+
+matchIdentifier :: ParseState (Maybe AST.ValidIdentifier)
+matchIdentifier = right <&> \case
+  LinToken t | kind t == LetterIdentifier -> Just $ content t
+  _ -> Nothing
 
 parseTerm :: Linear -> AST.Term
 parseTerm = parseInfix parseOneTerm
@@ -57,3 +106,15 @@ parseParens = go ExpectGroup
           Left z' -> (z', Nothing)
           Right (z', zr) -> (z', Just zr)
         term = parseTerm z'
+
+parseDestructuring :: ParseState AST.Destructuring
+parseDestructuring = eatWhitespace >> right >>= \case
+  (LinToken t) | kind t == LetterIdentifier -> pure . AST.DestructBind $ content t
+  (LinParens l) -> pure . evalState parseNominal $ Z.start l
+  _ -> unexpected
+
+parseNominal :: ParseState AST.Destructuring
+parseNominal = do
+  identifier <- expect matchIdentifier
+  destructurings <- exhaustively parseDestructuring
+  pure $ AST.DestructNominal (identifier, destructurings)

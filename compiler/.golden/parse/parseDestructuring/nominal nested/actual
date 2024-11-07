@@ -1,0 +1,3 @@
+(Cons (Nothing) (Just x))
+───
+TermApplication (TermApplication (TermIdentifier "Cons") (TermIdentifier "Nothing")) (TermApplication (TermIdentifier "x") (TermIdentifier "Just"))

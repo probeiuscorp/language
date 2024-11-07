@@ -31,3 +31,10 @@ spec = describe "Compiler.Parse" $ do
     test "tree group" "(this that there)"
     test "tuple 2" "(this, that)"
     test "tuple 3" "(this, that, there)"
+  describe "parseDestructuring" $ do
+    let prettyParseDestructuring = show . parseParens . Z.start . linearize . Z.start . tokenize
+    let test msg source = it msg $ defaultGolden ("parse/parseDestructuring/" ++ msg) $ source ++ "\n\x2500\x2500\x2500\n" ++ prettyParseDestructuring source ++ "\n"
+    test "binding" "x"
+    test "nominal" "(None)"
+    test "nominal many" "(Cons x xs)"
+    test "nominal nested" "(Cons (Nothing) (Just x))"
