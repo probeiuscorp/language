@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Compiler.Parse where
 
 import Compiler.Tokenizer
@@ -85,11 +87,13 @@ parseOneTerm z = Z.right z >>= \(term, zr) -> case term of
   (LinParens l) -> Just (parseParens $ Z.start l, zr)
   l -> error $ "term not supported yet: " ++ show l
 
-breakWhen :: (Token -> Bool) -> Linear -> Either Linear (Linear, Linear)
-breakWhen p z = maybe (Left rewound) (\(l, zr) -> case l of
-  LinToken t | p t -> Right (rewound, Z.restart zr)
-  _ -> breakWhen p zr) $ Z.right z
-  where rewound = Z.start . reverse $ Z.done z
+breakWhen :: (Token -> Bool) -> Linear -> (Maybe Linear, Linear)
+breakWhen p z0 = go z0
+  where
+    go :: Linear -> (Maybe Linear, Linear)
+    go z = maybe (Nothing, z0) (\(l, zr) -> case l of
+      LinToken t | p t -> (Just $ Z.restart zr, Z.start . reverse $ Z.done z)
+      _ -> go zr) $ Z.right z
 
 data ParenParseState = ExpectTuple [AST.Term] | ExpectGroup
 parseParens :: Linear -> AST.Term
@@ -102,9 +106,7 @@ parseParens = go ExpectGroup
       (ExpectTuple terms, Nothing) -> AST.TermTuple . reverse $ term : terms
       (ExpectTuple terms, Just xs) -> go (ExpectTuple $ term : terms) xs
       where
-        (z', zr) = case breakWhen ((== ",") . content) z of
-          Left z' -> (z', Nothing)
-          Right (z', zr) -> (z', Just zr)
+        (zr, z') = breakWhen ((== ",") . content) z
         term = parseTerm z'
 
 parseDestructuring :: ParseState AST.Destructuring
