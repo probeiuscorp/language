@@ -25,6 +25,10 @@ dependencies:
 - QuickCheck
 - HUnit
 
+default-extensions:
+- LambdaCase
+- TupleSections
+
 ghc-options:
 - -Wall
 - -Wcompat
