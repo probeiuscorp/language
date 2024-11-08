@@ -1,27 +1,18 @@
 module Compiler.ParseInfixSpec (spec) where
 
 import Test.Hspec
-import Test.Hspec.Golden (defaultGolden)
 import qualified Compiler.Zipper as Z
-import qualified Compiler.AST as AST
-import Compiler.Parse
+import Compiler.Parse (parseOneTerm)
 import Compiler.Tokenizer (tokenize)
 import Compiler.Linearizer (linearize)
 import Compiler.ParseInfix (parseInfix)
+import Compiler.ParseSpec (prettyPrintTerm)
+import Compiler.SnapshotTesting (snapshot)
 
-prettyPrintTerm :: String -> AST.Term -> String
-prettyPrintTerm lastIndent (AST.TermApplication (AST.TermApplication fn arg1) arg2) =
-  prettyPrintTerm lastIndent fn
-  ++ "\n" ++ indent ++ prettyPrintTerm (lastIndent ++ "\x2502 ") arg1
-  ++ "\n" ++ indent ++ prettyPrintTerm (lastIndent ++ "  ") arg2
-  where indent = lastIndent ++ "\x2937 "
-prettyPrintTerm indent (AST.TermApplication fn arg) = "(" ++ prettyPrintTerm indent fn ++ " " ++ prettyPrintTerm indent arg ++ ")"
-prettyPrintTerm indent (AST.TermIdentifier ident) = ident
-prettyPrintTerm indent term = show term
-
+spec :: SpecWith ()
 spec = describe "parseInfix" $ do
   let prettyParseInfix = prettyPrintTerm "" . parseInfix parseOneTerm . Z.start . linearize . Z.start . tokenize
-  let test msg source = it msg $ defaultGolden ("parseInfix/" ++ msg) $ source ++ "\n\x2500\x2500\x2500\n" ++ prettyParseInfix source ++ "\n"
+  let test = snapshot "parseInfix/" prettyParseInfix
   test "right associativity" "a $ b $ c $ d"
   test "left associativity" "a - b - c - d"
   test "application" "a b c d"
