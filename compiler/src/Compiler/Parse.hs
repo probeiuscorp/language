@@ -1,5 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
-
 module Compiler.Parse where
 
 import Compiler.Tokenizer
@@ -85,6 +83,8 @@ parseOneTerm z = Z.right z >>= \(term, zr) -> case term of
   (LinToken t) | isWhitespace t -> parseOneTerm zr
   (LinToken t) | kind t == LetterIdentifier || kind t == SymbolIdentifier -> Just (AST.TermIdentifier $ content t, zr)
   (LinParens l) -> Just (parseParens $ Z.start l, zr)
+  (LinFunction lparams lbody) ->
+    Just (AST.TermFunction (evalState (exhaustively parseDestructuring) $ Z.start lparams) (parseTerm $ Z.start lbody), zr)
   l -> error $ "term not supported yet: " ++ show l
 
 breakWhen :: (Token -> Bool) -> Linear -> (Maybe Linear, Linear)

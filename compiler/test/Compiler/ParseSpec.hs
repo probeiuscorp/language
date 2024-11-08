@@ -49,3 +49,9 @@ spec = describe "Compiler.Parse" $ do
     test "nominal" "(None)"
     test "nominal many" "(Cons x xs)"
     test "nominal nested" "(Cons (Nothing) (Just x))"
+  describe "parseTerm" $ do
+    let prettyParseTerm = prettyPrintTerm "" . parseTerm . source
+    let test = snapshot "parse/parseTerm/" prettyParseTerm
+    test "identity function" "x. x"
+    test "multiple bindings function" "x y. x"
+    test "nested destructurings" "x (Cons (Nothing) (Just x)). undefined"

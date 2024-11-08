@@ -1,0 +1,3 @@
+x y. x
+───
+TermFunction [DestructBind "x",DestructBind "y"] (TermIdentifier "x")
