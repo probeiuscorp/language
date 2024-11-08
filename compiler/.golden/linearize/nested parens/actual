@@ -1,0 +1,3 @@
+a ((b c) d) e
+───
+[LinToken "a",LinToken " ",LinParens [LinParens [LinToken "b",LinToken " ",LinToken "c"],LinToken " ",LinToken "d"],LinToken " ",LinToken "e"]

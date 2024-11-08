@@ -23,10 +23,10 @@ data GLinearized a
   deriving (Eq, Show, Functor)
 
 fixOrder :: GLinearized a -> GLinearized a
-fixOrder (LinFunction params body) = LinFunction params $ reverse body
-fixOrder (LinBrackets body) = LinBrackets $ reverse body
-fixOrder (LinBraces body) = LinBraces $ reverse body
-fixOrder (LinParens body) = LinParens $ reverse body
+fixOrder (LinFunction params body) = LinFunction (fixOrder <$> params) . reverse $ fixOrder <$> body
+fixOrder (LinBrackets body) = LinBrackets . reverse $ fixOrder <$> body
+fixOrder (LinBraces body) = LinBraces . reverse $ fixOrder <$> body
+fixOrder (LinParens body) = LinParens . reverse $ fixOrder <$> body
 fixOrder linearized = linearized
 
 -- | Linearizing sorts out productions which require seeking. Mostly it is for

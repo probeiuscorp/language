@@ -1,0 +1,3 @@
+x y. x
+───
+[LinFunction [LinToken "x",LinToken " ",LinToken "y"] [LinToken " ",LinToken "x"]]
