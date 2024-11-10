@@ -4,12 +4,14 @@ import Compiler.Tokenizer
 import qualified Compiler.AST as AST
 import qualified Compiler.Zipper as Z
 import Data.Char (isSpace)
-import Compiler.Linearizer (Linear, Linearized, GLinearized (..))
+import Compiler.Linearizer (Linear, GLinearized (..), linearize)
 import Compiler.ParseInfix (parseInfix)
-import Control.Monad.State (State, MonadState (state, get), evalState)
+import Control.Monad (guard, msum, MonadPlus (mzero))
+import Control.Monad.State (State, MonadState (state, get), gets, evalState, modify, runState, StateT (StateT, runStateT))
 import Data.Functor ((<&>))
 import Data.Maybe (fromMaybe)
 import Data.Bifunctor (Bifunctor(first))
+import Compiler.Zipper (filterMaybe)
 
 type Tokens = Z.Zipper Token
 
@@ -34,9 +36,68 @@ doesDeclarationContinue '}' = True
 doesDeclarationContinue ']' = True
 doesDeclarationContinue ch  = isInlineWhitespace ch
 
+parseDeclaration :: State Tokens AST.TopLevelDeclaration
+parseDeclaration = do
+  token <- right
+  eatWhitespaceTokens
+  z <- get
+  case content <$> Z.peek z of
+    Just "=" -> do
+      term <- gets $ parseTerm . Z.start . linearize
+      pure $ AST.ValueDeclaration (AST.DeclarationModule {
+        AST.identifier = content token,
+        AST.isExported = False
+      }) (Just term) Nothing
+    _ -> case content token of
+      "type" -> undefined
+      "export" -> undefined
+      "import" -> parseImportDeclaration
+      _ -> undefined
+
+type ParseAttempt = StateT Tokens Maybe AST.ImportListing
+parseImportDeclaration :: State Tokens AST.TopLevelDeclaration
+parseImportDeclaration = do
+  eatWhitespaceTokens
+  specifier <- catTokens <$> state (Z.match . filterMaybe $ not . isWhitespace)
+  eatWhitespaceTokens
+  importListing <- gets . runStateT $ msum [matchAs, matchHiding, matchOnly, matchAll]
+  pure . AST.ImportDeclaration specifier $ maybe undefined fst importListing
+  where
+    matchAs :: ParseAttempt
+    matchAs = do
+      keyword <- StateT Z.right
+      guard $ content keyword == "as"
+      liftState eatWhitespaceTokens
+      binding <- StateT Z.right
+      pure . AST.ImportAs $ content binding
+    parseImportList :: StateT Tokens Maybe [(AST.ValidIdentifier, AST.ValidIdentifier)]
+    parseImportList = do
+      z <- get
+      case linearize z of
+        [LinBraces l] -> pure []
+        _ -> mzero
+    matchOnly :: ParseAttempt
+    matchOnly = AST.ImportOnly <$> parseImportList
+    matchHiding :: ParseAttempt
+    matchHiding = do
+      keyword <- StateT Z.right
+      guard $ content keyword == "hiding"
+      liftState eatWhitespaceTokens
+      AST.ImportHiding <$> parseImportList
+    matchAll :: ParseAttempt
+    matchAll = do
+      z <- get
+      guard $ Z.isDone z
+      pure AST.ImportAll
+    liftState :: State s a -> StateT s Maybe a
+    liftState f = StateT $ pure . runState f
+
+eatWhitespaceTokens :: State Tokens ()
+eatWhitespaceTokens = modify $ Z.eat isWhitespace
+
 type ParseState = State Linear
 
-right :: ParseState Linearized
+right :: State (Z.Zipper a) a
 right = state $ fromMaybe (error "Unexpected end of input") . Z.right
 
 eatWhitespace :: ParseState Bool

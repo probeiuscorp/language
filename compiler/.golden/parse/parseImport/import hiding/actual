@@ -1,0 +1,3 @@
+import react/hooks hiding {}
+───
+ImportDeclaration "react/hooks" (ImportHiding [])

@@ -7,6 +7,7 @@ import qualified Compiler.Zipper as Z
 import Compiler.Tokenizer (tokenize)
 import Compiler.Linearizer (linearize)
 import Compiler.SnapshotTesting (snapshot)
+import Control.Monad.State (evalState)
 
 prettyPrintTerm :: String -> AST.Term -> String
 prettyPrintTerm lastIndent (AST.TermApplication (AST.TermApplication fn arg1) arg2) =
@@ -34,6 +35,13 @@ spec = describe "Compiler.Parse" $ do
     it "should continue if closing parenthesis" $ do
       let source = "pair = a. (\n\ta,\n\ta)\n"
       testDeclarations source `shouldBe` [source]
+  describe "parseImportDeclaration" $ do
+    let prettyParseImport = show . evalState parseDeclaration . Z.start . tokenize
+    let test = snapshot "parse/parseImport/" prettyParseImport
+    test "import all" "import react/hooks"
+    test "import only" "import react/hooks {}"
+    test "import hiding" "import react/hooks hiding {}"
+    test "import as" "import react/hooks as ReactHooks"
   let source = Z.start . linearize . Z.start . tokenize
   describe "parseParens" $ do
     let prettyParseParens = show . parseParens . source

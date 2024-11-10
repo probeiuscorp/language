@@ -1,0 +1,3 @@
+import react/hooks as ReactHooks
+───
+ImportDeclaration "react/hooks" (ImportAs "ReactHooks")
