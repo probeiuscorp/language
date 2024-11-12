@@ -13,3 +13,4 @@ spec = describe "Compiler.Tokenizer" $ do
   test "parens" ")::())("
   test "braces" "}::{)}{"
   test "math symbols" "∀x. x + x==2x"
+  test "newlines in whitespace" "  \n  "

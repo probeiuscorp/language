@@ -1,0 +1,5 @@
+"  \n  "
+───
+Token {kind = InlineWhitespace, content = "  "}
+Token {kind = EOL, content = "\n"}
+Token {kind = InlineWhitespace, content = "  "}

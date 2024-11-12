@@ -47,7 +47,7 @@ readToken str@(ch:|rest)
     kind = EOL,
     content = pure ch
   }, rest)
-  | isSpace ch    = matchSpan InlineWhitespace isSpace str
+  | isSpace ch    = matchSpan InlineWhitespace isInlineWhitespaceCh str
   | '"' == ch     = matchStringLiteral rest & mapFirst (\parsed -> Token {
     kind = StringLiteral parsed,
     content = parsed -- FIXME: this should contain the source of the string
@@ -57,6 +57,10 @@ readToken str@(ch:|rest)
     content = pure ch
   }, rest)
   | otherwise     = matchSpan SymbolIdentifier isSymbol str
+  where
+    isInlineWhitespaceCh :: Char -> Bool
+    isInlineWhitespaceCh '\n' = False
+    isInlineWhitespaceCh ch = isSpace ch
 
 tokenize :: String -> [Token]
 tokenize str = case nonEmpty str of
