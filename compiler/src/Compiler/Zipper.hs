@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveFunctor #-}
 
-module Compiler.Zipper (Zipper(..), todo, done, start, restart, rewind, peek, peekl, left, right, eat, eatOne, Compiler.Zipper.drop, isDone, match, matchCond, filterMaybe) where
+module Compiler.Zipper (Zipper(..), todo, done, start, restart, rewind, cat, peek, peekl, left, right, eat, eatOne, Compiler.Zipper.drop, isDone, match, matchCond, filterMaybe) where
 
 import Compiler.Tokenizer (mapFirst)
 
@@ -14,7 +14,10 @@ restart (Zipper _ ft) = Zipper [] ft
 
 rewind :: Zipper a -> Zipper a
 rewind (Zipper (x:xs) ft) = rewind $ Zipper xs (x:ft)
-rewind z@(Zipper [] ft) = z
+rewind z@(Zipper [] _) = z
+
+cat :: Zipper a -> [a]
+cat = todo . rewind
 
 todo :: Zipper a -> [a]
 todo (Zipper _ a) = a
