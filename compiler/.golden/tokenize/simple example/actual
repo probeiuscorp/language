@@ -1,0 +1,15 @@
+"export main:IO()\t=of()\n"
+───
+Token {kind = LetterIdentifier, content = "export"}
+Token {kind = InlineWhitespace, content = " "}
+Token {kind = LetterIdentifier, content = "main"}
+Token {kind = SymbolIdentifier, content = ":"}
+Token {kind = LetterIdentifier, content = "IO"}
+Token {kind = SymbolIdentifier, content = "("}
+Token {kind = SymbolIdentifier, content = ")"}
+Token {kind = InlineWhitespace, content = "\t"}
+Token {kind = SymbolIdentifier, content = "="}
+Token {kind = LetterIdentifier, content = "of"}
+Token {kind = SymbolIdentifier, content = "("}
+Token {kind = SymbolIdentifier, content = ")"}
+Token {kind = EOL, content = "\n"}

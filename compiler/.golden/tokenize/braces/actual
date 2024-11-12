@@ -1,0 +1,8 @@
+"}::{)}{"
+───
+Token {kind = SymbolIdentifier, content = "}"}
+Token {kind = SymbolIdentifier, content = "::"}
+Token {kind = SymbolIdentifier, content = "{"}
+Token {kind = SymbolIdentifier, content = ")"}
+Token {kind = SymbolIdentifier, content = "}"}
+Token {kind = SymbolIdentifier, content = "{"}

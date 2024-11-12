@@ -1,0 +1,14 @@
+"\8704x. x + x==2x"
+───
+Token {kind = SymbolIdentifier, content = "\8704"}
+Token {kind = LetterIdentifier, content = "x"}
+Token {kind = SymbolIdentifier, content = "."}
+Token {kind = InlineWhitespace, content = " "}
+Token {kind = LetterIdentifier, content = "x"}
+Token {kind = InlineWhitespace, content = " "}
+Token {kind = SymbolIdentifier, content = "+"}
+Token {kind = InlineWhitespace, content = " "}
+Token {kind = LetterIdentifier, content = "x"}
+Token {kind = SymbolIdentifier, content = "=="}
+Token {kind = NumberLiteral, content = "2"}
+Token {kind = LetterIdentifier, content = "x"}
