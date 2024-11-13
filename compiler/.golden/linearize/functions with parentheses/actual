@@ -1,3 +1,22 @@
 x (Cons (Just x) xs). undefined
 ───
-[LinFunction [LinToken "x",LinToken " ",LinParens [LinToken "Cons",LinToken " ",LinParens [LinToken "Just",LinToken " ",LinToken "x"],LinToken " ",LinToken "xs"]] [LinToken " ",LinToken "undefined"]]
+[
+  LinFunction [
+    LinToken "x",
+    LinToken " ",
+    LinParens [
+      LinToken "Cons",
+      LinToken " ",
+      LinParens [
+        LinToken "Just",
+        LinToken " ",
+        LinToken "x",
+      ],
+      LinToken " ",
+      LinToken "xs",
+    ],
+  ] [
+    LinToken " ",
+    LinToken "undefined",
+  ],
+]
