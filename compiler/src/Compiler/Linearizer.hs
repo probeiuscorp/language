@@ -1,7 +1,7 @@
 {-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE DeriveFunctor #-}
 
-module Compiler.Linearizer (linearize, Linear, Linearized, GLinearized(..)) where
+module Compiler.Linearizer (linearize, Linear, Linearized, Linearization, GLinearized(..)) where
 
 import Compiler.Tokenizer
 import qualified Compiler.Zipper as Z
@@ -33,34 +33,40 @@ fixOrder linearized = linearized
 -- handling function expressions, but while it's here, it may as well handle
 -- closing pairs too.
 linearize :: Tokens -> Linearization
-linearize z = reverse $ fixOrder <$> fst (linearizeL z [])
+linearize z0 = reverse $ fixOrder <$> fst (linearizeOrClose (const Continue) id z0 [])
 
-linearizeL :: Tokens -> Continue
-linearizeL z l = maybe (l, Z.start []) (flip (matchHead linearizeL) l) $ Z.right z
-
-linearizeOrClose :: String -> Tokens -> Continue
-linearizeOrClose exitSeq z l = maybe (error "unclosed group") (\(t, zr) ->
-  if content t == exitSeq
-    then (l, zr)
-    else matchHead (linearizeOrClose exitSeq) (t, zr) l
+data CloseAction = Continue | Eat | Keep deriving (Eq, Show)
+linearizeOrClose :: WithConfig (Tokens -> Continue)
+linearizeOrClose p handleEmpty z l = maybe (handleEmpty (l, z)) (\(t, zr) ->
+  case p t of
+    Continue -> matchHead p handleEmpty (t, zr) l
+    Eat -> (l, zr)
+    Keep -> (l, z)
   ) $ Z.right z
 
 type Continue = Linearization -> (Linearization, Tokens)
-matchHead :: (Tokens -> Continue) -> (Token, Tokens) -> Continue
-matchHead continue (t, zr) l = let con = content t in if
-  | (con == "." && matchesFunction zr) -> (linearizeFunction, zrr_f)
+type WithConfig a = (Token -> CloseAction) -> ((Linearization, Tokens) -> (Linearization, Tokens)) -> a
+matchHead :: WithConfig ((Token, Tokens) -> Continue)
+matchHead p handleEmpty (t, zr) l = let con = content t in if
+  | con == "." && matchesFunction zr -> fn
   | con == "(" -> pair LinParens ")"
   | con == "{" -> pair LinBraces "}"
   | con == "[" -> pair LinBrackets "]"
-  | otherwise -> continue zr (LinToken t : l)
+  | otherwise -> go zr $ LinToken t : l
   where
-    pair construct exitSeq =
-      let (linearizedContents, tokensAfter) = linearizeOrClose exitSeq zr []
-      in continue tokensAfter (construct linearizedContents : l)
+    go = linearizeOrClose p handleEmpty
+    pairlike construct lbefore (lcontents, tokensAfter) = go tokensAfter $ construct lcontents : lbefore
+    tokenIs con t' = if content t' == con then Eat else Continue
+    pair construct exitSeq = pairlike construct l $
+      linearizeOrClose (tokenIs exitSeq) (const $ error "unclosed group") zr []
     -- Linearizing functions
-    (Z.Zipper lParams lPreParams) = Z.eat shouldBeMadeParam $ Z.start l
-    (lBody, zrr_f) = continue zr []  -- Provide empty Linearization so `lBody` doesn't contain params
-    linearizeFunction = LinFunction lParams lBody : lPreParams
+    (Z.Zipper lparams lpreparams) = Z.eat shouldBeMadeParam $ Z.start l
+    pFnBody t'
+      | content t' == "," = Keep
+      | p t' == Continue  = Continue
+      | otherwise = Keep  -- if p wanted to eat the token, then we should keep it so caller can then eat it
+    fn = pairlike (LinFunction lparams) lpreparams $
+      linearizeOrClose pFnBody id zr []
 
 matchesFunction :: Tokens -> Bool
 matchesFunction zr = (isWhitespace <$> (z >>= Z.peekl)) == Just False && (isWhitespace <$> Z.peek zr) == Just True

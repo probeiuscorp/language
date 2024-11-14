@@ -1,0 +1,25 @@
+(x y. x, x y. y,)
+───
+[
+  LinParens [
+    LinFunction [
+      LinToken "x",
+      LinToken " ",
+      LinToken "y",
+    ] [
+      LinToken " ",
+      LinToken "x",
+    ],
+    LinToken ",",
+    LinFunction [
+      LinToken " ",
+      LinToken "x",
+      LinToken " ",
+      LinToken "y",
+    ] [
+      LinToken " ",
+      LinToken "y",
+    ],
+    LinToken ",",
+  ],
+]

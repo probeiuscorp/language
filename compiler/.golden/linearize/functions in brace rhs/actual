@@ -1,0 +1,49 @@
+{
+  a = x y. x,
+  b = x y. y,
+  c = undefined,
+}
+───
+[
+  LinBraces [
+    LinToken "\n",
+    LinToken "  ",
+    LinToken "a",
+    LinToken " ",
+    LinToken "=",
+    LinFunction [
+      LinToken " ",
+      LinToken "x",
+      LinToken " ",
+      LinToken "y",
+    ] [
+      LinToken " ",
+      LinToken "x",
+    ],
+    LinToken ",",
+    LinToken "\n",
+    LinToken "  ",
+    LinToken "b",
+    LinToken " ",
+    LinToken "=",
+    LinFunction [
+      LinToken " ",
+      LinToken "x",
+      LinToken " ",
+      LinToken "y",
+    ] [
+      LinToken " ",
+      LinToken "y",
+    ],
+    LinToken ",",
+    LinToken "\n",
+    LinToken "  ",
+    LinToken "c",
+    LinToken " ",
+    LinToken "=",
+    LinToken " ",
+    LinToken "undefined",
+    LinToken ",",
+    LinToken "\n",
+  ],
+]
