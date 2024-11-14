@@ -31,3 +31,4 @@ spec = describe "linearize" $ do
   test "mixed nestings" "(a {b c}) d (e)"
   test "functions" "x y. x"
   test "functions with parentheses" "x (Cons (Just x) xs). undefined"
+  test "function in parentheses" "(x y. x)"
