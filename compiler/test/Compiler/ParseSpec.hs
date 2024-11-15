@@ -17,6 +17,8 @@ prettyPrintTerm lastIndent (AST.TermApplication (AST.TermApplication fn arg1) ar
   where indent = lastIndent ++ "\x2937 "
 prettyPrintTerm indent (AST.TermApplication fn arg) = "(" ++ prettyPrintTerm indent fn ++ " " ++ prettyPrintTerm indent arg ++ ")"
 prettyPrintTerm _ (AST.TermIdentifier ident) = ident
+prettyPrintTerm lastIndent (AST.TermFunction params body) = "TermFunction " ++ show params ++ " (\n" ++ indent ++ prettyPrintTerm indent body ++ "\n" ++ lastIndent ++ ")"
+  where indent = "  " ++ lastIndent
 prettyPrintTerm _ term = show term
 
 spec :: SpecWith ()

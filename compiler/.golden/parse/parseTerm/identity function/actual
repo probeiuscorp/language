@@ -1,3 +1,5 @@
 x. x
 ───
-TermFunction [DestructBind "x"] (TermIdentifier "x")
+TermFunction [DestructBind "x"] (
+  x
+)
