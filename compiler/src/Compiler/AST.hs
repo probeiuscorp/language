@@ -5,7 +5,7 @@ type ValidIdentifier = String
 data Destructuring
   = DestructBind ValidIdentifier
   | DestructNominal (ValidIdentifier, [Destructuring])
-  | DestructRecord [(ValidIdentifier, Destructuring)]
+  | DestructRecord [(ValidIdentifier, Maybe Destructuring)]
   deriving (Eq, Show)
 
 -- | Terms are isomorphic with the source as-written (except for whitespace)
@@ -36,8 +36,8 @@ data InfixDeclaration = InfixDeclaration
 
 data ImportListing
   = ImportAll
-  | ImportOnly [(ValidIdentifier, ValidIdentifier)]
-  | ImportHiding [(ValidIdentifier, ValidIdentifier)]
+  | ImportOnly Destructuring
+  | ImportHiding Destructuring
   | ImportAs ValidIdentifier
   deriving (Eq, Show)
 

@@ -70,11 +70,11 @@ parseImportDeclaration = do
       liftState eatWhitespaceTokens
       binding <- StateT Z.right
       pure . AST.ImportAs $ content binding
-    parseImportList :: StateT Tokens Maybe [(AST.ValidIdentifier, AST.ValidIdentifier)]
+    parseImportList :: StateT Tokens Maybe AST.Destructuring
     parseImportList = do
       z <- get
       case linearize z of
-        [LinBraces l] -> pure []
+        [LinBraces l] -> pure $ parseRecordDestructure $ Z.start l
         _ -> mzero
     matchOnly :: ParseAttempt
     matchOnly = AST.ImportOnly <$> parseImportList
@@ -185,6 +185,7 @@ parseDestructuring :: ParseState AST.Destructuring
 parseDestructuring = eatWhitespace >> right >>= \case
   (LinToken t) | kind t == LetterIdentifier -> pure . AST.DestructBind $ content t
   (LinParens l) -> pure . evalState parseNominal $ Z.start l
+  (LinBraces l) -> pure $ parseRecordDestructure $ Z.start l
   _ -> unexpected
 
 parseNominal :: ParseState AST.Destructuring
@@ -209,4 +210,6 @@ splitRecordClauses sep z0 = splitClauses z0 >>= parseClause
 braceParser :: (Linear -> a) -> (Linear -> b) -> String -> Linear -> [(a, Maybe b)]
 braceParser fLHS fRHS sep z = bimap fLHS (fmap fRHS) <$> splitRecordClauses sep z
 
-parseRecordLiteral = AST.TermRecord . braceParser (evalState $ only $ expect matchIdentifier) parseTerm "="
+onlyIdentifier = evalState $ only $ expect matchIdentifier
+parseRecordLiteral = AST.TermRecord . braceParser onlyIdentifier parseTerm "="
+parseRecordDestructure = AST.DestructRecord . braceParser onlyIdentifier (evalState parseDestructuring) "as"

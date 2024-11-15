@@ -48,16 +48,20 @@ spec = describe "Compiler.Parse" $ do
     let test = snapshot "parse/parseImport/" prettyParseImport
     test "import all" "import react/hooks"
     test "import only" "import react/hooks {}"
-    test "import hiding" "import react/hooks hiding {}"
+    test "import only list" "import react/hooks { useState, useEffect }"
+    test "import hiding list" "import react/hooks hiding { useState, useEffect }"
     test "import as" "import react/hooks as ReactHooks"
   let source = Z.start . linearize . Z.start . tokenize
   describe "parseDestructuring" $ do
-    let prettyParseDestructuring = show . parseParens . source
+    let prettyParseDestructuring = show . evalState parseDestructuring . source
     let test = snapshot "parse/parseDestructuring/" prettyParseDestructuring
     test "binding" "x"
     test "nominal" "(None)"
     test "nominal many" "(Cons x xs)"
     test "nominal nested" "(Cons (Nothing) (Just x))"
+    test "record" "{ x, y, z }"
+    test "record rebind" "{ x as playerX, y as playerY }"
+    test "record destructure" "{ start as { x as x0, y as y0 }, end as { x as x1, y as y1 } }"
   describe "parseTerm" $ do
     let prettyParseTerm = prettyPrintTerm "" . parseTerm . source
     let test = snapshot "parse/parseTerm/" prettyParseTerm

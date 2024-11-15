@@ -1,0 +1,3 @@
+{ start as { x as x0, y as y0 }, end as { x as x1, y as y1 } }
+───
+DestructRecord [("start",Just (DestructRecord [("x",Just (DestructBind "x0")),("y",Just (DestructBind "y0"))])),("end",Just (DestructRecord [("x",Just (DestructBind "x1")),("y",Just (DestructBind "y1"))]))]

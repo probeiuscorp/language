@@ -1,0 +1,3 @@
+{ x, y, z }
+───
+DestructRecord [("x",Nothing),("y",Nothing),("z",Nothing)]

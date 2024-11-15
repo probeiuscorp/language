@@ -1,0 +1,3 @@
+{ x as playerX, y as playerY }
+───
+DestructRecord [("x",Just (DestructBind "playerX")),("y",Just (DestructBind "playerY"))]
