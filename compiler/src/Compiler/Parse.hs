@@ -153,6 +153,7 @@ parseOneTerm z = Z.right z >>= \(lin, zr) -> let ok term = Just (term, zr) in ca
   (LinToken t) | isWhitespace t -> parseOneTerm zr
   (LinToken t) | kind t == LetterIdentifier || kind t == SymbolIdentifier -> ok $ AST.TermIdentifier $ content t
   (LinParens l) -> ok $ parseParens $ Z.start l
+  (LinBrackets l) -> ok $ AST.TermList $ either pure id $ parseCommaSeparated $ Z.start l
   (LinBraces l) -> ok $ parseRecordLiteral $ Z.start l
   (LinFunction lparams lbody) ->
     ok $ AST.TermFunction (evalState (exhaustively parseDestructuring) $ Z.start lparams) (parseTerm $ Z.start lbody)
@@ -167,18 +168,18 @@ breakWhen p z0 = go z0
       _ -> go zr) $ Z.right z
 
 data ParenParseState = ExpectTuple [AST.Term] | ExpectGroup
-parseParens :: Linear -> AST.Term
-parseParens = go ExpectGroup
+parseCommaSeparated :: Linear -> Either AST.Term [AST.Term]
+parseCommaSeparated = go ExpectGroup
   where
-    go :: ParenParseState -> Linear -> AST.Term
     go s z = case (s, zr) of
-      (ExpectGroup, Nothing) -> term
+      (ExpectGroup, Nothing) -> Left term
       (ExpectGroup, Just xs) -> go (ExpectTuple $ pure term) xs
-      (ExpectTuple terms, Nothing) -> AST.TermTuple . reverse $ term : terms
+      (ExpectTuple terms, Nothing) -> Right . reverse $ term : terms
       (ExpectTuple terms, Just xs) -> go (ExpectTuple $ term : terms) xs
       where
         (zr, z') = breakWhen ((== ",") . content) z
         term = parseTerm z'
+parseParens = either id AST.TermTuple . parseCommaSeparated
 
 parseDestructuring :: ParseState AST.Destructuring
 parseDestructuring = eatWhitespace >> right >>= \case

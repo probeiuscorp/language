@@ -15,6 +15,7 @@ data Term
   | TermIdentifier ValidIdentifier
   | TermRecord [(String, Maybe Term)]
   | TermTuple [Term]
+  | TermList [Term]
   deriving (Eq, Show)
 data TypeExpression = TypeExpression deriving (Eq, Show)
 

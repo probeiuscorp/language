@@ -51,13 +51,6 @@ spec = describe "Compiler.Parse" $ do
     test "import hiding" "import react/hooks hiding {}"
     test "import as" "import react/hooks as ReactHooks"
   let source = Z.start . linearize . Z.start . tokenize
-  describe "parseParens" $ do
-    let prettyParseParens = show . parseParens . source
-    let test = snapshot "parse/parseParens/" prettyParseParens
-    test "single group" "(this)"
-    test "tree group" "(this that there)"
-    test "tuple 2" "(this, that)"
-    test "tuple 3" "(this, that, there)"
   describe "parseDestructuring" $ do
     let prettyParseDestructuring = show . parseParens . source
     let test = snapshot "parse/parseDestructuring/" prettyParseDestructuring
@@ -70,6 +63,12 @@ spec = describe "Compiler.Parse" $ do
     let test = snapshot "parse/parseTerm/" prettyParseTerm
     test "identity function" "x. x"
     test "multiple bindings function" "x y. x"
+    test "single group" "(this)"
+    test "tree group" "(this that there)"
+    test "tuple 2" "(this, that)"
+    test "tuple 3" "(this, that, there)"
+    test "list one item" "[x]"
+    test "list multiple items" "[x, y, z]"
     test "nested destructurings" "x (Cons (Nothing) (Just x)). undefined"
     test "record literal"
       "{\n\

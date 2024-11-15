@@ -1,0 +1,3 @@
+[x, y, z]
+───
+TermList [TermIdentifier "x",TermIdentifier "y",TermIdentifier "z"]
