@@ -1,0 +1,8 @@
+x y. { x, y }
+───
+TermFunction [DestructBind "x",DestructBind "y"] (
+  TermRecord {
+    x = Nothing
+    y = Nothing
+  }
+)

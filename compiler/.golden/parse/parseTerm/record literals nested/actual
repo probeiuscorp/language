@@ -1,0 +1,11 @@
+{ a, b = { this }, c, d = {}}
+───
+TermRecord {
+  a = Nothing
+  b = TermRecord {
+    this = Nothing
+  }
+  c = Nothing
+  d = TermRecord {
+  }
+}

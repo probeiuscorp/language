@@ -7,10 +7,10 @@ import Data.Char (isSpace)
 import Compiler.Linearizer (Linear, GLinearized (..), linearize)
 import Compiler.ParseInfix (parseInfix)
 import Control.Monad (guard, msum, MonadPlus (mzero))
-import Control.Monad.State (State, MonadState (state, get), gets, evalState, modify, runState, StateT (StateT, runStateT))
-import Data.Functor ((<&>))
+import Control.Monad.State (State, MonadState (state, get), gets, evalState, modify, runState, StateT (StateT, runStateT), execState)
+import Data.Functor ((<&>), ($>))
 import Data.Maybe (fromMaybe)
-import Data.Bifunctor (Bifunctor(first))
+import Data.Bifunctor (Bifunctor(first, bimap))
 import Compiler.Zipper (filterMaybe)
 
 type Tokens = Z.Zipper Token
@@ -107,6 +107,15 @@ eatWhitespace = state $ go False
       (LinToken t) | isWhitespace t -> Just $ go True zr
       _ -> Nothing
 
+only :: ParseState a -> ParseState a
+only match = do
+  r <- match
+  eatWhitespace
+  isDone <- gets Z.isDone
+  if isDone
+    then pure r
+    else unexpected
+
 many :: ParseState (Maybe a) -> ParseState [a]
 many match = go []
   where
@@ -140,12 +149,13 @@ parseTerm :: Linear -> AST.Term
 parseTerm = parseInfix parseOneTerm
 
 parseOneTerm :: Linear -> Maybe (AST.Term, Linear)
-parseOneTerm z = Z.right z >>= \(term, zr) -> case term of
+parseOneTerm z = Z.right z >>= \(lin, zr) -> let ok term = Just (term, zr) in case lin of
   (LinToken t) | isWhitespace t -> parseOneTerm zr
-  (LinToken t) | kind t == LetterIdentifier || kind t == SymbolIdentifier -> Just (AST.TermIdentifier $ content t, zr)
-  (LinParens l) -> Just (parseParens $ Z.start l, zr)
+  (LinToken t) | kind t == LetterIdentifier || kind t == SymbolIdentifier -> ok $ AST.TermIdentifier $ content t
+  (LinParens l) -> ok $ parseParens $ Z.start l
+  (LinBraces l) -> ok $ parseRecordLiteral $ Z.start l
   (LinFunction lparams lbody) ->
-    Just (AST.TermFunction (evalState (exhaustively parseDestructuring) $ Z.start lparams) (parseTerm $ Z.start lbody), zr)
+    ok $ AST.TermFunction (evalState (exhaustively parseDestructuring) $ Z.start lparams) (parseTerm $ Z.start lbody)
   l -> error $ "term not supported yet: " ++ show l
 
 breakWhen :: (Token -> Bool) -> Linear -> (Maybe Linear, Linear)
@@ -181,3 +191,21 @@ parseNominal = do
   identifier <- expect matchIdentifier
   destructurings <- exhaustively parseDestructuring
   pure $ AST.DestructNominal (identifier, destructurings)
+
+splitRecordClauses :: String -> Linear -> [(Linear, Maybe Linear)]
+splitRecordClauses sep z0 = splitClauses z0 >>= parseClause
+  where
+    parseClause :: Linear -> [(Linear, Maybe Linear)]
+    parseClause clause = case breakWhen ((== sep) . content) clause of
+      (Just rhs, lhs) -> pure (execState eatWhitespace lhs, Just $ execState eatWhitespace rhs)
+      (Nothing, lhs) -> let lhs' = execState eatWhitespace lhs in
+        guard (not $ Z.isDone lhs') $> (lhs', Nothing)
+    splitClauses z = let (mrest, segment) = breakWhen ((== ",") . content) z in
+      case mrest of
+        Just rest -> segment : splitClauses rest
+        Nothing -> pure segment
+
+braceParser :: (Linear -> a) -> (Linear -> b) -> String -> Linear -> [(a, Maybe b)]
+braceParser fLHS fRHS sep z = bimap fLHS (fmap fRHS) <$> splitRecordClauses sep z
+
+parseRecordLiteral = AST.TermRecord . braceParser (evalState $ only $ expect matchIdentifier) parseTerm "="

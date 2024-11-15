@@ -1,0 +1,18 @@
+{
+  x = xx. undefined,
+  y = yy,
+  z,
+  d = dd, e = ee
+  ,another,
+}
+───
+TermRecord {
+  x = TermFunction [DestructBind "xx"] (
+    undefined
+  )
+  y = yy
+  z = Nothing
+  d = dd
+  e = ee
+  another = Nothing
+}

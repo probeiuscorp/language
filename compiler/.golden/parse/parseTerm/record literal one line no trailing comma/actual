@@ -1,0 +1,8 @@
+{ a, b, c = undefined, d }
+───
+TermRecord {
+  a = Nothing
+  b = Nothing
+  c = undefined
+  d = Nothing
+}

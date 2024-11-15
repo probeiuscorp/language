@@ -19,6 +19,12 @@ prettyPrintTerm indent (AST.TermApplication fn arg) = "(" ++ prettyPrintTerm ind
 prettyPrintTerm _ (AST.TermIdentifier ident) = ident
 prettyPrintTerm lastIndent (AST.TermFunction params body) = "TermFunction " ++ show params ++ " (\n" ++ indent ++ prettyPrintTerm indent body ++ "\n" ++ lastIndent ++ ")"
   where indent = "  " ++ lastIndent
+prettyPrintTerm indent (AST.TermRecord fields) = "TermRecord {\n" ++ (fields >>= showField) ++ indent ++ "}"
+  where
+    nextIndent = "  " ++ indent
+    showValue Nothing = "Nothing"
+    showValue (Just term) = prettyPrintTerm nextIndent term
+    showField (name, value) = nextIndent ++ name ++ " = " ++ showValue value ++ "\n"
 prettyPrintTerm _ term = show term
 
 spec :: SpecWith ()
@@ -65,3 +71,14 @@ spec = describe "Compiler.Parse" $ do
     test "identity function" "x. x"
     test "multiple bindings function" "x y. x"
     test "nested destructurings" "x (Cons (Nothing) (Just x)). undefined"
+    test "record literal"
+      "{\n\
+      \  x = xx. undefined,\n\
+      \  y = yy,\n\
+      \  z,\n\
+      \  d = dd, e = ee\n\
+      \  ,another,\n\
+      \}"
+    test "record literal one line no trailing comma" "{ a, b, c = undefined, d }"
+    test "record literals nested" "{ a, b = { this }, c, d = {}}"
+    test "record literal in function" "x y. { x, y }"
