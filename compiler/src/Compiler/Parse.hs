@@ -1,10 +1,10 @@
 module Compiler.Parse where
 
-import Compiler.Tokenizer
+import Compiler.Tokenize
 import qualified Compiler.AST as AST
 import qualified Compiler.Zipper as Z
 import Data.Char (isSpace)
-import Compiler.Linearizer (Linear, GLinearized (..), linearize)
+import Compiler.Linearize (Linear, GLinearized (..), linearize)
 import Compiler.ParseInfix (parseInfix)
 import Control.Monad (guard, msum, MonadPlus (mzero))
 import Control.Monad.State (State, MonadState (state, get), gets, evalState, modify, runState, StateT (StateT, runStateT), execState)

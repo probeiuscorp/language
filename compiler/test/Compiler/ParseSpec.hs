@@ -4,8 +4,8 @@ import Test.Hspec
 import Compiler.Parse
 import qualified Compiler.AST as AST
 import qualified Compiler.Zipper as Z
-import Compiler.Tokenizer (tokenize)
-import Compiler.Linearizer (linearize)
+import Compiler.Tokenize (tokenize)
+import Compiler.Linearize (linearize)
 import Compiler.SnapshotTesting (snapshot)
 import Control.Monad.State (evalState)
 

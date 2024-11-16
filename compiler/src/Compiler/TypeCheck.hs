@@ -1,4 +1,4 @@
-module Compiler.Checker where
+module Compiler.TypeCheck where
 
 import qualified Compiler.AST as AST
 import Compiler.Type

@@ -1,4 +1,4 @@
-module Compiler.Tokenizer (tokenize, Token(Token), TokenKind(..), content, kind, isWhitespace, catTokens, mapFirst) where
+module Compiler.Tokenize (tokenize, Token(Token), TokenKind(..), content, kind, isWhitespace, catTokens, mapFirst) where
 import Data.Char (isDigit, isAlphaNum, isSpace)
 import Data.Function ((&))
 import Data.List.NonEmpty (NonEmpty((:|)), nonEmpty)

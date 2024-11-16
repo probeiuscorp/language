@@ -2,7 +2,7 @@
 
 module Compiler.Zipper (Zipper(..), todo, done, start, restart, rewind, cat, peek, peekl, left, right, eat, eatOne, Compiler.Zipper.drop, isDone, match, matchCond, filterMaybe) where
 
-import Compiler.Tokenizer (mapFirst)
+import Compiler.Tokenize (mapFirst)
 
 data Zipper a = Zipper [a] [a] deriving (Eq, Show, Functor)
 

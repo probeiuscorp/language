@@ -1,9 +1,9 @@
-module Compiler.LinearizerSpec (spec) where
+module Compiler.LinearizeSpec (spec) where
 
 import Test.Hspec
 import qualified Compiler.Zipper as Z
-import Compiler.Linearizer (linearize, Linearized, Linearization, GLinearized (..))
-import Compiler.Tokenizer (tokenize, content)
+import Compiler.Linearize (linearize, Linearized, Linearization, GLinearized (..))
+import Compiler.Tokenize (tokenize, content)
 import Compiler.SnapshotTesting (snapshot)
 
 prettyPrintLinearization :: [Linearized] -> String

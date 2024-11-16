@@ -1,9 +1,9 @@
 {-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE DeriveFunctor #-}
 
-module Compiler.Linearizer (linearize, Linear, Linearized, Linearization, GLinearized(..)) where
+module Compiler.Linearize (linearize, Linear, Linearized, Linearization, GLinearized(..)) where
 
-import Compiler.Tokenizer
+import Compiler.Tokenize
 import qualified Compiler.Zipper as Z
 
 type Tokens = Z.Zipper Token

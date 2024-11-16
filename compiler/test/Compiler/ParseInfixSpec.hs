@@ -3,8 +3,8 @@ module Compiler.ParseInfixSpec (spec) where
 import Test.Hspec
 import qualified Compiler.Zipper as Z
 import Compiler.Parse (parseOneTerm)
-import Compiler.Tokenizer (tokenize)
-import Compiler.Linearizer (linearize)
+import Compiler.Tokenize (tokenize)
+import Compiler.Linearize (linearize)
 import Compiler.ParseInfix (parseInfix)
 import Compiler.ParseSpec (prettyPrintTerm)
 import Compiler.SnapshotTesting (snapshot)

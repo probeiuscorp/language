@@ -3,7 +3,7 @@
 module Compiler.ParseInfix (parseInfix) where
 
 import qualified Compiler.AST as AST
-import Compiler.Linearizer (Linear, Linearized, GLinearized(..))
+import Compiler.Linearize (Linear, Linearized, GLinearized(..))
 import qualified Compiler.Zipper as Z
 import qualified Data.List.NonEmpty as NE
 import Data.Bifunctor (Bifunctor(first))

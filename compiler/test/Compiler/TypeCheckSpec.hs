@@ -1,8 +1,8 @@
-module Compiler.CheckerSpec where
+module Compiler.TypeCheckSpec where
 
 import Test.Hspec
 import Compiler.Type
-import Compiler.Checker
+import Compiler.TypeCheck
 import qualified Data.Set as Set
 import qualified Data.Map.Strict as Map
 
@@ -31,7 +31,7 @@ never = Type {
 }
 
 spec :: SpecWith ()
-spec = describe "Compiler.Checker" $ do
+spec = describe "Compiler.TypeCheck" $ do
   describe "intersectPositiveWithNegative" $ do
     it "should intersect negatives with positive" $ do
       intersectPositiveWithNegative (group [
