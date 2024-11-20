@@ -1,9 +1,10 @@
-module Compiler.Tokenize (tokenize, Token(Token), TokenKind(..), content, kind, isWhitespace, catTokens, mapFirst) where
+module Compiler.Tokenize (tokenize, Token(Token), TokenKind(..), content, kind, isWhitespace, catTokens) where
 import Data.Char (isDigit, isAlphaNum, isSpace)
 import Data.Function ((&))
 import Data.List.NonEmpty (NonEmpty((:|)), nonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe (fromMaybe)
+import Data.Bifunctor (Bifunctor(first))
 
 data TokenKind
   = InlineWhitespace | EOL
@@ -21,11 +22,8 @@ isWhitespace token = kind token == InlineWhitespace || kind token == EOL
 catTokens :: [Token] -> String
 catTokens = foldr ((++) . content) mempty
 
-mapFirst :: (a -> b) -> (a, c) -> (b, c)
-mapFirst f (a, c) = (f a, c)
-
 matchSpan :: TokenKind -> (Char -> Bool) -> NonEmpty Char -> (Token, String)
-matchSpan kind isMatch str = NE.span isMatch str & mapFirst (\content -> Token {
+matchSpan kind isMatch str = NE.span isMatch str & first (\content -> Token {
   kind = kind,
   content = content
 })
@@ -48,7 +46,7 @@ readToken str@(ch:|rest)
     content = pure ch
   }, rest)
   | isSpace ch    = matchSpan InlineWhitespace isInlineWhitespaceCh str
-  | '"' == ch     = matchStringLiteral rest & mapFirst (\parsed -> Token {
+  | '"' == ch     = matchStringLiteral rest & first (\parsed -> Token {
     kind = StringLiteral parsed,
     content = parsed -- FIXME: this should contain the source of the string
   })
@@ -71,7 +69,7 @@ tokenize str = case nonEmpty str of
 matchStringLiteral :: String -> (String, String)
 matchStringLiteral ('\\':xs) = matchEscapeSequence xs
 matchStringLiteral ('"':xs)  = ([], xs)
-matchStringLiteral (x:xs)    = matchStringLiteral xs & mapFirst (x:)
+matchStringLiteral (x:xs)    = matchStringLiteral xs & first (x:)
 matchStringLiteral []        = error "Unterminated string"
 
 matchEscapeSequence :: String -> (String, String)

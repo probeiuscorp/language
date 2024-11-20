@@ -1,8 +1,7 @@
 {-# LANGUAGE DeriveFunctor #-}
 
 module Compiler.Zipper (Zipper(..), todo, done, start, restart, rewind, cat, peek, peekl, left, right, eat, eatOne, Compiler.Zipper.drop, isDone, match, matchCond, filterMaybe) where
-
-import Compiler.Tokenize (mapFirst)
+import Data.Bifunctor (Bifunctor(first))
 
 data Zipper a = Zipper [a] [a] deriving (Eq, Show, Functor)
 
@@ -65,10 +64,10 @@ matchLoop f m@(acc, Zipper bt (a:xs)) = case f a of
 matchLoop _ m = m
 
 match :: (a -> Maybe b) -> Zipper a -> ([b], Zipper a)
-match f z = mapFirst reverse $ matchLoop f ([], z)
+match f z = first reverse $ matchLoop f ([], z)
 
 filterMaybe :: (a -> Bool) -> a -> Maybe a
 filterMaybe f a = if f a then Just a else Nothing
 
 matchCond :: (a -> Bool) -> Zipper a -> ([a], Zipper a)
-matchCond f z = mapFirst reverse $ matchLoop (filterMaybe f) ([], z)
+matchCond f z = first reverse $ matchLoop (filterMaybe f) ([], z)
