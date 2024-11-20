@@ -25,6 +25,10 @@ prettyPrintTerm indent (AST.TermRecord fields) = "TermRecord {\n" ++ (fields >>=
     showValue Nothing = "Nothing"
     showValue (Just term) = prettyPrintTerm nextIndent term
     showField (name, value) = nextIndent ++ name ++ " = " ++ showValue value ++ "\n"
+prettyPrintTerm indent (AST.TermMatch clauses) = "TermMatch [\n" ++ (clauses >>= showField) ++ indent ++ "]"
+  where
+    nextIndent = "  " ++ indent
+    showField (destructurings, term) = nextIndent ++ show destructurings ++ " = " ++ prettyPrintTerm nextIndent term ++ "\n"
 prettyPrintTerm _ term = show term
 
 spec :: SpecWith ()
@@ -85,3 +89,18 @@ spec = describe "Compiler.Parse" $ do
     test "record literal one line no trailing comma" "{ a, b, c = undefined, d }"
     test "record literals nested" "{ a, b = { this }, c, d = {}}"
     test "record literal in function" "x y. { x, y }"
+    test "match empty" "match { }"
+    test "match simple"
+      "f. match {\n\
+      \  (Cons x xs) = f x $ xs\n\
+      \  (Nil) = Nil\n\
+      \}"
+    test "match trailers"
+      "match {\n\
+      \  (Cons x xs) = f x $ xs\n\
+      \  (Nil) = Nil\n\
+      \} list"
+    test "match no braces"
+      "f. match\n\
+      \  (Cons x xs) = f x $ xs\n\
+      \  (Nil) = Nil\n"

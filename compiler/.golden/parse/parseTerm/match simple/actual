@@ -1,0 +1,13 @@
+f. match {
+  (Cons x xs) = f x $ xs
+  (Nil) = Nil
+}
+───
+TermFunction [DestructBind "f"] (
+  TermMatch [
+    [DestructNominal ("Cons",[DestructBind "x",DestructBind "xs"])] = $
+    ⤷ (f x)
+    ⤷ xs
+    [DestructNominal ("Nil",[])] = Nil
+  ]
+)

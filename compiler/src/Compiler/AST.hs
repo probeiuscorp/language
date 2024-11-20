@@ -16,6 +16,7 @@ data Term
   | TermRecord [(String, Maybe Term)]
   | TermTuple [Term]
   | TermList [Term]
+  | TermMatch [([Destructuring], Term)]
   deriving (Eq, Show)
 data TypeExpression = TypeExpression deriving (Eq, Show)
 

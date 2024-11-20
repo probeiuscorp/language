@@ -7,9 +7,10 @@ import Data.Char (isSpace)
 import Compiler.Linearize (Linear, GLinearized (..), linearize)
 import Compiler.ParseInfix (parseInfix)
 import Control.Monad (guard, msum, MonadPlus (mzero))
-import Control.Monad.State (State, MonadState (state, get), gets, evalState, modify, runState, StateT (StateT, runStateT), execState)
+import Control.Monad.State (State, MonadState (state, get, put), gets, evalState, modify, runState, StateT (StateT, runStateT), execState)
 import Data.Functor ((<&>), ($>))
 import Data.Maybe (fromMaybe)
+import qualified Data.List.NonEmpty as NE
 import Data.Bifunctor (Bifunctor(first, bimap))
 import Compiler.Zipper (filterMaybe)
 
@@ -127,6 +128,7 @@ exhaustively :: ParseState a -> ParseState [a]
 exhaustively match = reverse <$> go []
   where
     go xs = do
+      eatWhitespace
       z <- get
       if Z.isDone z
         then pure xs
@@ -151,6 +153,7 @@ parseTerm = parseInfix parseOneTerm
 parseOneTerm :: Linear -> Maybe (AST.Term, Linear)
 parseOneTerm z = Z.right z >>= \(lin, zr) -> let ok term = Just (term, zr) in case lin of
   (LinToken t) | isWhitespace t -> parseOneTerm zr
+  (LinToken t) | content t == "match" -> Just $ runState parseMatch zr
   (LinToken t) | kind t == LetterIdentifier || kind t == SymbolIdentifier -> ok $ AST.TermIdentifier $ content t
   (LinParens l) -> ok $ parseParens $ Z.start l
   (LinBrackets l) -> ok $ AST.TermList $ either pure id $ parseCommaSeparated $ Z.start l
@@ -194,18 +197,21 @@ parseNominal = do
   destructurings <- exhaustively parseDestructuring
   pure $ AST.DestructNominal (identifier, destructurings)
 
+splitClauses :: String -> Linear -> NE.NonEmpty Linear
+splitClauses sep = go
+  where
+    go z = let (mrest, segment) = breakWhen ((== sep) . content) z in
+      case mrest of
+        Just rest -> segment NE.<| go rest
+        Nothing -> pure segment
 splitRecordClauses :: String -> Linear -> [(Linear, Maybe Linear)]
-splitRecordClauses sep z0 = splitClauses z0 >>= parseClause
+splitRecordClauses sep z0 = NE.toList (splitClauses "," z0) >>= parseClause
   where
     parseClause :: Linear -> [(Linear, Maybe Linear)]
     parseClause clause = case breakWhen ((== sep) . content) clause of
       (Just rhs, lhs) -> pure (execState eatWhitespace lhs, Just $ execState eatWhitespace rhs)
       (Nothing, lhs) -> let lhs' = execState eatWhitespace lhs in
         guard (not $ Z.isDone lhs') $> (lhs', Nothing)
-    splitClauses z = let (mrest, segment) = breakWhen ((== ",") . content) z in
-      case mrest of
-        Just rest -> segment : splitClauses rest
-        Nothing -> pure segment
 
 braceParser :: (Linear -> a) -> (Linear -> b) -> String -> Linear -> [(a, Maybe b)]
 braceParser fLHS fRHS sep z = bimap fLHS (fmap fRHS) <$> splitRecordClauses sep z
@@ -213,3 +219,29 @@ braceParser fLHS fRHS sep z = bimap fLHS (fmap fRHS) <$> splitRecordClauses sep 
 onlyIdentifier = evalState $ only $ expect matchIdentifier
 parseRecordLiteral = AST.TermRecord . braceParser onlyIdentifier parseTerm "="
 parseRecordDestructure = AST.DestructRecord . braceParser onlyIdentifier (evalState parseDestructuring) "as"
+
+revZ :: Linear -> Linear
+revZ (Z.Zipper bt ft) = Z.Zipper (reverse bt) (reverse ft)
+rtl :: (Linear -> (Maybe Linear, Linear)) -> Linear -> (Maybe Linear, Linear)
+rtl f z = bimap (fmap revZ) revZ $ f (revZ z)
+parseMatchClauses :: Linear -> AST.Term
+parseMatchClauses z0 = AST.TermMatch $ go firstClause otherClauses
+  where
+    go :: Linear -> [Linear] -> [([AST.Destructuring], AST.Term)]
+    go lhs [] | Z.isDone $ execState eatWhitespace lhs = []
+    go _ [] = error "incomplete match clause"
+    go lhs (clause:clauses) = (evalState (exhaustively parseDestructuring) lhs, term) : go nextLHS clauses
+      where
+        (rhs, nextLHS) = rtl (breakWhen (\t -> kind t == EOL || content t == ",")) clause
+        term = parseTerm $ fromMaybe (error "match clauses must be separated by newline or comma") rhs
+    (firstClause NE.:| otherClauses) = splitClauses "=" z0
+
+parseMatch :: ParseState AST.Term
+parseMatch = eatWhitespace >> gets Z.peek >>= \case
+  (Just (LinBraces l)) -> do
+    modify Z.eatOne
+    pure $ parseMatchClauses $ Z.start l
+  _ -> do
+    term <- gets parseMatchClauses
+    put $ Z.start []
+    pure term
