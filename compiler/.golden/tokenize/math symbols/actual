@@ -10,5 +10,16 @@ Token {kind = SymbolIdentifier, content = "+"}
 Token {kind = InlineWhitespace, content = " "}
 Token {kind = LetterIdentifier, content = "x"}
 Token {kind = SymbolIdentifier, content = "=="}
-Token {kind = NumberLiteral, content = "2"}
+Token
+  { kind = NumberLiteral
+    ( NumberContents
+      { numIsPos = True
+      , numRadix = RadixDec
+      , numIntegral = [ 2 ]
+      , numFractional = Nothing
+      , numExponent = Nothing
+      }
+    )
+  , content = "2"
+  }
 Token {kind = LetterIdentifier, content = "x"}

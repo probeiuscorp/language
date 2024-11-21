@@ -1,0 +1,17 @@
+"0xFF.8"
+───
+Token
+  { kind = NumberLiteral
+    ( NumberContents
+      { numIsPos = True
+      , numRadix = RadixHex
+      , numIntegral =
+        [ 15
+        , 15
+        ]
+      , numFractional = Just [ 8 ]
+      , numExponent = Nothing
+      }
+    )
+  , content = "0xFF.8"
+  }

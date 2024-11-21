@@ -1,0 +1,19 @@
+"0x10e6"
+───
+Token
+  { kind = NumberLiteral
+    ( NumberContents
+      { numIsPos = True
+      , numRadix = RadixHex
+      , numIntegral =
+        [ 1
+        , 0
+        , 14
+        , 6
+        ]
+      , numFractional = Nothing
+      , numExponent = Nothing
+      }
+    )
+  , content = "0x10e6"
+  }

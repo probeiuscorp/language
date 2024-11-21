@@ -1,0 +1,19 @@
+"-0x12B0"
+───
+Token
+  { kind = NumberLiteral
+    ( NumberContents
+      { numIsPos = False
+      , numRadix = RadixHex
+      , numIntegral =
+        [ 1
+        , 2
+        , 11
+        , 0
+        ]
+      , numFractional = Nothing
+      , numExponent = Nothing
+      }
+    )
+  , content = "-0x12B0"
+  }

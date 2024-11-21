@@ -1,0 +1,17 @@
+"-0o27"
+───
+Token
+  { kind = NumberLiteral
+    ( NumberContents
+      { numIsPos = False
+      , numRadix = RadixOct
+      , numIntegral =
+        [ 2
+        , 7
+        ]
+      , numFractional = Nothing
+      , numExponent = Nothing
+      }
+    )
+  , content = "-0o27"
+  }

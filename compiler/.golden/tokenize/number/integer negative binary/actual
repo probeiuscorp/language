@@ -1,0 +1,23 @@
+"-0b01101001"
+───
+Token
+  { kind = NumberLiteral
+    ( NumberContents
+      { numIsPos = False
+      , numRadix = RadixBin
+      , numIntegral =
+        [ 0
+        , 1
+        , 1
+        , 0
+        , 1
+        , 0
+        , 0
+        , 1
+        ]
+      , numFractional = Nothing
+      , numExponent = Nothing
+      }
+    )
+  , content = "-0b01101001"
+  }

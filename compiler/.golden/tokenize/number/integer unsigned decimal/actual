@@ -1,0 +1,19 @@
+"1728"
+───
+Token
+  { kind = NumberLiteral
+    ( NumberContents
+      { numIsPos = True
+      , numRadix = RadixDec
+      , numIntegral =
+        [ 1
+        , 7
+        , 2
+        , 8
+        ]
+      , numFractional = Nothing
+      , numExponent = Nothing
+      }
+    )
+  , content = "1728"
+  }

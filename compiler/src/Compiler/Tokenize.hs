@@ -1,15 +1,29 @@
 module Compiler.Tokenize (tokenize, Token(Token), TokenKind(..), content, kind, isWhitespace, catTokens) where
-import Data.Char (isDigit, isAlphaNum, isSpace)
+import qualified Compiler.Zipper as Z
+import Data.Char (isDigit, isAlphaNum, isSpace, digitToInt, isHexDigit, isOctDigit)
 import Data.Function ((&))
 import Data.List.NonEmpty (NonEmpty((:|)), nonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe (fromMaybe)
+import Control.Monad.State (MonadState (state, put), gets, StateT (runStateT))
+import Control.Monad (guard)
+import Data.Functor ((<&>))
 import Data.Bifunctor (Bifunctor(first))
 
+data Radix = RadixBin | RadixOct | RadixDec | RadixHex
+  deriving (Eq, Show)
+data NumberContents = NumberContents
+  { numIsPos :: Bool
+  , numRadix :: Radix
+  , numIntegral :: [Int]
+  , numFractional :: Maybe [Int]
+  , numExponent :: Maybe Int
+  } deriving (Eq, Show)
 data TokenKind
   = InlineWhitespace | EOL
   | LetterIdentifier | SymbolIdentifier
-  | NumberLiteral | StringLiteral String
+  | StringLiteral String
+  | NumberLiteral NumberContents
   deriving (Eq, Show)
 data Token = Token
   { kind :: TokenKind
@@ -38,24 +52,27 @@ isSymbol :: Char -> Bool
 isSymbol ch = not $ isDigit ch || isAlphaNum ch || isSpace ch || shouldTokenizeAlone ch
 
 readToken :: NonEmpty Char -> (Token, String)
-readToken str@(ch:|rest)
-  | isDigit ch    = matchSpan NumberLiteral isDigit str
-  | isAlphaNum ch = matchSpan LetterIdentifier isAlphaNum str
-  | '\n' == ch    = (Token {
-    kind = EOL,
-    content = pure ch
-  }, rest)
-  | isSpace ch    = matchSpan InlineWhitespace isInlineWhitespaceCh str
-  | '"' == ch     = matchStringLiteral rest & first (\parsed -> Token {
-    kind = StringLiteral parsed,
-    content = parsed -- FIXME: this should contain the source of the string
-  })
-  | shouldTokenizeAlone ch = (Token {
-    kind = SymbolIdentifier,
-    content = pure ch
-  }, rest)
-  | otherwise     = matchSpan SymbolIdentifier isSymbol str
+readToken str@(ch:|rest) = fromMaybe tokenMatch numberMatch
   where
+    numberMatch = runStateT matchNumberLiteral (Z.start (ch:rest)) <&> \(numKind, Z.Zipper consumed zr) ->
+      (Token { kind = numKind, content = reverse consumed }, zr)
+    tokenMatch :: (Token, String)
+    tokenMatch
+      | isAlphaNum ch = matchSpan LetterIdentifier isAlphaNum str
+      | '\n' == ch    = (Token {
+        kind = EOL,
+        content = pure ch
+      }, rest)
+      | isSpace ch    = matchSpan InlineWhitespace isInlineWhitespaceCh str
+      | '"' == ch     = matchStringLiteral rest & first (\parsed -> Token {
+        kind = StringLiteral parsed,
+        content = parsed -- FIXME: this should contain the source of the string
+      })
+      | shouldTokenizeAlone ch = (Token {
+        kind = SymbolIdentifier,
+        content = pure ch
+      }, rest)
+      | otherwise     = matchSpan SymbolIdentifier isSymbol str
     isInlineWhitespaceCh :: Char -> Bool
     isInlineWhitespaceCh '\n' = False
     isInlineWhitespaceCh ch = isSpace ch
@@ -87,3 +104,39 @@ matchEscape 'a' = Just '\a'
 matchEscape 'b' = Just '\b'
 matchEscape 'v' = Just '\v'
 matchEscape _   = Nothing
+
+data ExplicitSign = Pos | Neg | NoMatch deriving (Eq, Show)
+type NumLitState = StateT (Z.Zipper Char) Maybe
+matchNumberLiteral :: NumLitState TokenKind
+matchNumberLiteral = do
+  explicitSign <- state $ \z -> case Z.right z of
+    Just ('+', zr) -> (Pos, zr)
+    Just ('-', zr) -> (Neg, zr)
+    _ -> (NoMatch, z)
+  pointingAtDigit <- gets $ \z -> case Z.peek z of
+    Just ch -> isDigit ch
+    _ -> False
+  guard pointingAtDigit
+  (radix, isRadixDigit) <- state $ \case
+    (Z.Zipper bt ('0':'b':ft)) -> ((RadixBin, isBinDigit), Z.Zipper ('b':'0':bt) ft)
+    (Z.Zipper bt ('0':'o':ft)) -> ((RadixOct, isOctDigit), Z.Zipper ('o':'0':bt) ft)
+    (Z.Zipper bt ('0':'x':ft)) -> ((RadixHex, isHexDigit), Z.Zipper ('x':'0':bt) ft)
+    z -> ((RadixDec, isDigit), z)
+  integral <- state $ Z.matchCond isRadixDigit
+  fractionals <- peekThen (== '.') $ state $ Z.matchCond isRadixDigit
+  exponents <- if radix /= RadixHex
+    then peekThen (\ch -> ch == 'e' || ch == 'E') $ state $ Z.matchCond isDigit
+    else pure Nothing
+  pure . NumberLiteral $ NumberContents {
+    numIsPos = explicitSign /= Neg,
+    numRadix = radix,
+    numIntegral = digitToInt <$> integral,
+    numFractional = fmap digitToInt <$> fractionals,
+    numExponent = read <$> exponents
+  }
+  where
+    isBinDigit ch = ch == '0' || ch == '1'
+    peekThen :: (Char -> Bool) -> NumLitState a -> NumLitState (Maybe a)
+    peekThen p run = gets Z.right >>= \case
+      (Just (ch, zr)) | p ch -> put zr >> Just <$> run
+      _ -> pure Nothing
