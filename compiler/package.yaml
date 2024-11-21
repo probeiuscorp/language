@@ -23,6 +23,7 @@ dependencies:
 - hspec
 - hspec-contrib
 - hspec-golden
+- pretty-simple
 - QuickCheck
 - HUnit
 
