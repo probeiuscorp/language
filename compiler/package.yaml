@@ -24,6 +24,7 @@ dependencies:
 - hspec-contrib
 - hspec-golden
 - pretty-simple
+- text
 - QuickCheck
 - HUnit
 
