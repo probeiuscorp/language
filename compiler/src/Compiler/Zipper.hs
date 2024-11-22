@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveFunctor #-}
 
-module Compiler.Zipper (Zipper(..), todo, done, start, restart, rewind, cat, peek, peekl, left, right, eat, eatOne, Compiler.Zipper.drop, isDone, match, matchCond, filterMaybe) where
+module Compiler.Zipper (Zipper(..), todo, done, start, restart, rewind, cat, peek, peekl, left, right, eat, eatOne, eatIf, Compiler.Zipper.drop, isDone, match, matchCond, filterMaybe) where
 import Data.Bifunctor (Bifunctor(first))
 
 data Zipper a = Zipper [a] [a] deriving (Eq, Show, Functor)
@@ -47,6 +47,11 @@ eat :: (a -> Bool) -> Zipper a -> Zipper a
 eat predicate z = maybe z (\(x, zr) -> if predicate x
   then eat predicate zr
   else z) $ right z
+
+eatIf :: (a -> Bool) -> Zipper a -> (Bool, Zipper a)
+eatIf p z = case right z of
+  Just (x, zr) | p x -> (True, zr)
+  _ -> (False, z)
 
 drop :: (a -> Bool) -> Zipper a -> Zipper a
 drop predicate z@(Zipper bt (x:ft)) = if predicate x
