@@ -6,7 +6,7 @@ import qualified Compiler.AST as AST
 import qualified Compiler.Zipper as Z
 import Compiler.Tokenize (tokenize)
 import Compiler.Linearize (linearize)
-import Compiler.SnapshotTesting (snapshot)
+import Compiler.SnapshotTesting (snapshot, prettyShow)
 import Control.Monad.State (evalState)
 
 prettyPrintTerm :: String -> AST.Term -> String
@@ -47,14 +47,18 @@ spec = describe "Compiler.Parse" $ do
     it "should continue if closing parenthesis" $ do
       let source = "pair = a. (\n\ta,\n\ta)\n"
       testDeclarations source `shouldBe` [source]
+  let prettyParseDeclaration = prettyShow . evalState parseDeclaration . Z.start . tokenize
   describe "parseImportDeclaration" $ do
-    let prettyParseImport = show . evalState parseDeclaration . Z.start . tokenize
-    let test = snapshot "parse/parseImport/" prettyParseImport
+    let test = snapshot "parse/parseImport/" prettyParseDeclaration
     test "import all" "import react/hooks"
     test "import only" "import react/hooks {}"
     test "import only list" "import react/hooks { useState, useEffect }"
     test "import hiding list" "import react/hooks hiding { useState, useEffect }"
     test "import as" "import react/hooks as ReactHooks"
+  describe "binding declarations" $ do
+    let test = snapshot "parse/declaration binding/" prettyParseDeclaration
+    test "simple" "true = x y. x"
+    test "exported" "export main = pure ()"
   let source = Z.start . linearize . Z.start . tokenize
   describe "parseDestructuring" $ do
     let prettyParseDestructuring = show . evalState parseDestructuring . source

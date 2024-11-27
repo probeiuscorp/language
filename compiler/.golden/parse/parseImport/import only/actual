@@ -1,3 +1,6 @@
 import react/hooks {}
 ───
-ImportDeclaration "react/hooks" (ImportOnly (DestructRecord []))
+ImportDeclaration "react/hooks"
+  ( ImportOnly
+    ( DestructRecord [] )
+  )

@@ -1,0 +1,16 @@
+true = x y. x
+───
+ValueDeclaration
+  ( DeclarationModule
+    { identifier = "true"
+    , isExported = False
+    }
+  )
+  ( Just
+    ( TermFunction
+      [ DestructBind "x"
+      , DestructBind "y"
+      ]
+      ( TermIdentifier "x" )
+    )
+  ) Nothing

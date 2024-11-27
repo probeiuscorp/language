@@ -7,7 +7,7 @@ import Data.Char (isSpace)
 import Compiler.Linearize (Linear, GLinearized (..), linearize)
 import Compiler.ParseInfix (parseInfix)
 import Control.Monad (guard, msum, MonadPlus (mzero))
-import Control.Monad.State (State, MonadState (state, get, put), gets, evalState, modify, runState, StateT (StateT, runStateT), execState)
+import Control.Monad.State (State, MonadState (state, get, put), gets, evalState, modify, runState, StateT (StateT, runStateT), execState, evalStateT)
 import Data.Functor ((<&>), ($>))
 import Data.Maybe (fromMaybe)
 import qualified Data.List.NonEmpty as NE
@@ -39,23 +39,38 @@ doesDeclarationContinue ch  = isInlineWhitespace ch
 
 parseDeclaration :: State Tokens AST.TopLevelDeclaration
 parseDeclaration = do
-  token <- right
-  eatWhitespaceTokens
-  z <- get
-  case content <$> Z.peek z of
-    Just "=" -> do
-      term <- gets $ parseTerm . Z.start . linearize
-      pure $ AST.ValueDeclaration (AST.DeclarationModule {
-        AST.identifier = content token,
-        AST.isExported = False
-      }) (Just term) Nothing
-    _ -> case content token of
-      "type" -> undefined
-      "export" -> undefined
-      "import" -> parseImportDeclaration
-      _ -> undefined
+  maybeBinding <- gets . evalStateT $ parseBindingDeclaration
+  specialDeclaration <- parseSpecialDeclaration
+  pure $ fromMaybe specialDeclaration maybeBinding
+  where
+    parseSpecialDeclaration = do
+      token <- right
+      eatWhitespaceTokens
+      case content token of
+        "export" -> undefined
+        "import" -> parseImportDeclaration
+        _ -> undefined
+
+is :: String -> Token -> Bool
+is str = (== str) . content
+parseBindingDeclaration :: StateT Tokens Maybe AST.TopLevelDeclaration
+parseBindingDeclaration = do
+  liftState eatWhitespaceTokens
+  isExported <- state $ Z.eatIf $ is "export"
+  liftState eatWhitespaceTokens
+  identifier <- catTokens <$> state (Z.match . filterMaybe $ not . isWhitespace)
+  liftState eatWhitespaceTokens
+  isBinding <- state $ Z.eatIf $ is "="
+  guard isBinding
+  term <- gets $ parseTerm . Z.start . linearize
+  pure $ AST.ValueDeclaration (AST.DeclarationModule
+    { AST.identifier = identifier
+    , AST.isExported = isExported
+    }) (Just term) Nothing
 
 type ParseAttempt = StateT Tokens Maybe AST.ImportListing
+liftState :: State s a -> StateT s Maybe a
+liftState f = StateT $ pure . runState f
 parseImportDeclaration :: State Tokens AST.TopLevelDeclaration
 parseImportDeclaration = do
   eatWhitespaceTokens
@@ -90,8 +105,6 @@ parseImportDeclaration = do
       z <- get
       guard $ Z.isDone z
       pure AST.ImportAll
-    liftState :: State s a -> StateT s Maybe a
-    liftState f = StateT $ pure . runState f
 
 eatWhitespaceTokens :: State Tokens ()
 eatWhitespaceTokens = modify $ Z.eat isWhitespace
@@ -201,7 +214,7 @@ parseNominal = do
 splitClauses :: String -> Linear -> NE.NonEmpty Linear
 splitClauses sep = go
   where
-    go z = let (mrest, segment) = breakWhen ((== sep) . content) z in
+    go z = let (mrest, segment) = breakWhen (is sep) z in
       case mrest of
         Just rest -> segment NE.<| go rest
         Nothing -> pure segment
@@ -209,7 +222,7 @@ splitRecordClauses :: String -> Linear -> [(Linear, Maybe Linear)]
 splitRecordClauses sep z0 = NE.toList (splitClauses "," z0) >>= parseClause
   where
     parseClause :: Linear -> [(Linear, Maybe Linear)]
-    parseClause clause = case breakWhen ((== sep) . content) clause of
+    parseClause clause = case breakWhen (is sep) clause of
       (Just rhs, lhs) -> pure (execState eatWhitespace lhs, Just $ execState eatWhitespace rhs)
       (Nothing, lhs) -> let lhs' = execState eatWhitespace lhs in
         guard (not $ Z.isDone lhs') $> (lhs', Nothing)

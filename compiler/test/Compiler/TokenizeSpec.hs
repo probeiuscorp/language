@@ -2,17 +2,12 @@ module Compiler.TokenizeSpec (spec) where
 
 import Test.Hspec
 import Compiler.Tokenize
-import Compiler.SnapshotTesting (snapshotData)
+import Compiler.SnapshotTesting (snapshotData, prettyShow)
 import Data.List (intercalate)
-import Data.Text.Lazy (unpack)
-import Text.Pretty.Simple (OutputOptions (outputOptionsIndentAmount), defaultOutputOptionsNoColor, pShowOpt)
 import Control.Monad (forM_)
 
-options :: OutputOptions
-options = defaultOutputOptionsNoColor
-  { outputOptionsIndentAmount = 2 }
 prettyShowToken :: Token -> String
-prettyShowToken token@(Token { kind = NumberLiteral _ }) = unpack $ pShowOpt options token
+prettyShowToken token@(Token { kind = NumberLiteral _ }) = prettyShow token
 prettyShowToken token = show token
 
 spec :: SpecWith ()

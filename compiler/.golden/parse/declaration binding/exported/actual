@@ -1,0 +1,14 @@
+export main = pure ()
+───
+ValueDeclaration
+  ( DeclarationModule
+    { identifier = "main"
+    , isExported = True
+    }
+  )
+  ( Just
+    ( TermApplication
+      ( TermIdentifier "pure" )
+      ( TermTuple [] )
+    )
+  ) Nothing
