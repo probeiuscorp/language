@@ -1,3 +1,3 @@
 (this, that, there)
 ───
-TermTuple [TermIdentifier "this",TermIdentifier "that",TermIdentifier "there"]
+TermTuple [Just (TermIdentifier "this"),Just (TermIdentifier "that"),Just (TermIdentifier "there")]

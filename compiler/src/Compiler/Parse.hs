@@ -11,7 +11,7 @@ import Control.Monad.State (State, MonadState (state, get, put), gets, evalState
 import Data.Functor ((<&>), ($>))
 import Data.Maybe (fromMaybe)
 import qualified Data.List.NonEmpty as NE
-import Data.Bifunctor (Bifunctor(first, bimap))
+import Data.Bifunctor (Bifunctor(first, bimap, second))
 import Compiler.Zipper (filterMaybe)
 
 type Tokens = Z.Zipper Token
@@ -156,7 +156,7 @@ parseOneTerm z = Z.right z >>= \(lin, zr) -> let ok term = Just (term, zr) in ca
   (LinToken t) | content t == "match" -> Just $ runState parseMatch zr
   (LinToken t) | kind t == LetterIdentifier || kind t == SymbolIdentifier -> ok $ AST.TermIdentifier $ content t
   (LinParens l) -> ok $ parseParens $ Z.start l
-  (LinBrackets l) -> ok $ AST.TermList $ either pure id $ parseCommaSeparated $ Z.start l
+  (LinBrackets l) -> ok $ AST.TermList $ either (pure . Just) id $ parseCommaSeparated $ Z.start l
   (LinBraces l) -> ok $ parseRecordLiteral $ Z.start l
   (LinFunction lparams lbody) ->
     ok $ AST.TermFunction (evalState (exhaustively parseDestructuring) $ Z.start lparams) (parseTerm $ Z.start lbody)
@@ -170,18 +170,19 @@ breakWhen p z0 = go z0
       LinToken t | p t -> (Just $ Z.restart zr, Z.start . reverse $ Z.done z)
       _ -> go zr) $ Z.right z
 
-data ParenParseState = ExpectTuple [AST.Term] | ExpectGroup
-parseCommaSeparated :: Linear -> Either AST.Term [AST.Term]
+data ParenParseState = ExpectTuple [Maybe AST.Term] | ExpectGroup
+parseCommaSeparated :: Linear -> Either AST.Term [Maybe AST.Term]
 parseCommaSeparated = go ExpectGroup
   where
+    go :: ParenParseState -> Linear -> Either AST.Term [Maybe AST.Term]
     go s z = case (s, zr) of
-      (ExpectGroup, Nothing) -> Left term
+      (ExpectGroup, Nothing) -> maybe (Right []) Left term
       (ExpectGroup, Just xs) -> go (ExpectTuple $ pure term) xs
       (ExpectTuple terms, Nothing) -> Right . reverse $ term : terms
       (ExpectTuple terms, Just xs) -> go (ExpectTuple $ term : terms) xs
       where
-        (zr, z') = breakWhen ((== ",") . content) z
-        term = parseTerm z'
+        (zr, z') = second (execState eatWhitespace) $ breakWhen (is ",") z
+        term = if Z.isDone z' then Nothing else Just $ parseTerm z'
 parseParens = either id AST.TermTuple . parseCommaSeparated
 
 parseDestructuring :: ParseState AST.Destructuring

@@ -1,0 +1,3 @@
+(this, , there)
+───
+TermTuple [Just (TermIdentifier "this"),Nothing,Just (TermIdentifier "there")]

@@ -14,8 +14,8 @@ data Term
   | TermApplication Term Term
   | TermIdentifier ValidIdentifier
   | TermRecord [(String, Maybe Term)]
-  | TermTuple [Term]
-  | TermList [Term]
+  | TermTuple [Maybe Term]
+  | TermList [Maybe Term]
   | TermMatch [([Destructuring], Term)]
   deriving (Eq, Show)
 data TypeExpression = TypeExpression deriving (Eq, Show)
