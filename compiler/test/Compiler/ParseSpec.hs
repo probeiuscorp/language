@@ -53,6 +53,7 @@ spec = describe "Compiler.Parse" $ do
     test "import all" "import react/hooks"
     test "import only" "import react/hooks {}"
     test "import only list" "import react/hooks { useState, useEffect }"
+    test "import only list trailing whitespace" "import react/hooks { useState, useEffect }\n"
     test "import hiding list" "import react/hooks hiding { useState, useEffect }"
     test "import as" "import react/hooks as ReactHooks"
   describe "binding declarations" $ do

@@ -90,7 +90,7 @@ parseImportDeclaration = do
     parseImportList = do
       z <- get
       case linearize z of
-        [LinBraces l] -> pure $ parseRecordDestructure $ Z.start l
+        (LinBraces l:xs) -> guard (onlyWhitespaceLeft $ Z.start xs) $> parseRecordDestructure (Z.start l)
         _ -> mzero
     matchOnly :: ParseAttempt
     matchOnly = AST.ImportOnly <$> parseImportList
@@ -120,6 +120,8 @@ eatWhitespace = state $ go False
     go hadWhitespace z = fromMaybe (hadWhitespace, z) $ Z.right z >>= \(l, zr) -> case l of
       (LinToken t) | isWhitespace t -> Just $ go True zr
       _ -> Nothing
+onlyWhitespaceLeft :: Linear -> Bool
+onlyWhitespaceLeft = Z.isDone . execState eatWhitespace
 
 only :: ParseState a -> ParseState a
 only match = do
@@ -242,7 +244,7 @@ parseMatchClauses :: Linear -> AST.Term
 parseMatchClauses z0 = AST.TermMatch $ go firstClause otherClauses
   where
     go :: Linear -> [Linear] -> [([AST.Destructuring], AST.Term)]
-    go lhs [] | Z.isDone $ execState eatWhitespace lhs = []
+    go lhs [] | onlyWhitespaceLeft lhs = []
     go _ [] = error "incomplete match clause"
     go lhs (clause:clauses) = (evalState (exhaustively parseDestructuring) lhs, term) : go nextLHS clauses
       where
