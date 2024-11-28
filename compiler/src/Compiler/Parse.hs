@@ -170,6 +170,7 @@ parseOneTerm z = Z.right z >>= \(lin, zr) -> let ok term = Just (term, zr) in ca
   (LinToken t) | isWhitespace t -> parseOneTerm zr
   (LinToken t) | content t == "match" -> Just $ runState parseMatch zr
   (LinToken t) | kind t == LetterIdentifier || kind t == SymbolIdentifier -> ok $ AST.TermIdentifier $ content t
+  (LinToken (Token { kind = NumberLiteral numContents })) -> ok $ AST.TermNumberLiteral numContents
   (LinParens l) -> ok $ parseParens $ Z.start l
   (LinBrackets l) -> ok $ AST.TermList $ either (pure . Just) id $ parseCommaSeparated $ Z.start l
   (LinBraces l) -> ok $ parseRecordLiteral $ Z.start l

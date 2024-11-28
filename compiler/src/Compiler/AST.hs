@@ -1,4 +1,5 @@
 module Compiler.AST where
+import Compiler.Tokenize (NumberContents)
 
 type ValidIdentifier = String
 
@@ -13,6 +14,7 @@ data Term
   = TermFunction [Destructuring] Term
   | TermApplication Term Term
   | TermIdentifier ValidIdentifier
+  | TermNumberLiteral NumberContents
   | TermRecord [(String, Maybe Term)]
   | TermTuple [Maybe Term]
   | TermList [Maybe Term]
