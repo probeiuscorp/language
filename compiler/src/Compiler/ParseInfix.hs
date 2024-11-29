@@ -64,6 +64,9 @@ collapseStack op stack = uncurry Operand $ collapseWhile stack []
     fold term ((t, op):xs) = case opAssociativity op of
       AST.LeftAssociative -> fold (append op term t) xs
       AST.RightAssociative -> append op term (fold t xs)
+      AST.NonAssociative -> case xs of
+        [] -> append op term t
+        _ -> error "cannot mix non-associative infix operators"
     collapseWhile :: Operand -> Terms -> (AST.Term, Operator)
     collapseWhile (Operand term n@(Operator nextOp xs)) terms = if
       -- Keep collapsing
@@ -99,4 +102,5 @@ opAssociativity (OpFn "$") = AST.RightAssociative
 opAssociativity (OpFn "-") = AST.LeftAssociative
 opAssociativity (OpFn "*") = AST.LeftAssociative
 opAssociativity (OpFn "/") = AST.LeftAssociative
+opAssociativity (OpFn "\\") = AST.NonAssociative
 opAssociativity _ = AST.RightAssociative

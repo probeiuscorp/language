@@ -22,4 +22,5 @@ spec = describe "parseInfix" $ do
   test "mixed 2" "d0 - d1 - d2 * a * b $ x y z"
   test "mixed 3" "d * a $ b b0 b1 $ c $ d x y z - e - f $ g"
   test "single term" "a"
-
+  test "non associative alone" "a \\ b"
+  test "non associative complex" "a $ b c \\ d $ e"

@@ -40,7 +40,7 @@ data DeclarationModule = DeclarationModule
   { identifier :: ValidIdentifier
   , isExported :: Bool
   } deriving (Eq, Show)
-data Associativity = LeftAssociative | RightAssociative deriving (Eq, Show)
+data Associativity = NonAssociative | LeftAssociative | RightAssociative deriving (Eq, Show)
 data TopLevelDeclaration
   = ImportDeclaration String ImportListing
   | ExportDeclaration [(ValidIdentifier, Term)]

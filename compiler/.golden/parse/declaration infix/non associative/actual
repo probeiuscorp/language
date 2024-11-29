@@ -1,0 +1,3 @@
+infix 1 \
+───
+InfixDeclaration "\" 1.0 NonAssociative

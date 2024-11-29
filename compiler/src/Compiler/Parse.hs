@@ -108,7 +108,7 @@ parseImportDeclaration = do
 
 parseInfixDeclaration :: StateT Tokens Maybe AST.TopLevelDeclaration
 parseInfixDeclaration = do
-  associativity <- msum [ifIs "infixl" AST.LeftAssociative, ifIs "infixr" AST.RightAssociative]
+  associativity <- msum [ifIs "infixl" AST.LeftAssociative, ifIs "infixr" AST.RightAssociative, ifIs "infix" AST.NonAssociative]
   liftState eatWhitespaceTokens
   Token { kind = NumberLiteral numContents } <- liftState right
   liftState eatWhitespaceTokens
