@@ -39,7 +39,7 @@ doesDeclarationContinue ch  = isInlineWhitespace ch
 
 parseDeclaration :: State Tokens AST.TopLevelDeclaration
 parseDeclaration = do
-  maybeBinding <- gets . evalStateT $ parseBindingDeclaration
+  maybeBinding <- gets . evalStateT $ msum [parseBindingDeclaration, parseInfixDeclaration]
   specialDeclaration <- parseSpecialDeclaration
   pure $ fromMaybe specialDeclaration maybeBinding
   where
@@ -105,6 +105,31 @@ parseImportDeclaration = do
       z <- get
       guard $ Z.isDone z
       pure AST.ImportAll
+
+parseInfixDeclaration :: StateT Tokens Maybe AST.TopLevelDeclaration
+parseInfixDeclaration = do
+  associativity <- msum [ifIs "infixl" AST.LeftAssociative, ifIs "infixr" AST.RightAssociative]
+  liftState eatWhitespaceTokens
+  Token { kind = NumberLiteral numContents } <- liftState right
+  liftState eatWhitespaceTokens
+  identifier <- content <$> liftState right
+  pure $ AST.InfixDeclaration identifier (parsePrecedence numContents) associativity
+  where
+    ifIs :: String -> a -> StateT Tokens Maybe a
+    ifIs keyword value = (guard =<< state (Z.eatIf $ is keyword)) $> value
+    parsePrecedence :: NumberContents -> Double
+    parsePrecedence (NumberContents { numRadix = radix, numIntegral = integral, numFractional = fractional }) =
+      fromIntegral (parseIntegral (baseOfRadix radix) integral) + maybe 0 (snd . foldl (\(pos, acc) n -> if n >= 2
+        then error "infix precendence fractionals must be binary"
+        else (pos + 1, acc + (fromIntegral n / (2 ** pos)))
+        ) (1, 0)) fractional
+    parseIntegral :: Int -> [Int] -> Int
+    parseIntegral base = foldl (\acc n -> acc * base + n) 0
+    baseOfRadix :: Radix -> Int
+    baseOfRadix RadixBin = 2
+    baseOfRadix RadixOct = 8
+    baseOfRadix RadixDec = 10
+    baseOfRadix RadixHex = 16
 
 eatWhitespaceTokens :: State Tokens ()
 eatWhitespaceTokens = modify $ Z.eat isWhitespace

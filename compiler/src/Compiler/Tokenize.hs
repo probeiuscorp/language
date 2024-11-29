@@ -1,4 +1,4 @@
-module Compiler.Tokenize (tokenize, Token(Token), TokenKind(..), NumberContents(..), content, kind, isWhitespace, catTokens) where
+module Compiler.Tokenize (tokenize, Token(Token), TokenKind(..), NumberContents(..), Radix(..), content, kind, isWhitespace, catTokens) where
 import qualified Compiler.Zipper as Z
 import Data.Char (isDigit, isAlphaNum, isSpace, digitToInt, isHexDigit, isOctDigit)
 import Data.Function ((&))

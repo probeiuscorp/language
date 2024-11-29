@@ -1,0 +1,3 @@
+infixr 0x20 |
+───
+InfixDeclaration "|" 32.0 RightAssociative

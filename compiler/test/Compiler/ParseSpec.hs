@@ -61,6 +61,12 @@ spec = describe "Compiler.Parse" $ do
     test "simple" "true = x y. x"
     test "exported" "export main = pure ()"
   let source = Z.start . linearize . Z.start . tokenize
+  describe "infix declarations" $ do
+    let test = snapshot "parse/declaration infix/" prettyParseDeclaration
+    test "left associative" "infixl 1 $$"
+    test "right associative" "infixr 1 $$"
+    test "fractional precedence" "infixr 2.110 |"
+    test "complex precedence" "infixr 0x20 |"
   describe "parseDestructuring" $ do
     let prettyParseDestructuring = show . evalState parseDestructuring . source
     let test = snapshot "parse/parseDestructuring/" prettyParseDestructuring
