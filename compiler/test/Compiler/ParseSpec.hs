@@ -78,6 +78,8 @@ spec = describe "Compiler.Parse" $ do
     test "record" "{ x, y, z }"
     test "record rebind" "{ x as playerX, y as playerY }"
     test "record destructure" "{ start as { x as x0, y as y0 }, end as { x as x1, y as y1 } }"
+    test "as pattern" "list@(Cons x xs)"
+    test "as pattern record" "{ pos as pos@{ x, y } }"
   describe "parseTerm" $ do
     let prettyParseTerm = prettyPrintTerm "" . parseTerm . source
     let test = snapshot "parse/parseTerm/" prettyParseTerm

@@ -1,0 +1,3 @@
+{ pos as pos@{ x, y } }
+───
+DestructRecord [("pos",Just (DestructAs "pos" (DestructRecord [("x",Nothing),("y",Nothing)])))]

@@ -228,7 +228,13 @@ parseParens = either id AST.TermTuple . parseCommaSeparated
 
 parseDestructuring :: ParseState AST.Destructuring
 parseDestructuring = eatWhitespace >> right >>= \case
-  (LinToken t) | kind t == LetterIdentifier -> pure . AST.DestructBind $ content t
+  (LinToken t) | kind t == LetterIdentifier -> do
+    isAsPattern <- state $ Z.eatIf $ \case
+      LinToken (Token { content = "@" }) -> True
+      _ -> False
+    if isAsPattern
+      then AST.DestructAs (content t) <$> parseDestructuring
+      else pure . AST.DestructBind $ content t
   (LinParens l) -> pure . evalState parseNominal $ Z.start l
   (LinBraces l) -> pure $ parseRecordDestructure $ Z.start l
   _ -> unexpected
