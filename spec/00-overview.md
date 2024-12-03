@@ -2,6 +2,21 @@
 
 ## Nominal data
 
+Nominal types can be created using `data` declarations.
+```
+data ANominal
+```
+
+Nominal types can have a body, in which case unknown capitalized identifiers are
+created as new nominal types. The left hand identifier will no longer be created
+as a nominal type but rather as a regular type, but marked so that a typeclass
+can be defined on it.
+```
+data Maybe = a. Some a + None
+```
+
+If a data declaration is exported, so are all the created nominal types.
+
 ## Records
 
 ## Typeclasses
@@ -29,7 +44,7 @@ class Monoid a
 Only nominal types may be instances of typeclasses. Each nominal type may only
 have one instance of each typeclass.
 ```
-type Maybe = a. Some a + None
+data Maybe = a. Some a + None
 instance Functor Maybe
     fmap = f. match {
         Some a = Some $ f a
