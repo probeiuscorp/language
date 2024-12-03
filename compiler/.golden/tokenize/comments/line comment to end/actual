@@ -1,0 +1,5 @@
+"a // fix me"
+───
+Token {kind = LetterIdentifier, content = "a"}
+Token {kind = InlineWhitespace, content = " "}
+Token {kind = Comment LineComment, content = "// fix me"}

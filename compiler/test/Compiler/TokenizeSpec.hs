@@ -34,3 +34,7 @@ spec = describe "Compiler.Tokenize" $ do
     test "fractional decimal" "10.25"
     test "fractional hex" "0xFF.8"
     test "among others" "y = x. 0.5 * x + 12"
+  describe "comments" $ do
+    let test = mkTest "tokenize/comments/"
+    test "line comment to end" "a // fix me"
+    test "line comment with next line" "a // fix me\ndifferent line"

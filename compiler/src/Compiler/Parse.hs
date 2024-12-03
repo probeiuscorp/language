@@ -132,18 +132,20 @@ parseInfixDeclaration = do
     baseOfRadix RadixHex = 16
 
 eatWhitespaceTokens :: State Tokens ()
-eatWhitespaceTokens = modify $ Z.eat isWhitespace
+eatWhitespaceTokens = modify $ Z.eat shouldConsume
 
 type ParseState = State Linear
 
 right :: State (Z.Zipper a) a
 right = state $ fromMaybe (error "Unexpected end of input") . Z.right
 
+shouldConsume Token { kind = Comment _ } = True
+shouldConsume token = isWhitespace token
 eatWhitespace :: ParseState Bool
 eatWhitespace = state $ go False
   where
     go hadWhitespace z = fromMaybe (hadWhitespace, z) $ Z.right z >>= \(l, zr) -> case l of
-      (LinToken t) | isWhitespace t -> Just $ go True zr
+      (LinToken t) | shouldConsume t -> Just $ go True zr
       _ -> Nothing
 onlyWhitespaceLeft :: Linear -> Bool
 onlyWhitespaceLeft = Z.isDone . execState eatWhitespace

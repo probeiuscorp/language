@@ -19,11 +19,13 @@ data NumberContents = NumberContents
   , numFractional :: Maybe [Int]
   , numExponent :: Maybe Int
   } deriving (Eq, Show)
+data CommentKind = LineComment | InlineComment deriving (Eq, Show)
 data TokenKind
   = InlineWhitespace | EOL
   | LetterIdentifier | SymbolIdentifier
   | StringLiteral String
   | NumberLiteral NumberContents
+  | Comment CommentKind
   deriving (Eq, Show)
 data Token = Token
   { kind :: TokenKind
@@ -37,10 +39,7 @@ catTokens :: [Token] -> String
 catTokens = foldr ((++) . content) mempty
 
 matchSpan :: TokenKind -> (Char -> Bool) -> NonEmpty Char -> (Token, String)
-matchSpan kind isMatch str = NE.span isMatch str & first (\content -> Token {
-  kind = kind,
-  content = content
-})
+matchSpan matchKind isMatch str = first (Token matchKind) $ NE.span isMatch str
 
 shouldTokenizeAlone :: Char -> Bool
 shouldTokenizeAlone ch =
@@ -72,7 +71,10 @@ readToken str@(ch:|rest) = fromMaybe tokenMatch numberMatch
         kind = SymbolIdentifier,
         content = pure ch
       }, rest)
-      | otherwise     = matchSpan SymbolIdentifier isSymbol str
+      | otherwise = if content token == "//"
+        then first (Token (Comment LineComment) . ("//" ++)) $ span (/= '\n') after
+        else match
+        where match@(token, after) = matchSpan SymbolIdentifier isSymbol str
     isInlineWhitespaceCh :: Char -> Bool
     isInlineWhitespaceCh '\n' = False
     isInlineWhitespaceCh ch = isSpace ch
