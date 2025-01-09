@@ -34,12 +34,25 @@ packages:
 # Dependency packages to be pulled from upstream that are not in the resolver.
 # These entries can reference officially published versions as well as
 # forks / in-progress versions pinned to a git hash. For example:
-#
-# extra-deps:
-# - acme-missiles-0.3
-# - git: https://github.com/commercialhaskell/stack.git
-#   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a
-#
+
+extra-deps:
+# For llvm-hs
+- git: https://github.com/llvm-hs/llvm-hs
+  commit: 5bca2c1a2a3aa98ecfb19181e7a5ebbf3e212b76
+  subdirs:
+    - llvm-hs
+    - llvm-hs-pure
+- transformers-0.5.6.2@sha256:6c959d14430f4deffb99579ba019de07c3d852a2122b6f449344386c7d75ff1d,3172
+- directory-1.3.8.5@sha256:fbeec9ec346e5272167f63dcb86af513b457a7b9fc36dc818e4c7b81608d612b,3166
+- exceptions-0.10.8@sha256:c31fd9b35d36196cbb14ffa5fca4de49868fd39acfeddd601fb77e742554aa67,2892
+- mtl-2.3.1@sha256:5377696d7315e2ef31a8d15d67b22d733c20cac2caf8b26756ff8524c8217e6d,1868
+- process-1.6.20.0@sha256:2a9393de33f18415fb8f4826957a87a94ffe8840ca8472a9b69dca6de45aca03,2790
+- Cabal-3.10.3.0@sha256:4a36954a66769eef90353daa0dbb07d43e49c228281383c7e4134445d495f714,12313
+- Cabal-syntax-3.10.3.0@sha256:c2ca36499bf9365726968b1e11a757e6d846c47cdf0c2c26a003698fd3c300fe,7431
+- filepath-1.4.300.2@sha256:345cbb1afe414a09e47737e4d14cbd51891a734e67c0ef3d77a1439518bb81e8,5900
+- parsec-3.1.17.0@sha256:8407cbd428d7f640a0fff8891bd2f7aca13cebe70a5e654856f8abec9a648b56,5149
+- unix-2.8.5.1@sha256:3f702a252a313a7bcb56e3908a14e7f9f1b40e41b7bdc8ae8a9605a1a8686f06,9808
+
 # extra-deps: []
 
 # Override default flag values for local packages and extra-deps

@@ -27,6 +27,8 @@ dependencies:
 - text
 - QuickCheck
 - HUnit
+- llvm-hs
+- llvm-hs-pure
 
 default-extensions:
 - LambdaCase
