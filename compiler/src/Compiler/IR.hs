@@ -17,12 +17,17 @@ import qualified Data.Set as Set
 import Data.Foldable (Foldable(toList))
 import GHC.Num (integerFromInt)
 import Data.String (IsString(fromString))
+import Control.Monad.Reader (Reader, MonadReader (ask, local), runReader)
 
 type VarSet = Set.Set AST.ValidIdentifier
-collectFreeVariables :: AST.Term -> VarSet
-collectFreeVariables (AST.TermIdentifier ident) = Set.singleton ident
-collectFreeVariables (AST.TermFunction destructs body) = collectFreeVariables body Set.\\ foldMap collectBindings destructs
-collectFreeVariables (AST.TermApplication lhs rhs) = collectFreeVariables lhs `mappend` collectFreeVariables rhs
+collectFreeVariables :: AST.Term -> Reader VarSet VarSet
+collectFreeVariables (AST.TermIdentifier ident) = do
+  boundVars <- ask
+  pure $ if Set.member ident boundVars
+    then mempty
+    else Set.singleton ident
+collectFreeVariables (AST.TermFunction destructs body) = local (mappend $ foldMap collectBindings destructs) $ collectFreeVariables body
+collectFreeVariables (AST.TermApplication lhs rhs) = liftA2 mappend (collectFreeVariables lhs) (collectFreeVariables rhs)
 collectFreeVariables _ = mempty
 collectBindings :: AST.Destructuring -> VarSet
 collectBindings (AST.DestructBind ident) = Set.singleton ident
@@ -46,7 +51,7 @@ emitTerm (AST.TermApplication termTarget termArgument) = do
   target <- emitTerm termTarget
   argument <- emitTerm termArgument
   functionCall target argument
-emitTerm fn@(AST.TermFunction destructs body) = functionExpression destructs (collectFreeVariables fn) body
+emitTerm fn@(AST.TermFunction destructs body) = functionExpression destructs (runReader mempty $ collectFreeVariables fn) body
 emitTerm _ = undefined
 
 mallocType = Type.FunctionType Type.ptr [Type.i64] False
