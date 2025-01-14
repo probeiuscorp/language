@@ -1,4 +1,9 @@
-module Compiler.Tokenize (tokenize, Token(Token), TokenKind(..), NumberContents(..), Radix(..), content, kind, isWhitespace, catTokens) where
+module Compiler.Tokenize (
+  tokenize, Token(Token), TokenKind(..),
+  NumberContents(..), Radix(..), parseIntegral, parseFractional, numScalar, baseOfRadix,
+  content, kind, isWhitespace, catTokens
+) where
+
 import qualified Compiler.Zipper as Z
 import Data.Char (isDigit, isAlphaNum, isSpace, digitToInt, isHexDigit, isOctDigit)
 import Data.Function ((&))
@@ -19,6 +24,21 @@ data NumberContents = NumberContents
   , numFractional :: Maybe [Int]
   , numExponent :: Maybe Int
   } deriving (Eq, Show)
+parseIntegral :: Int -> [Int] -> Int
+parseIntegral base = foldl (\acc n -> acc * base + n) 0
+parseFractional :: Int -> [Int] -> Double
+parseFractional base = snd . foldl (\(pos, acc) n ->
+    (pos + 1, acc + (fromIntegral n / (fromIntegral base ** pos)))
+  ) (1, 0)
+numScalar :: NumberContents -> Double
+numScalar (NumberContents { numIsPos = isPos, numExponent = mExponent, numRadix = radix }) =
+  (if isPos then id else negate) $ maybe 1 ((fromIntegral $ baseOfRadix radix) ^^) mExponent
+baseOfRadix :: Radix -> Int
+baseOfRadix RadixBin = 2
+baseOfRadix RadixOct = 8
+baseOfRadix RadixDec = 10
+baseOfRadix RadixHex = 16
+
 data CommentKind = LineComment | InlineComment deriving (Eq, Show)
 data TokenKind
   = InlineWhitespace | EOL

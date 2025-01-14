@@ -3,11 +3,12 @@
 module Compiler.IR where
 
 import qualified Compiler.AST as AST
+import qualified Compiler.Tokenize as Tok
 import LLVM.AST.Operand (Operand(ConstantOperand, LocalReference))
 import LLVM.AST.Constant (Constant(Undef, GlobalReference, Int))
 import LLVM.IRBuilder.Module (ModuleBuilder, function, extern, buildModule, ParameterName (NoParameterName))
 import LLVM.IRBuilder.Monad (IRBuilderT, named, freshUnName)
-import LLVM.IRBuilder.Constant (int32, int64)
+import LLVM.IRBuilder.Constant (int32, int64, double)
 import qualified LLVM.IRBuilder.Instruction as L
 import qualified LLVM.AST.Type as Type
 import LLVM.AST (Module)
@@ -28,7 +29,7 @@ collectFreeVariables (AST.TermIdentifier ident) = do
     else Set.singleton ident
 collectFreeVariables (AST.TermFunction destructs body) = local (mappend $ foldMap collectBindings destructs) $ collectFreeVariables body
 collectFreeVariables (AST.TermApplication lhs rhs) = liftA2 mappend (collectFreeVariables lhs) (collectFreeVariables rhs)
-collectFreeVariables _ = mempty
+collectFreeVariables _ = pure mempty
 collectBindings :: AST.Destructuring -> VarSet
 collectBindings (AST.DestructBind ident) = Set.singleton ident
 collectBindings (AST.DestructAs ident destruct) = Set.singleton ident `mappend` collectBindings destruct
@@ -51,7 +52,18 @@ emitTerm (AST.TermApplication termTarget termArgument) = do
   target <- emitTerm termTarget
   argument <- emitTerm termArgument
   functionCall target argument
-emitTerm fn@(AST.TermFunction destructs body) = functionExpression destructs (runReader mempty $ collectFreeVariables fn) body
+emitTerm fn@(AST.TermFunction destructs body) = functionExpression destructs (runReader (collectFreeVariables fn) mempty) body
+emitTerm (AST.TermNumberLiteral numContents@(Tok.NumberContents
+  { Tok.numIntegral = digits
+  , Tok.numFractional = mFractions
+  , Tok.numRadix = radix
+  })) = case mFractions of
+    Nothing -> valueOf KindInt $ int64 $ integerFromInt $ ceiling scalar * integerPart
+    Just fractions -> valueOf KindDouble $ double $ scalar * (fromIntegral integerPart + Tok.parseFractional base fractions)
+  where
+    base = Tok.baseOfRadix radix
+    scalar = Tok.numScalar numContents
+    integerPart = Tok.parseIntegral base digits
 emitTerm _ = undefined
 
 mallocType = Type.FunctionType Type.ptr [Type.i64] False
@@ -71,7 +83,7 @@ buildStruct recordType = foldM (\currentRecord (operand, i) ->
 
 anyValueType :: Type.Type
 anyValueType = structure [Type.i64, Type.i64]
-data ValueKind = KindClosure | KindInt deriving (Eq, Ord, Show, Enum)
+data ValueKind = KindClosure | KindData | KindRecord | KindInt | KindDouble deriving (Eq, Ord, Show, Enum)
 kindOf :: ValueKind -> Operand
 kindOf = int64 . integerFromInt . fromEnum
 valueOf :: ValueKind -> Operand -> Codegen Operand

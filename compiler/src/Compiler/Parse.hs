@@ -119,17 +119,9 @@ parseInfixDeclaration = do
     ifIs keyword value = (guard =<< state (Z.eatIf $ is keyword)) $> value
     parsePrecedence :: NumberContents -> Double
     parsePrecedence (NumberContents { numRadix = radix, numIntegral = integral, numFractional = fractional }) =
-      fromIntegral (parseIntegral (baseOfRadix radix) integral) + maybe 0 (snd . foldl (\(pos, acc) n -> if n >= 2
-        then error "infix precendence fractionals must be binary"
-        else (pos + 1, acc + (fromIntegral n / (2 ** pos)))
-        ) (1, 0)) fractional
-    parseIntegral :: Int -> [Int] -> Int
-    parseIntegral base = foldl (\acc n -> acc * base + n) 0
-    baseOfRadix :: Radix -> Int
-    baseOfRadix RadixBin = 2
-    baseOfRadix RadixOct = 8
-    baseOfRadix RadixDec = 10
-    baseOfRadix RadixHex = 16
+      if (all (< 2) <$> fractional) == Just False
+        then error "infix precedence fractionals must be binary"
+        else fromIntegral (parseIntegral (baseOfRadix radix) integral) + maybe 0 (parseFractional 2) fractional
 
 eatWhitespaceTokens :: State Tokens ()
 eatWhitespaceTokens = modify $ Z.eat shouldConsume
