@@ -1,16 +1,36 @@
 A pure, functional programming language inspired most by Haskell, but a bit by TypeScript.
 
-Notable differences from Haskell:
-- Sound, [axiomatic](spec/01-types.md#given-type-constructors) type system with **subtyping**, **higher kinded type** synonyms, and infix type constructors.
-- A focus on anonymous functions, with concise syntax for both value functions and type constructors.
+Notable features and differences from Haskell:
+- **Complement types**, as the (¬) function. For example:
 ```
-id = a. a
-type id = a. a
+data Errors = NotProvided + NotInteger + NotInRange
+replaceLeft = f. match
+  (Left e) = f e
+  right = right
+defaultToZero: ∀e. Either e Int -> Either (e & ¬NotProvided) Int
+defaultToZero = replaceLeft $ match
+  NotProvided = Right 0
+  left = left
+```
+From this function and the intersection (&), the type checker is sound and [axiomatic](spec/01-types.md#given-type-constructors).
+- Subtyping:
+```
+getRight: ∀a. Either ⊥ a -> a
+getRight = match
+  Left e -> e  // Since `e` is ⊥, it is compatible with `a`
+  Right a -> a
+```
+- Expression oriented and point-free. No special syntax in declarations.
+Anonymous function expressions are focused, with concise syntax for functions as well as for [pattern matching](spec/01-pattern-matching.md):
+```
+id = x. x
+type id = x. x
 S = x y z. x z $ y z
 type S = x y z. x z $ y z
+mapMaybe = f. match
+  (Some x) = Some $ f x
+  (None) = None
 ```
-- A focus on minimizing language features. For example, do-notation as well as `in` and `where` expressions are dropped.
-- (Speculative) Algebraic effects to address the configuration problem.
 - ECMAScript-like [module system](spec/01-modules.md).
 
 Notable features kept from Haskell:
@@ -18,11 +38,10 @@ Notable features kept from Haskell:
 - Typeclassing
 - Curried by default
 
-Worth mentioning:
+Some changes from Haskell:
 - Emphasis on pipe operator `|` (type `∀a b. a -> (a -> b) -> b`)
 - List types are `List a` instead of `[a]`
-- "Batteries-included" prelude
-- Point-free [pattern matching](spec/01-pattern-matching.md) by default (see Haskell's `\case`)
+- Do notation dropped
 
 ## Non-Goals
 
@@ -38,13 +57,13 @@ Add structurally typed records inspired by TypeScript.
 1. Syntax
 ```
 person = {
-    name = 'Alex Generic'
-    birthdate = Date 1821 4 20
-    customerStatus = {
-        joined = Date 2024 02 10
-        loyaltyPoints = 140
-        balance = 12310
-    }
+  name = 'Alex Generic'
+  birthdate = Date 1821 4 20
+  customerStatus = {
+    joined = Date 2024 02 10
+    loyaltyPoints = 140
+    balance = 12310
+  }
 }
 ```
 2. Reading and updating
@@ -52,22 +71,22 @@ person = {
 ageWhenJoined = person.customerStatus.joined - person.birthdate
 // Speculative
 withNewAge = person | update {
-    name = const 'Alex Generic I'
-    birthdate = (+1)
-    customerStatus = update {
-        loyaltyPoints = (+30)
-    }
+  name = const 'Alex Generic I'
+  birthdate = (+1)
+  customerStatus = update {
+    loyaltyPoints = (+30)
+  }
 }
 ```
 3. Typing
 ```
 type Person = {
-    name: String
-    birthdate: Date
-    customerStatus: {
-        joined: Date
-        loyaltyPoints: Int
-    }
+  name: String
+  birthdate: Date
+  customerStatus: {
+    joined: Date
+    loyaltyPoints: Int
+  }
 }
 ```
 4. Destructuring
@@ -77,22 +96,13 @@ y: Quadratic -> Double -> Double
 y = { a, b, c } x. a * x ** 2 + b * x + c
 ```
 ### Advantages of structural typing
-Structural typing enables convenient subtype polymorphism, and
-tighter functions which don't require unused fields.
-```
-type Line = {
-    slope: Double
-    intercept: Double
-}
-slope l: Pick Line 'slope'. l.slope
-```
 Fun with unions, intersections and differences
 ```
 type StructuralMaybe = a. {
-    type: 'some'
-    data: a
+  type: 'some'
+  data: a
 } + {
-    type: 'none'
+  type: 'none'
 }
 type StructuralSome = a. StructuralMaybe a & { type: 'some' }
 type StructuralNone = StructuralMaybe () \ StructuralSome ()
@@ -111,5 +121,4 @@ Time complexity for property access is currently undefined.
 divisible as `+` would imply.
 
 ## Ideas
-1. Transparent RPC
-2. Algebraic effects
+1. Algebraic effects
