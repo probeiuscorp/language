@@ -156,3 +156,35 @@ import react { lazy as lazyComponent }
 ```
 x
 ```
+
+## Multiline operator shorthand
+
+If an expression begins with an infix operator, and then the line is ended, the
+offside-rule will be used to find the arguments which will be folded by that
+operator.
+
+```
+errorMessage = <>
+  "Failed to get user data.\n"
+  "Check your internet connection.\n"
+  "HTTP " <> errno <> "\n"
+```
+
+This also enables something akin to `do`-notation, but more expression-oriented:
+```
+main = >>
+  putStr "Hello, what is your name? "
+  getLine
+  /* I could apply a function to this whole function */ ln. putStrLn $
+    "Hello " ++ ln ++ "!"
+```
+
+**TODO**: How does this work with expressions? The simplest would be allowing backtick infixed,
+and it *would* allow arbtrary expressions, but that leaves a *lot* of diff churn
+and clumsiness.
+
+```
+type StructuralMaybe = a. (a b. ¬(¬a & ¬b)) | union. `union`
+  { type: 'some', data: a }
+  { type: 'none' }
+```
