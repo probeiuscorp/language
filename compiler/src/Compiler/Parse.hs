@@ -39,7 +39,7 @@ doesDeclarationContinue ch  = isInlineWhitespace ch
 
 parseDeclaration :: State Tokens AST.TopLevelDeclaration
 parseDeclaration = do
-  maybeBinding <- gets . evalStateT $ msum [parseBindingDeclaration, parseInfixDeclaration]
+  maybeBinding <- gets . evalStateT $ msum [parseBindingDeclaration, parseDataDeclaration, parseInfixDeclaration]
   specialDeclaration <- parseSpecialDeclaration
   pure $ fromMaybe specialDeclaration maybeBinding
   where
@@ -53,20 +53,37 @@ parseDeclaration = do
 
 is :: String -> Token -> Bool
 is str = (== str) . content
+eatIsExported :: StateT Tokens Maybe Bool
+eatIsExported = state $ Z.eatIf $ is "export"
+eatIdentifier :: StateT Tokens Maybe String
+eatIdentifier = catTokens <$> state (Z.match . filterMaybe $ not . isWhitespace)
 parseBindingDeclaration :: StateT Tokens Maybe AST.TopLevelDeclaration
 parseBindingDeclaration = do
   liftState eatWhitespaceTokens
-  isExported <- state $ Z.eatIf $ is "export"
+  isExported <- eatIsExported
   liftState eatWhitespaceTokens
-  identifier <- catTokens <$> state (Z.match . filterMaybe $ not . isWhitespace)
+  identifier <- eatIdentifier
   liftState eatWhitespaceTokens
-  isBinding <- state $ Z.eatIf $ is "="
-  guard isBinding
+  guard =<< state (Z.eatIf $ is "=")
   term <- gets $ parseTerm . Z.start . linearize
   pure $ AST.ValueDeclaration (AST.DeclarationModule
     { AST.identifier = identifier
     , AST.isExported = isExported
     }) (Just term) Nothing
+
+parseDataDeclaration :: StateT Tokens Maybe AST.TopLevelDeclaration
+parseDataDeclaration = do
+  liftState eatWhitespaceTokens
+  isExported <- eatIsExported
+  liftState eatWhitespaceTokens
+  guard =<< state (Z.eatIf $ is "data")
+  liftState eatWhitespaceTokens
+  identifier <- eatIdentifier
+  liftState eatWhitespaceTokens
+  hasBody <- state $ Z.eatIf $ is "="
+  AST.DataDeclaration (AST.DeclarationModule identifier isExported) <$> if hasBody
+    then gets $ Just . parseTerm . Z.start . linearize
+    else pure Nothing
 
 type ParseAttempt = StateT Tokens Maybe AST.ImportListing
 liftState :: State s a -> StateT s Maybe a

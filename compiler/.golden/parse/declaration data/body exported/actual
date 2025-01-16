@@ -1,0 +1,23 @@
+export data Maybe = a. Some a + None
+───
+DataDeclaration
+  ( DeclarationModule
+    { identifier = "Maybe"
+    , isExported = True
+    }
+  )
+  ( Just
+    ( TermFunction
+      [ DestructBind "a" ]
+      ( TermApplication
+        ( TermApplication
+          ( TermIdentifier "+" )
+          ( TermApplication
+            ( TermIdentifier "Some" )
+            ( TermIdentifier "a" )
+          )
+        )
+        ( TermIdentifier "None" )
+      )
+    )
+  )

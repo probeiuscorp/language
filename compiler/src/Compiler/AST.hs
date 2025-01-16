@@ -45,7 +45,7 @@ data Associativity = NonAssociative | LeftAssociative | RightAssociative derivin
 data TopLevelDeclaration
   = ImportDeclaration String ImportListing
   | ExportDeclaration [(ValidIdentifier, Term)]
-  | DataDeclaration ValidIdentifier [TypeExpression]
+  | DataDeclaration DeclarationModule (Maybe Term)
   | ValueDeclaration DeclarationModule (Maybe Term) (Maybe TypeExpression)
   | TypeDeclaration DeclarationModule TypeExpression
   | InfixDeclaration ValidIdentifier Double Associativity

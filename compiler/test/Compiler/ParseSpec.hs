@@ -60,6 +60,12 @@ spec = describe "Compiler.Parse" $ do
     let test = snapshot "parse/declaration binding/" prettyParseDeclaration
     test "simple" "true = x y. x"
     test "exported" "export main = pure ()"
+  describe "data declarations" $ do
+    let test = snapshot "parse/declaration data/" prettyParseDeclaration
+    test "no body" "data None"
+    test "no body exported" "export data None"
+    test "body" "data Maybe = a. Some a + None"
+    test "body exported" "export data Maybe = a. Some a + None"
   let source = Z.start . linearize . Z.start . tokenize
   describe "infix declarations" $ do
     let test = snapshot "parse/declaration infix/" prettyParseDeclaration
