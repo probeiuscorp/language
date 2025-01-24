@@ -10,7 +10,7 @@ import Data.Function ((&))
 import Data.List.NonEmpty (NonEmpty((:|)), nonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe (fromMaybe)
-import Control.Monad.State (MonadState (state, put), gets, StateT (runStateT))
+import Control.Monad.State (MonadState (state, put), gets, StateT (runStateT, StateT), State)
 import Control.Monad (guard)
 import Data.Functor ((<&>))
 import Data.Bifunctor (Bifunctor(first))
@@ -147,7 +147,12 @@ matchNumberLiteral = do
   integral <- state $ Z.matchCond isRadixDigit
   fractionals <- peekThen (== '.') $ state $ Z.matchCond isRadixDigit
   exponents <- if radix /= RadixHex
-    then peekThen (\ch -> ch == 'e' || ch == 'E') $ state $ Z.matchCond isDigit
+    then peekThen (\ch -> ch == 'e' || ch == 'E') $ liftA2 ($)
+      (StateT $ \z -> Z.right z <&> \(ch, zr) -> if ch == '-'
+        then ((ch:), zr)  -- eat and prepend to matched
+        else (id, if ch == '+' then zr else z)  -- don't prepend '+' because `read` does not like it, but do eat '+'
+      )
+      (state $ Z.matchCond isDigit)
     else pure Nothing
   pure . NumberLiteral $ NumberContents {
     numIsPos = explicitSign /= Neg,

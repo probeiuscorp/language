@@ -30,6 +30,8 @@ spec = describe "Compiler.Tokenize" $ do
       test "integer explicitly positive" ("+" ++ value)
     let test = test'
     test "exponent decimal" "1e12"
+    test "exponent negative" "1e-4"
+    test "exponent explicit positive" "1e+4"
     test "exponent-like hex" "0x10e6"
     test "fractional decimal" "10.25"
     test "fractional hex" "0xFF.8"
