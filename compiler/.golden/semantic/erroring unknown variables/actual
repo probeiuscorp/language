@@ -1,0 +1,4 @@
+x y. w
+───
+Left
+  [ ErrUnknownIdentifier "w" ]

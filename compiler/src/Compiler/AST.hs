@@ -1,5 +1,6 @@
 module Compiler.AST where
 import Compiler.Tokenize (NumberContents)
+import qualified Data.Set as Set
 
 type ValidIdentifier = String
 
@@ -21,14 +22,19 @@ data Term
   | TermList [Maybe Term]
   | TermMatch [([Destructuring], Term)]
   deriving (Eq, Show)
-data TypeExpression = TypeExpression deriving (Eq, Show)
 
+type VarSet = Set.Set ValidIdentifier
 -- | Expressions are isomorphic with the compiled form
 data Expression
-  = ExFunction Destructuring Expression
-  | ExApplication Expression Expression
-  | ExIdentifier ValidIdentifier
-  | ExRecord [(String, Expression)]
+  = ExprFunction VarSet Destructuring Expression
+  | ExprApplication Expression Expression
+  | ExprIdentifier ValidIdentifier
+  | ExprIntegral Int
+  | ExprDouble Double
+  | ExprRecord [(String, Expression)]
+  | ExprTuple [Expression]
+  | ExprList [Expression]
+  | ExprMatch [(Destructuring, Expression)]
   deriving (Eq, Show)
 
 data ImportListing
@@ -46,7 +52,11 @@ data TopLevelDeclaration
   = ImportDeclaration String ImportListing
   | ExportDeclaration [(ValidIdentifier, Term)]
   | DataDeclaration DeclarationModule (Maybe Term)
-  | ValueDeclaration DeclarationModule (Maybe Term) (Maybe TypeExpression)
-  | TypeDeclaration DeclarationModule TypeExpression
+  | ValueDeclaration DeclarationModule (Maybe Term) (Maybe Term)
+  | TypeDeclaration DeclarationModule Term
   | InfixDeclaration ValidIdentifier Double Associativity
   deriving (Eq, Show)
+
+data ParseError
+  = ErrUnknownIdentifier String
+  deriving (Eq, Show, Ord)

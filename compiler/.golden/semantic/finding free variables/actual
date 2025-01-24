@@ -1,0 +1,29 @@
+x y z. x z (y z)
+───
+Right
+  ( ExprFunction
+    ( fromList [] )
+    ( DestructBind "x" )
+    ( ExprFunction
+      ( fromList [ "x" ] )
+      ( DestructBind "y" )
+      ( ExprFunction
+        ( fromList
+          [ "x"
+          , "y"
+          ]
+        )
+        ( DestructBind "z" )
+        ( ExprApplication
+          ( ExprApplication
+            ( ExprIdentifier "x" )
+            ( ExprIdentifier "z" )
+          )
+          ( ExprApplication
+            ( ExprIdentifier "y" )
+            ( ExprIdentifier "z" )
+          )
+        )
+      )
+    )
+  )
