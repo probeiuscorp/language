@@ -1,0 +1,10 @@
+"of $ /* nothing of note here */ ()"
+───
+Token {kind = LetterIdentifier, content = "of"}
+Token {kind = InlineWhitespace, content = " "}
+Token {kind = SymbolIdentifier, content = "$"}
+Token {kind = InlineWhitespace, content = " "}
+Token {kind = Comment InlineComment, content = "/* nothing of note here */"}
+Token {kind = InlineWhitespace, content = " "}
+Token {kind = SymbolIdentifier, content = "("}
+Token {kind = SymbolIdentifier, content = ")"}

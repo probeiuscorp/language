@@ -1,0 +1,7 @@
+"/* /* */ /* /* */ */ */ outside /* inside again */"
+───
+Token {kind = Comment InlineComment, content = "/* /* */ /* /* */ */ */"}
+Token {kind = InlineWhitespace, content = " "}
+Token {kind = LetterIdentifier, content = "outside"}
+Token {kind = InlineWhitespace, content = " "}
+Token {kind = Comment InlineComment, content = "/* inside again */"}

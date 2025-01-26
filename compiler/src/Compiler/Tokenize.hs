@@ -10,10 +10,11 @@ import Data.Function ((&))
 import Data.List.NonEmpty (NonEmpty((:|)), nonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe (fromMaybe)
-import Control.Monad.State (MonadState (state, put), gets, StateT (runStateT, StateT), State)
+import Control.Monad.State (MonadState (state, put), gets, StateT (runStateT, StateT), State, runState)
 import Control.Monad (guard)
 import Data.Functor ((<&>))
 import Data.Bifunctor (Bifunctor(first))
+import Control.Applicative (asum)
 
 data Radix = RadixBin | RadixOct | RadixDec | RadixHex
   deriving (Eq, Show)
@@ -71,9 +72,9 @@ isSymbol :: Char -> Bool
 isSymbol ch = not $ isDigit ch || isAlphaNum ch || isSpace ch || shouldTokenizeAlone ch
 
 readToken :: NonEmpty Char -> (Token, String)
-readToken str@(ch:|rest) = fromMaybe tokenMatch numberMatch
+readToken str@(ch:|rest) = fromMaybe tokenMatch blindMatches
   where
-    numberMatch = runStateT matchNumberLiteral (Z.start (ch:rest)) <&> \(numKind, Z.Zipper consumed zr) ->
+    blindMatches = runStateT (asum [matchNumberLiteral, matchInlineComment]) (Z.start (ch:rest)) <&> \(numKind, Z.Zipper consumed zr) ->
       (Token { kind = numKind, content = reverse consumed }, zr)
     tokenMatch :: (Token, String)
     tokenMatch
@@ -104,6 +105,26 @@ tokenize str = case nonEmpty str of
   Just a -> let (token, rest) = readToken a in
     token:tokenize rest
   Nothing -> []
+
+matchInlineComment :: StateT (Z.Zipper Char) Maybe TokenKind
+matchInlineComment = matchStart *> StateT (Just . runState (go []))
+  where
+    go :: [()] -> State (Z.Zipper Char) TokenKind
+    go k = do
+      matchIsEnd <- gets $ runStateT $ asum [matchStart *> pure False, matchEnd *> pure True]
+      maybe (pure ()) (put . snd) matchIsEnd
+      case fst <$> matchIsEnd of
+        Just False -> go $ () : k
+        Just True -> case k of
+          [] -> pure $ Comment InlineComment
+          (_:ks) -> go ks
+        Nothing -> gets Z.right >>= \case
+          Just (_, zr) -> put zr *> go k
+          Nothing -> error "unclosed inline comment"
+    matchStart = eatenIs '/' *> eatenIs '*'
+    matchEnd = eatenIs '*' *> eatenIs '/'
+    eatenIs :: Char -> StateT (Z.Zipper Char) Maybe ()
+    eatenIs ch = (ch ==) <$> StateT Z.right >>= guard
 
 matchStringLiteral :: String -> (String, String)
 matchStringLiteral ('\\':xs) = matchEscapeSequence xs
