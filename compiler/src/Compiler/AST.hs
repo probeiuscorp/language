@@ -9,7 +9,7 @@ data Destructuring
   | DestructAs ValidIdentifier Destructuring
   | DestructNominal (ValidIdentifier, [Destructuring])
   | DestructRecord [(ValidIdentifier, Maybe Destructuring)]
-  deriving (Eq, Show)
+  deriving (Eq, Show, Ord)
 
 -- | Terms are isomorphic with the source as-written (except for whitespace)
 data Term
@@ -21,7 +21,7 @@ data Term
   | TermTuple [Maybe Term]
   | TermList [Maybe Term]
   | TermMatch [([Destructuring], Term)]
-  deriving (Eq, Show)
+  deriving (Eq, Show, Ord)
 
 type VarSet = Set.Set ValidIdentifier
 -- | Expressions are isomorphic with the compiled form
@@ -42,12 +42,12 @@ data ImportListing
   | ImportOnly Destructuring
   | ImportHiding Destructuring
   | ImportAs ValidIdentifier
-  deriving (Eq, Show)
+  deriving (Eq, Show, Ord)
 data DeclarationModule = DeclarationModule
   { identifier :: ValidIdentifier
   , isExported :: Bool
-  } deriving (Eq, Show)
-data Associativity = NonAssociative | LeftAssociative | RightAssociative deriving (Eq, Show)
+  } deriving (Eq, Show, Ord)
+data Associativity = NonAssociative | LeftAssociative | RightAssociative deriving (Eq, Show, Ord)
 data TopLevelDeclaration
   = ImportDeclaration String ImportListing
   | ExportDeclaration [(ValidIdentifier, Term)]
@@ -55,7 +55,7 @@ data TopLevelDeclaration
   | ValueDeclaration DeclarationModule (Maybe Term) (Maybe Term)
   | TypeDeclaration DeclarationModule Term
   | InfixDeclaration ValidIdentifier Double Associativity
-  deriving (Eq, Show)
+  deriving (Eq, Show, Ord)
 
 data ParseError
   = ErrUnknownIdentifier String

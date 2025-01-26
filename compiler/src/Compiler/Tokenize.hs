@@ -17,14 +17,14 @@ import Data.Bifunctor (Bifunctor(first))
 import Control.Applicative (asum)
 
 data Radix = RadixBin | RadixOct | RadixDec | RadixHex
-  deriving (Eq, Show)
+  deriving (Eq, Show, Ord)
 data NumberContents = NumberContents
   { numIsPos :: Bool
   , numRadix :: Radix
   , numIntegral :: [Int]
   , numFractional :: Maybe [Int]
   , numExponent :: Maybe Int
-  } deriving (Eq, Show)
+  } deriving (Eq, Show, Ord)
 parseIntegral :: Int -> [Int] -> Int
 parseIntegral base = foldl (\acc n -> acc * base + n) 0
 parseFractional :: Int -> [Int] -> Double
@@ -40,18 +40,18 @@ baseOfRadix RadixOct = 8
 baseOfRadix RadixDec = 10
 baseOfRadix RadixHex = 16
 
-data CommentKind = LineComment | InlineComment deriving (Eq, Show)
+data CommentKind = LineComment | InlineComment deriving (Eq, Show, Ord)
 data TokenKind
   = InlineWhitespace | EOL
   | LetterIdentifier | SymbolIdentifier
   | StringLiteral String
   | NumberLiteral NumberContents
   | Comment CommentKind
-  deriving (Eq, Show)
+  deriving (Eq, Show, Ord)
 data Token = Token
   { kind :: TokenKind
   , content :: String
-  } deriving (Eq, Show)
+  } deriving (Eq, Show, Ord)
 
 isWhitespace :: Token -> Bool
 isWhitespace token = kind token == InlineWhitespace || kind token == EOL
