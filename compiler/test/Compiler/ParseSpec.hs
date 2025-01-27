@@ -34,19 +34,12 @@ prettyPrintTerm _ term = show term
 spec :: SpecWith ()
 spec = describe "Compiler.Parse" $ do
   describe "splitDeclarations" $ do
-    let testDeclarations = splitDeclarations . Z.start
-    it "empty string" $ do
-      testDeclarations "" `shouldBe` []
-    it "just newlines" $ do
-      testDeclarations "\n\n\n\n\n\n" `shouldBe` []
-    it "should continue if inline whitespace" $ do
-      testDeclarations "pair = a.\n\t(a, a)" `shouldBe` ["pair = a.\n\t(a, a)"]
-    it "should continue if closing brace" $ do
-      let source = "import react/hooks {\n\tuseState\n}\n"
-      testDeclarations source `shouldBe` [source]
-    it "should continue if closing parenthesis" $ do
-      let source = "pair = a. (\n\ta,\n\ta)\n"
-      testDeclarations source `shouldBe` [source]
+    let test = snapshot "parse/splitDeclarations/" $ prettyShow . splitDeclarations . Z.start . tokenize
+    test "empty string" ""
+    test "just newlines" "\n\n\n\n\n\n"
+    test "continue on inline whitespace" "pair = a.\n\t(a, a)"
+    test "continue on closing brace" "import react/hooks {\n\tuseState\n}\n"
+    test "continue on closing parenthesis" "pair = a. (\n\ta,\n\ta)\n"
   let prettyParseDeclaration = prettyShow . evalState parseDeclaration . Z.start . tokenize
   describe "parseImportDeclaration" $ do
     let test = snapshot "parse/parseImport/" prettyParseDeclaration

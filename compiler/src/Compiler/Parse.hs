@@ -3,7 +3,6 @@ module Compiler.Parse where
 import Compiler.Tokenize
 import qualified Compiler.AST as AST
 import qualified Compiler.Zipper as Z
-import Data.Char (isSpace)
 import Compiler.Linearize (Linear, GLinearized (..), linearize)
 import Compiler.ParseInfix (parseInfix)
 import Control.Monad (guard, msum, MonadPlus (mzero))
@@ -20,22 +19,16 @@ type Tokens = Z.Zipper Token
 (<<$>>) f = (fmap f <$>)
 infixl 4 <<$>>
 
-isInlineWhitespace :: Char -> Bool
-isInlineWhitespace '\n' = False
-isInlineWhitespace ch   = isSpace ch
-
-splitDeclarations :: Z.Zipper Char -> [String]
-splitDeclarations z = filter (not . all isSpace) $ case Z.eatOne $ Z.eat (/= '\n') z of
+splitDeclarations :: Tokens -> [[Token]]
+splitDeclarations z = filter (not . all isWhitespace) $ case Z.eatOne $ Z.eat ((/= EOL) . kind) z of
   (Z.Zipper bt (ch:xs)) -> if doesDeclarationContinue ch
     then splitDeclarations $ Z.Zipper (ch:bt) xs
     else reverse bt : splitDeclarations (Z.Zipper [ch] xs)
-  (Z.Zipper bt _) -> [reverse bt]
+  (Z.Zipper bt _) -> pure $ reverse bt
 
-doesDeclarationContinue :: Char -> Bool
-doesDeclarationContinue ')' = True
-doesDeclarationContinue '}' = True
-doesDeclarationContinue ']' = True
-doesDeclarationContinue ch  = isInlineWhitespace ch
+doesDeclarationContinue :: Token -> Bool
+doesDeclarationContinue t = con == ")" || con == "}" || con == "]" || kind t == InlineWhitespace
+  where con = content t
 
 parseDeclaration :: State Tokens AST.TopLevelDeclaration
 parseDeclaration = do

@@ -1,0 +1,63 @@
+pair = a.
+	(a, a)
+───
+[
+  [ Token
+    { kind = LetterIdentifier
+    , content = "pair"
+    }
+  , Token
+    { kind = InlineWhitespace
+    , content = " "
+    }
+  , Token
+    { kind = SymbolIdentifier
+    , content = "="
+    }
+  , Token
+    { kind = InlineWhitespace
+    , content = " "
+    }
+  , Token
+    { kind = LetterIdentifier
+    , content = "a"
+    }
+  , Token
+    { kind = SymbolIdentifier
+    , content = "."
+    }
+  , Token
+    { kind = EOL
+    , content = "
+      "
+    }
+  , Token
+    { kind = InlineWhitespace
+    , content = "\x9"
+    }
+  , Token
+    { kind = SymbolIdentifier
+    , content = "("
+    }
+  , Token
+    { kind = LetterIdentifier
+    , content = "a"
+    }
+  , Token
+    { kind = SymbolIdentifier
+    , content = ","
+    }
+  , Token
+    { kind = InlineWhitespace
+    , content = " "
+    }
+  , Token
+    { kind = LetterIdentifier
+    , content = "a"
+    }
+  , Token
+    { kind = SymbolIdentifier
+    , content = ")"
+    }
+  ]
+]

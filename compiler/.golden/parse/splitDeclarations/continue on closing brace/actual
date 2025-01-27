@@ -1,0 +1,63 @@
+import react/hooks {
+	useState
+}
+
+───
+[
+  [ Token
+    { kind = LetterIdentifier
+    , content = "import"
+    }
+  , Token
+    { kind = InlineWhitespace
+    , content = " "
+    }
+  , Token
+    { kind = LetterIdentifier
+    , content = "react"
+    }
+  , Token
+    { kind = SymbolIdentifier
+    , content = "/"
+    }
+  , Token
+    { kind = LetterIdentifier
+    , content = "hooks"
+    }
+  , Token
+    { kind = InlineWhitespace
+    , content = " "
+    }
+  , Token
+    { kind = SymbolIdentifier
+    , content = "{"
+    }
+  , Token
+    { kind = EOL
+    , content = "
+      "
+    }
+  , Token
+    { kind = InlineWhitespace
+    , content = "\x9"
+    }
+  , Token
+    { kind = LetterIdentifier
+    , content = "useState"
+    }
+  , Token
+    { kind = EOL
+    , content = "
+      "
+    }
+  , Token
+    { kind = SymbolIdentifier
+    , content = "}"
+    }
+  , Token
+    { kind = EOL
+    , content = "
+      "
+    }
+  ]
+]
