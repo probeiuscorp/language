@@ -42,7 +42,8 @@ Type constructors are written as:
 a. (a, a)
 ```
 
-The special type symbol `*` is equal to `never` in input position and `unknown` in output position.
+The special type symbol `*` is equal to `never` in contravariant positions and `unknown` in covariant position.
+It is rejected in invariant positions.
 
 A supertype of all functions is
 ```
