@@ -8,7 +8,9 @@ that they are given.
 - `¬` (U+00ac) Complement: Should be a given since it defines what `unknown` is and includes.
 - `~` \<unnamed>: Should be a given since it defines how the types interact. `~` is unary and will evaluate to `unknown` if its argument is `never`, and otherwise will evaluate to `never`.
 
-## Union, difference and intersection
+### Axiomatic type system
+
+Union and difference can be defined with `&` and `\`:
 ```
 // Union
 (+) = a b. ¬(¬a & ¬b)
@@ -16,20 +18,18 @@ that they are given.
 (\) = a b. a & ¬b
 ```
 
-1. `unknown` and `never`
+Given some type `k`, `isNever` evaluates to a Church boolean. It is defined as follows:
 ```
-unknown & a == a
-unknown + a == unknown
-
-never & a == never
-never + a == a
+type isNever = k. a b. (~~k & a) + (~k & b)
 ```
 
-2. Functions
+Type compatibility is thus defined:
 ```
-(a -> c) + (b -> d) == (a & b) -> c + d
-(a -> c) & (b -> d) == (a + b) -> c & d
+type (<=) = a b. isNever $ b \ a
 ```
+
+Internally the type checker applies the branching of `~` on `b \ a` to decide
+whether a constraint is satisfied.
 
 ## Type constructors
 Value constructors (functions) are typed as:
