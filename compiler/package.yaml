@@ -29,6 +29,7 @@ dependencies:
 - HUnit
 - llvm-hs
 - llvm-hs-pure
+- optparse-applicative
 
 default-extensions:
 - LambdaCase
