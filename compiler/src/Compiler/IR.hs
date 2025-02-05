@@ -3,6 +3,7 @@
 module Compiler.IR where
 
 import qualified Compiler.AST as AST
+import Compiler.Modules (TillyModuleBuildable)
 import LLVM.AST.Operand (Operand(ConstantOperand, LocalReference))
 import LLVM.AST.Constant (Constant(Undef, GlobalReference, Int))
 import LLVM.IRBuilder.Module (ModuleBuilder, function, extern, buildModule, ParameterName (NoParameterName))
@@ -16,6 +17,7 @@ import Control.Monad.State.Strict (MonadTrans (lift))
 import Data.Foldable (Foldable(toList))
 import GHC.Num (integerFromInt)
 import Data.String (IsString(fromString))
+import qualified Data.Map as Map
 
 type Codegen = IRBuilderT ModuleBuilder
 
@@ -92,9 +94,10 @@ functionCall value argument = do
   envPtr <- L.gep Type.ptr closurePtr [int32 1]
   L.call fnType fnPtr [(envPtr, []), (argument, [])]
 
-mkMainModule :: AST.Expression -> Module
-mkMainModule term = buildModule "main" $ do
+mkMainModule :: TillyModuleBuildable -> Module
+mkMainModule (_, exprs) = buildModule "main" $ do
   void $ extern "malloc" [Type.i64] Type.ptr
-  void $ function "main" [] anyValueType $ const $ do
-    res <- emitExpr term
-    L.ret res
+  forM_ (Map.toList exprs) $ \(ident, expr) -> do
+    function (userIdentifier ident) [] anyValueType $ const $ do
+      res <- emitExpr expr
+      L.ret res
