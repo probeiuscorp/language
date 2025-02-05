@@ -32,6 +32,7 @@ dependencies:
 - llvm-hs-pure
 - bytestring
 - optparse-applicative
+- validation
 
 default-extensions:
 - LambdaCase
