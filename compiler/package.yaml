@@ -30,6 +30,7 @@ dependencies:
 - HUnit
 - llvm-hs
 - llvm-hs-pure
+- bytestring
 - optparse-applicative
 
 default-extensions:
