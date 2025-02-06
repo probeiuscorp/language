@@ -5,9 +5,9 @@ f. match
 ───
 TermFunction [DestructBind "f"] (
   TermMatch [
-    [DestructBind "match",DestructNominal ("Cons",[DestructBind "x",DestructBind "xs"])] = $
+    [DestructBind "match",DestructNominal "Cons" [DestructBind "x",DestructBind "xs"]] = $
     ⤷ (f x)
     ⤷ xs
-    [DestructNominal ("Nil",[])] = Nil
+    [DestructNominal "Nil" []] = Nil
   ]
 )

@@ -251,7 +251,7 @@ parseNominal :: ParseState AST.Destructuring
 parseNominal = do
   identifier <- expect matchIdentifier
   destructurings <- exhaustively parseDestructuring
-  pure $ AST.DestructNominal (identifier, destructurings)
+  pure $ AST.DestructNominal identifier destructurings
 
 splitClauses :: String -> Linear -> NE.NonEmpty Linear
 splitClauses sep = go

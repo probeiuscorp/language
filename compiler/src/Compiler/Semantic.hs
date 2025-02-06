@@ -64,7 +64,7 @@ collectFreeVariables term = runReader (go term) mempty
 collectBindings :: AST.Destructuring -> AST.VarSet
 collectBindings (AST.DestructBind ident) = Set.singleton ident
 collectBindings (AST.DestructAs ident destruct) = Set.singleton ident <> collectBindings destruct
-collectBindings (AST.DestructNominal (_, destructs)) = foldMap collectBindings destructs
+collectBindings (AST.DestructNominal _ destructs) = foldMap collectBindings destructs
 collectBindings (AST.DestructRecord rows) = foldMap (\case
     (_, Just destruct) -> collectBindings destruct
     (ident, Nothing) -> Set.singleton ident

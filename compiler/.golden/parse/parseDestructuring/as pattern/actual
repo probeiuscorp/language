@@ -1,3 +1,3 @@
 list@(Cons x xs)
 ───
-DestructAs "list" (DestructNominal ("Cons",[DestructBind "x",DestructBind "xs"]))
+DestructAs "list" (DestructNominal "Cons" [DestructBind "x",DestructBind "xs"])

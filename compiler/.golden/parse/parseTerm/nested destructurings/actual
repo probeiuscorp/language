@@ -1,5 +1,5 @@
 x (Cons (Nothing) (Just x)). undefined
 ───
-TermFunction [DestructBind "x",DestructNominal ("Cons",[DestructNominal ("Nothing",[]),DestructNominal ("Just",[DestructBind "x"])])] (
+TermFunction [DestructBind "x",DestructNominal "Cons" [DestructNominal "Nothing" [],DestructNominal "Just" [DestructBind "x"]]] (
   undefined
 )

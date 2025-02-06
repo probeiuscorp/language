@@ -7,7 +7,7 @@ type ValidIdentifier = String
 data Destructuring
   = DestructBind ValidIdentifier
   | DestructAs ValidIdentifier Destructuring
-  | DestructNominal (ValidIdentifier, [Destructuring])
+  | DestructNominal ValidIdentifier [Destructuring]
   | DestructRecord [(ValidIdentifier, Maybe Destructuring)]
   deriving (Eq, Show, Ord)
 

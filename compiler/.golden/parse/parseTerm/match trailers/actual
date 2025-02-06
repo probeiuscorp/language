@@ -4,8 +4,8 @@ match {
 } list
 ───
 (TermMatch [
-  [DestructNominal ("Cons",[DestructBind "x",DestructBind "xs"])] = $
+  [DestructNominal "Cons" [DestructBind "x",DestructBind "xs"]] = $
   ⤷ (f x)
   ⤷ xs
-  [DestructNominal ("Nil",[])] = Nil
+  [DestructNominal "Nil" []] = Nil
 ] list)
