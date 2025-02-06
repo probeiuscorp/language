@@ -1,12 +1,12 @@
 "y = x. 0.5 * x + 12"
 ───
-Token {kind = LetterIdentifier, content = "y"}
-Token {kind = InlineWhitespace, content = " "}
-Token {kind = SymbolIdentifier, content = "="}
-Token {kind = InlineWhitespace, content = " "}
-Token {kind = LetterIdentifier, content = "x"}
-Token {kind = SymbolIdentifier, content = "."}
-Token {kind = InlineWhitespace, content = " "}
+Token {kind = LetterIdentifier, content = "y", posStart = FilePos {lineno = 1, colno = 1}, posEnd = FilePos {lineno = 1, colno = 2}}
+Token {kind = InlineWhitespace, content = " ", posStart = FilePos {lineno = 1, colno = 2}, posEnd = FilePos {lineno = 1, colno = 3}}
+Token {kind = SymbolIdentifier, content = "=", posStart = FilePos {lineno = 1, colno = 3}, posEnd = FilePos {lineno = 1, colno = 4}}
+Token {kind = InlineWhitespace, content = " ", posStart = FilePos {lineno = 1, colno = 4}, posEnd = FilePos {lineno = 1, colno = 5}}
+Token {kind = LetterIdentifier, content = "x", posStart = FilePos {lineno = 1, colno = 5}, posEnd = FilePos {lineno = 1, colno = 6}}
+Token {kind = SymbolIdentifier, content = ".", posStart = FilePos {lineno = 1, colno = 6}, posEnd = FilePos {lineno = 1, colno = 7}}
+Token {kind = InlineWhitespace, content = " ", posStart = FilePos {lineno = 1, colno = 7}, posEnd = FilePos {lineno = 1, colno = 8}}
 Token
   { kind = NumberLiteral
     ( NumberContents
@@ -18,14 +18,22 @@ Token
       }
     )
   , content = "0.5"
+  , posStart = FilePos
+    { lineno = 1
+    , colno = 8
+    }
+  , posEnd = FilePos
+    { lineno = 1
+    , colno = 11
+    }
   }
-Token {kind = InlineWhitespace, content = " "}
-Token {kind = SymbolIdentifier, content = "*"}
-Token {kind = InlineWhitespace, content = " "}
-Token {kind = LetterIdentifier, content = "x"}
-Token {kind = InlineWhitespace, content = " "}
-Token {kind = SymbolIdentifier, content = "+"}
-Token {kind = InlineWhitespace, content = " "}
+Token {kind = InlineWhitespace, content = " ", posStart = FilePos {lineno = 1, colno = 11}, posEnd = FilePos {lineno = 1, colno = 12}}
+Token {kind = SymbolIdentifier, content = "*", posStart = FilePos {lineno = 1, colno = 12}, posEnd = FilePos {lineno = 1, colno = 13}}
+Token {kind = InlineWhitespace, content = " ", posStart = FilePos {lineno = 1, colno = 13}, posEnd = FilePos {lineno = 1, colno = 14}}
+Token {kind = LetterIdentifier, content = "x", posStart = FilePos {lineno = 1, colno = 14}, posEnd = FilePos {lineno = 1, colno = 15}}
+Token {kind = InlineWhitespace, content = " ", posStart = FilePos {lineno = 1, colno = 15}, posEnd = FilePos {lineno = 1, colno = 16}}
+Token {kind = SymbolIdentifier, content = "+", posStart = FilePos {lineno = 1, colno = 16}, posEnd = FilePos {lineno = 1, colno = 17}}
+Token {kind = InlineWhitespace, content = " ", posStart = FilePos {lineno = 1, colno = 17}, posEnd = FilePos {lineno = 1, colno = 18}}
 Token
   { kind = NumberLiteral
     ( NumberContents
@@ -40,4 +48,12 @@ Token
       }
     )
   , content = "12"
+  , posStart = FilePos
+    { lineno = 1
+    , colno = 18
+    }
+  , posEnd = FilePos
+    { lineno = 1
+    , colno = 20
+    }
   }

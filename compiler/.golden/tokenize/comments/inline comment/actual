@@ -1,10 +1,10 @@
 "of $ /* nothing of note here */ ()"
 ───
-Token {kind = LetterIdentifier, content = "of"}
-Token {kind = InlineWhitespace, content = " "}
-Token {kind = SymbolIdentifier, content = "$"}
-Token {kind = InlineWhitespace, content = " "}
-Token {kind = Comment InlineComment, content = "/* nothing of note here */"}
-Token {kind = InlineWhitespace, content = " "}
-Token {kind = SymbolIdentifier, content = "("}
-Token {kind = SymbolIdentifier, content = ")"}
+Token {kind = LetterIdentifier, content = "of", posStart = FilePos {lineno = 1, colno = 1}, posEnd = FilePos {lineno = 1, colno = 3}}
+Token {kind = InlineWhitespace, content = " ", posStart = FilePos {lineno = 1, colno = 3}, posEnd = FilePos {lineno = 1, colno = 4}}
+Token {kind = SymbolIdentifier, content = "$", posStart = FilePos {lineno = 1, colno = 4}, posEnd = FilePos {lineno = 1, colno = 5}}
+Token {kind = InlineWhitespace, content = " ", posStart = FilePos {lineno = 1, colno = 5}, posEnd = FilePos {lineno = 1, colno = 6}}
+Token {kind = Comment InlineComment, content = "/* nothing of note here */", posStart = FilePos {lineno = 1, colno = 6}, posEnd = FilePos {lineno = 1, colno = 32}}
+Token {kind = InlineWhitespace, content = " ", posStart = FilePos {lineno = 1, colno = 32}, posEnd = FilePos {lineno = 1, colno = 33}}
+Token {kind = SymbolIdentifier, content = "(", posStart = FilePos {lineno = 1, colno = 33}, posEnd = FilePos {lineno = 1, colno = 34}}
+Token {kind = SymbolIdentifier, content = ")", posStart = FilePos {lineno = 1, colno = 34}, posEnd = FilePos {lineno = 1, colno = 35}}

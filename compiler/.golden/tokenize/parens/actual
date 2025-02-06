@@ -1,8 +1,8 @@
 ")::())("
 ───
-Token {kind = SymbolIdentifier, content = ")"}
-Token {kind = SymbolIdentifier, content = "::"}
-Token {kind = SymbolIdentifier, content = "("}
-Token {kind = SymbolIdentifier, content = ")"}
-Token {kind = SymbolIdentifier, content = ")"}
-Token {kind = SymbolIdentifier, content = "("}
+Token {kind = SymbolIdentifier, content = ")", posStart = FilePos {lineno = 1, colno = 1}, posEnd = FilePos {lineno = 1, colno = 2}}
+Token {kind = SymbolIdentifier, content = "::", posStart = FilePos {lineno = 1, colno = 2}, posEnd = FilePos {lineno = 1, colno = 4}}
+Token {kind = SymbolIdentifier, content = "(", posStart = FilePos {lineno = 1, colno = 4}, posEnd = FilePos {lineno = 1, colno = 5}}
+Token {kind = SymbolIdentifier, content = ")", posStart = FilePos {lineno = 1, colno = 5}, posEnd = FilePos {lineno = 1, colno = 6}}
+Token {kind = SymbolIdentifier, content = ")", posStart = FilePos {lineno = 1, colno = 6}, posEnd = FilePos {lineno = 1, colno = 7}}
+Token {kind = SymbolIdentifier, content = "(", posStart = FilePos {lineno = 1, colno = 7}, posEnd = FilePos {lineno = 1, colno = 8}}

@@ -16,4 +16,12 @@ Token
       }
     )
   , content = "-1728"
+  , posStart = FilePos
+    { lineno = 1
+    , colno = 1
+    }
+  , posEnd = FilePos
+    { lineno = 1
+    , colno = 6
+    }
   }

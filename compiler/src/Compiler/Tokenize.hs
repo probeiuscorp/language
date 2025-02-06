@@ -7,7 +7,7 @@ module Compiler.Tokenize (
 import qualified Compiler.Zipper as Z
 import Data.Char (isDigit, isAlphaNum, isSpace, digitToInt, isHexDigit, isOctDigit)
 import Data.Function ((&))
-import Data.List.NonEmpty (NonEmpty((:|)), nonEmpty)
+import Data.List.NonEmpty (NonEmpty((:|)))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe (fromMaybe)
 import Control.Monad.State (MonadState (state, put), gets, StateT (runStateT, StateT), State, runState)
@@ -48,10 +48,15 @@ data TokenKind
   | NumberLiteral NumberContents
   | Comment CommentKind
   deriving (Eq, Show, Ord)
+data FilePos = FilePos { lineno :: Int, colno :: Int }
+  deriving (Eq, Ord, Show)
 data Token = Token
   { kind :: TokenKind
   , content :: String
+  , posStart :: FilePos
+  , posEnd :: FilePos
   } deriving (Eq, Show, Ord)
+type TokenMatch = (TokenKind, String)
 
 isWhitespace :: Token -> Bool
 isWhitespace token = kind token == InlineWhitespace || kind token == EOL
@@ -59,8 +64,8 @@ isWhitespace token = kind token == InlineWhitespace || kind token == EOL
 catTokens :: [Token] -> String
 catTokens = foldr ((++) . content) mempty
 
-matchSpan :: TokenKind -> (Char -> Bool) -> NonEmpty Char -> (Token, String)
-matchSpan matchKind isMatch str = first (Token matchKind) $ NE.span isMatch str
+matchSpan :: TokenKind -> (Char -> Bool) -> NonEmpty Char -> (TokenMatch, String)
+matchSpan matchKind isMatch str = first (matchKind,) $ NE.span isMatch str
 
 shouldTokenizeAlone :: Char -> Bool
 shouldTokenizeAlone ch =
@@ -71,29 +76,30 @@ shouldTokenizeAlone ch =
 isSymbol :: Char -> Bool
 isSymbol ch = not $ isDigit ch || isAlphaNum ch || isSpace ch || shouldTokenizeAlone ch
 
-readToken :: NonEmpty Char -> (Token, String)
-readToken str@(ch:|rest) = fromMaybe tokenMatch blindMatches
+goTokenize :: FilePos -> String -> [Token]
+goTokenize _ [] = []
+goTokenize currentPos (ch:rest) = Token tokenKind tokenContent currentPos nextPos : goTokenize nextPos nextSource
   where
+    ((tokenKind, tokenContent), nextSource) = fromMaybe tokenMatch blindMatches
+    str = ch:|rest
+    nextPos :: FilePos
+    nextPos = flip (flip foldl currentPos) tokenContent $ \x y -> if y == '\n'
+      then FilePos { lineno = lineno x + 1, colno = 1 }
+      else FilePos { lineno = lineno x, colno = colno x + 1 }
     blindMatches = runStateT (asum [matchNumberLiteral, matchInlineComment]) (Z.start (ch:rest)) <&> \(numKind, Z.Zipper consumed zr) ->
-      (Token { kind = numKind, content = reverse consumed }, zr)
-    tokenMatch :: (Token, String)
+      ((numKind, reverse consumed), zr)
+    tokenMatch :: (TokenMatch, String)
     tokenMatch
       | isAlphaNum ch = matchSpan LetterIdentifier isAlphaNum str
-      | '\n' == ch    = (Token {
-        kind = EOL,
-        content = pure ch
-      }, rest)
+      | '\n' == ch    = ((EOL, pure ch), rest)
       | isSpace ch    = matchSpan InlineWhitespace isInlineWhitespaceCh str
-      | '"' == ch     = matchStringLiteral rest & first (\parsed -> Token {
-        kind = StringLiteral parsed,
-        content = parsed -- FIXME: this should contain the source of the string
-      })
-      | shouldTokenizeAlone ch = (Token {
-        kind = SymbolIdentifier,
-        content = pure ch
-      }, rest)
-      | otherwise = if content token == "//"
-        then first (Token (Comment LineComment) . ("//" ++)) $ span (/= '\n') after
+      | '"' == ch     = matchStringLiteral rest & first (\parsed -> (
+        StringLiteral parsed,
+        parsed -- FIXME: this should contain the source of the string
+      ))
+      | shouldTokenizeAlone ch = ((SymbolIdentifier, pure ch), rest)
+      | otherwise = if snd token == "//"
+        then first ((Comment LineComment,) . ("//" ++)) $ span (/= '\n') after
         else match
         where match@(token, after) = matchSpan SymbolIdentifier isSymbol str
     isInlineWhitespaceCh :: Char -> Bool
@@ -101,10 +107,7 @@ readToken str@(ch:|rest) = fromMaybe tokenMatch blindMatches
     isInlineWhitespaceCh ch = isSpace ch
 
 tokenize :: String -> [Token]
-tokenize str = case nonEmpty str of
-  Just a -> let (token, rest) = readToken a in
-    token:tokenize rest
-  Nothing -> []
+tokenize = goTokenize $ FilePos 1 1
 
 matchInlineComment :: StateT (Z.Zipper Char) Maybe TokenKind
 matchInlineComment = matchStart *> StateT (Just . runState (go []))

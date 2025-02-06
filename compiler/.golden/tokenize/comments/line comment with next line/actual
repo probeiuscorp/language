@@ -1,9 +1,9 @@
 "a // fix me\ndifferent line"
 ───
-Token {kind = LetterIdentifier, content = "a"}
-Token {kind = InlineWhitespace, content = " "}
-Token {kind = Comment LineComment, content = "// fix me"}
-Token {kind = EOL, content = "\n"}
-Token {kind = LetterIdentifier, content = "different"}
-Token {kind = InlineWhitespace, content = " "}
-Token {kind = LetterIdentifier, content = "line"}
+Token {kind = LetterIdentifier, content = "a", posStart = FilePos {lineno = 1, colno = 1}, posEnd = FilePos {lineno = 1, colno = 2}}
+Token {kind = InlineWhitespace, content = " ", posStart = FilePos {lineno = 1, colno = 2}, posEnd = FilePos {lineno = 1, colno = 3}}
+Token {kind = Comment LineComment, content = "// fix me", posStart = FilePos {lineno = 1, colno = 3}, posEnd = FilePos {lineno = 1, colno = 12}}
+Token {kind = EOL, content = "\n", posStart = FilePos {lineno = 1, colno = 12}, posEnd = FilePos {lineno = 2, colno = 1}}
+Token {kind = LetterIdentifier, content = "different", posStart = FilePos {lineno = 2, colno = 1}, posEnd = FilePos {lineno = 2, colno = 10}}
+Token {kind = InlineWhitespace, content = " ", posStart = FilePos {lineno = 2, colno = 10}, posEnd = FilePos {lineno = 2, colno = 11}}
+Token {kind = LetterIdentifier, content = "line", posStart = FilePos {lineno = 2, colno = 11}, posEnd = FilePos {lineno = 2, colno = 15}}

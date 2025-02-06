@@ -5,59 +5,171 @@ pair = a.
   [ Token
     { kind = LetterIdentifier
     , content = "pair"
+    , posStart = FilePos
+      { lineno = 1
+      , colno = 1
+      }
+    , posEnd = FilePos
+      { lineno = 1
+      , colno = 5
+      }
     }
   , Token
     { kind = InlineWhitespace
     , content = " "
+    , posStart = FilePos
+      { lineno = 1
+      , colno = 5
+      }
+    , posEnd = FilePos
+      { lineno = 1
+      , colno = 6
+      }
     }
   , Token
     { kind = SymbolIdentifier
     , content = "="
+    , posStart = FilePos
+      { lineno = 1
+      , colno = 6
+      }
+    , posEnd = FilePos
+      { lineno = 1
+      , colno = 7
+      }
     }
   , Token
     { kind = InlineWhitespace
     , content = " "
+    , posStart = FilePos
+      { lineno = 1
+      , colno = 7
+      }
+    , posEnd = FilePos
+      { lineno = 1
+      , colno = 8
+      }
     }
   , Token
     { kind = LetterIdentifier
     , content = "a"
+    , posStart = FilePos
+      { lineno = 1
+      , colno = 8
+      }
+    , posEnd = FilePos
+      { lineno = 1
+      , colno = 9
+      }
     }
   , Token
     { kind = SymbolIdentifier
     , content = "."
+    , posStart = FilePos
+      { lineno = 1
+      , colno = 9
+      }
+    , posEnd = FilePos
+      { lineno = 1
+      , colno = 10
+      }
     }
   , Token
     { kind = EOL
     , content = "
       "
+    , posStart = FilePos
+      { lineno = 1
+      , colno = 10
+      }
+    , posEnd = FilePos
+      { lineno = 2
+      , colno = 1
+      }
     }
   , Token
     { kind = InlineWhitespace
     , content = "\x9"
+    , posStart = FilePos
+      { lineno = 2
+      , colno = 1
+      }
+    , posEnd = FilePos
+      { lineno = 2
+      , colno = 2
+      }
     }
   , Token
     { kind = SymbolIdentifier
     , content = "("
+    , posStart = FilePos
+      { lineno = 2
+      , colno = 2
+      }
+    , posEnd = FilePos
+      { lineno = 2
+      , colno = 3
+      }
     }
   , Token
     { kind = LetterIdentifier
     , content = "a"
+    , posStart = FilePos
+      { lineno = 2
+      , colno = 3
+      }
+    , posEnd = FilePos
+      { lineno = 2
+      , colno = 4
+      }
     }
   , Token
     { kind = SymbolIdentifier
     , content = ","
+    , posStart = FilePos
+      { lineno = 2
+      , colno = 4
+      }
+    , posEnd = FilePos
+      { lineno = 2
+      , colno = 5
+      }
     }
   , Token
     { kind = InlineWhitespace
     , content = " "
+    , posStart = FilePos
+      { lineno = 2
+      , colno = 5
+      }
+    , posEnd = FilePos
+      { lineno = 2
+      , colno = 6
+      }
     }
   , Token
     { kind = LetterIdentifier
     , content = "a"
+    , posStart = FilePos
+      { lineno = 2
+      , colno = 6
+      }
+    , posEnd = FilePos
+      { lineno = 2
+      , colno = 7
+      }
     }
   , Token
     { kind = SymbolIdentifier
     , content = ")"
+    , posStart = FilePos
+      { lineno = 2
+      , colno = 7
+      }
+    , posEnd = FilePos
+      { lineno = 2
+      , colno = 8
+      }
     }
   ]
 ]
