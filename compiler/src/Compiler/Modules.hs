@@ -24,7 +24,7 @@ parModBindings = _3
 type TillyModuleBuildable = ((), Map.Map AST.ValidIdentifier AST.Expression)
 
 parseModule :: String -> TillyModuleParsed
-parseModule source = foldr (flip foldDeclaration) m0 declarations
+parseModule source = foldr (maybe id $ flip foldDeclaration) m0 declarations
   where
     m0 :: TillyModuleParsed
     m0 = (,,) mempty mempty mempty

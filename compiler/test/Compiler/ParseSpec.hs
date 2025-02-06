@@ -41,7 +41,7 @@ spec = describe "Compiler.Parse" $ do
     test "continue on closing brace" "import react/hooks {\n\tuseState\n}\n"
     test "continue on closing parenthesis" "pair = a. (\n\ta,\n\ta)\n"
     test "basic multi declaration" "import react {\n\tComponentsProps\n}\n\nimport react/hooks {\n\tuseState\n}\n"
-  let prettyParseDeclaration = prettyShow . evalState parseDeclaration . Z.start . tokenize
+  let prettyParseDeclaration = (\case Just x -> prettyShow x; Nothing -> "Nothing") . evalState parseDeclaration . Z.start . tokenize
   describe "parseImportDeclaration" $ do
     let test = snapshot "parse/parseImport/" prettyParseDeclaration
     test "import all" "import react/hooks"

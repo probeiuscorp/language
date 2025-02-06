@@ -30,11 +30,15 @@ doesDeclarationContinue :: Token -> Bool
 doesDeclarationContinue t = con == ")" || con == "}" || con == "]" || kind t == InlineWhitespace
   where con = content t
 
-parseDeclaration :: State Tokens AST.TopLevelDeclaration
+parseDeclaration :: State Tokens (Maybe AST.TopLevelDeclaration)
 parseDeclaration = do
-  maybeBinding <- gets . evalStateT $ msum [parseBindingDeclaration, parseDataDeclaration, parseInfixDeclaration]
-  specialDeclaration <- parseSpecialDeclaration
-  pure $ fromMaybe specialDeclaration maybeBinding
+  eatWhitespaceTokens
+  gets Z.isDone >>= \case
+    True -> pure Nothing
+    False -> do
+      maybeBinding <- gets . evalStateT $ msum [parseBindingDeclaration, parseDataDeclaration, parseInfixDeclaration]
+      specialDeclaration <- parseSpecialDeclaration
+      pure . Just $ fromMaybe specialDeclaration maybeBinding
   where
     parseSpecialDeclaration = do
       token <- right
