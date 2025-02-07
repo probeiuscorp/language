@@ -83,7 +83,7 @@ goTokenize currentPos (ch:rest) = Token tokenKind tokenContent currentPos nextPo
     ((tokenKind, tokenContent), nextSource) = fromMaybe tokenMatch blindMatches
     str = ch:|rest
     nextPos :: FilePos
-    nextPos = flip (flip foldl currentPos) tokenContent $ \x y -> if y == '\n'
+    nextPos = flip (`foldl` currentPos) tokenContent $ \x y -> if y == '\n'
       then FilePos { lineno = lineno x + 1, colno = 1 }
       else FilePos { lineno = lineno x, colno = colno x + 1 }
     blindMatches = runStateT (asum [matchNumberLiteral, matchInlineComment]) (Z.start (ch:rest)) <&> \(numKind, Z.Zipper consumed zr) ->
@@ -114,7 +114,7 @@ matchInlineComment = matchStart *> StateT (Just . runState (go []))
   where
     go :: [()] -> State (Z.Zipper Char) TokenKind
     go k = do
-      matchIsEnd <- gets $ runStateT $ asum [matchStart *> pure False, matchEnd *> pure True]
+      matchIsEnd <- gets $ runStateT $ asum [False <$ matchStart, True <$ matchEnd]
       maybe (pure ()) (put . snd) matchIsEnd
       case fst <$> matchIsEnd of
         Just False -> go $ () : k
@@ -127,7 +127,7 @@ matchInlineComment = matchStart *> StateT (Just . runState (go []))
     matchStart = eatenIs '/' *> eatenIs '*'
     matchEnd = eatenIs '*' *> eatenIs '/'
     eatenIs :: Char -> StateT (Z.Zipper Char) Maybe ()
-    eatenIs ch = (ch ==) <$> StateT Z.right >>= guard
+    eatenIs ch = StateT Z.right >>= guard . (ch ==)
 
 matchStringLiteral :: String -> (String, String)
 matchStringLiteral ('\\':xs) = matchEscapeSequence xs
