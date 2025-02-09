@@ -2,6 +2,10 @@
   "name": "tilly",
   "displayName": "Tilly",
   "description": "Support for Tilly, a pure function language with structural typing",
+  "publisher": "probeiuscorp",
+  "repository": {
+    "url": "https://github.com/probeiuscorp/language"
+  },
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.90.0"
