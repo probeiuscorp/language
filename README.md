@@ -1,3 +1,5 @@
+<img alt="Tilly Logo" src="tilly-logo-full.png" />
+
 A pure, functional programming language inspired most by Haskell, but a bit by TypeScript.
 
 Notable features and differences from Haskell:
