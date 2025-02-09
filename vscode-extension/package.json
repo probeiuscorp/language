@@ -1,0 +1,37 @@
+{
+  "name": "tilly",
+  "displayName": "Tilly",
+  "description": "Support for Tilly, a pure function language with structural typing",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "tilly",
+        "aliases": [
+          "Tilly",
+          "tilly"
+        ],
+        "extensions": [
+          ".tl"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "tilly",
+        "scopeName": "source.tilly",
+        "path": "./syntaxes/tilly.tmLanguage.json"
+      }
+    ]
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.1"
+  }
+}
