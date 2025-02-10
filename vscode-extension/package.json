@@ -13,6 +13,7 @@
   "categories": [
     "Programming Languages"
   ],
+  "icon": "images/tilly.png",
   "contributes": {
     "languages": [
       {
@@ -24,6 +25,10 @@
         "extensions": [
           ".tl"
         ],
+        "icon": {
+          "light": "images/tilly-low-detail.svg",
+          "dark": "images/tilly-low-detail.svg"
+        },
         "configuration": "./language-configuration.json"
       }
     ],
