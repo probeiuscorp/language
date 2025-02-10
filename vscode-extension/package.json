@@ -3,6 +3,7 @@
   "displayName": "Tilly",
   "description": "Support for Tilly, a pure function language with structural typing",
   "publisher": "probeiuscorp",
+  "license": "MIT",
   "repository": {
     "url": "https://github.com/probeiuscorp/language"
   },
