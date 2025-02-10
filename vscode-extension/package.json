@@ -7,7 +7,7 @@
   "repository": {
     "url": "https://github.com/probeiuscorp/language"
   },
-  "version": "0.0.1",
+  "version": "0.2.0",
   "engines": {
     "vscode": "^1.90.0"
   },
