@@ -22,23 +22,23 @@ If a data declaration is exported, so are all the created nominal types.
 ## Typeclasses
 A typeclass is declared like so:
 ```
-export class Eq a
-    areEq: a -> a -> Bool
+export class Eq a where
+  areEq: a -> a -> Bool
 ```
 
 Typeclass parameters can be constrained.
 ```
-class Functor f: * => *
-    fmap: forall a b. (a -> b) -> f a -> f b
+class Functor f: (* => *) where
+  fmap: (a -> b) -> f a -> f b
 ```
 
 Typeclass members can be given a default implementation.
 ```
-class Monoid a
-    mempty: a
-    mappend: a -> a -> a
-    mconcat: List a -> a
-    mconcat = foldr mappend mempty
+class Monoid a where
+  mempty: a
+  mappend: a -> a -> a
+  mconcat: List a -> a
+  mconcat = foldr mappend mempty
 ```
 
 Only nominal types may be instances of typeclasses. Each nominal type may only
@@ -46,18 +46,17 @@ have one instance of each typeclass.
 ```
 data Maybe = a. Some a + None
 instance Functor Maybe
-    fmap = f. match {
-        Some a = Some $ f a
-        None = None
-    }
+  fmap = f. match
+    Some a = Some $ f a
+    None = None
 ```
 
 Typeclasses work mostly independently from the rest of the type system. Considering
 `Monoid` again, from the rest of the type system's perspective, it's equal to:
 ```
-mempty: forall a: Monoid. a
-mappend: forall a: Monoid. a -> a -> a
-mconcat: forall a: Monoid. List a -> a
+mempty: ∀a: Monoid. a
+mappend: ∀a: Monoid. a -> a -> a
+mconcat: ∀a: Monoid. List a -> a
 ```
 where `Monoid` is a type which happens to have complete intersections with types
 such as `List`.

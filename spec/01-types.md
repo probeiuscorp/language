@@ -54,10 +54,10 @@ A supertype of all functions is
 Type constructors are valid types themselves.
 ```
 type Maybe = a. {
-    type: 'some'
-    data: a
+  type: 'some'
+  data: a
 } + {
-    type: 'none'
+  type: 'none'
 }
 type MaybeAlias = Maybe
 ```
@@ -65,22 +65,22 @@ type MaybeAlias = Maybe
 A type constructor's argument can be constrained like a value constructor's.
 ```
 type FunctionNodeArgument = {
-    Body: *
-    Constraint: *
+  Body: *
+  Constraint: *
 }
 // For demonstration purposes. Unconstrained destructured type members would default to `*`.
 type FunctionNode = { Body, Constraint }: FunctionNodeArgument. {
-    parameterName: String
-    constraint: Constraint
-    body: Body
+  parameterName: String
+  constraint: Constraint
+  body: Body
 }
 type ValueConstructor = FunctionNode {
-    Body: Expression
-    Constraint: TypeExpression
+  Body: Expression
+  Constraint: TypeExpression
 }
 type TypeConstructor = FunctionNode {
-    Body: TypeExpression
-    Constraint: TypeExpression
+  Body: TypeExpression
+  Constraint: TypeExpression
 }
 ```
 
@@ -91,9 +91,9 @@ A supertype for all type constructors is
 
 ```
 type Monad = m: (* => *). {
-    of: ∀a. a -> m a
-    join: ∀a. m $ m a -> m a
-    bind: ∀a b. (a -> m b) -> m a -> m b
+  of: ∀a. a -> m a
+  join: ∀a. m $ m a -> m a
+  bind: ∀a b. (a -> m b) -> m a -> m b
 }
 ```
 

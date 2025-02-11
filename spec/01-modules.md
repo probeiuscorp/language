@@ -46,12 +46,12 @@ Import a specifier to put all of the module's exported bindings in scope.
 <tr>
 <td>
 
-`importer.<extension>`
+`importer.tl`
 
 </td>
 <td>
 
-`some-file.<extension>`
+`some-file.tl`
 
 </td>
 </tr>
@@ -80,7 +80,7 @@ Add import list to whitelist.
 import ./some-file { main }
 ```
 
-(Speculative) Add `hiding` to blacklist.
+Add `hiding` to blacklist.
 ```
 import ./some-file hiding { main }
 ```

@@ -19,8 +19,8 @@ From this function and the intersection (&), the type checker is sound and [axio
 ```
 getRight: ∀a. Either ⊥ a -> a
 getRight = match
-  Left e -> e  // Since `e` is ⊥, it is compatible with `a`
-  Right a -> a
+  Left e = e  // Since `e` is ⊥, it is compatible with `a`
+  Right a = a
 ```
 - Expression oriented and point-free. No special syntax in declarations.
 Anonymous function expressions are focused, with concise syntax for functions as well as for [pattern matching](spec/01-pattern-matching.md):
