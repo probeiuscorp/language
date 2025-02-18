@@ -1,0 +1,12 @@
+combinator $
+  + ErrorNotProvided
+  + ErrorNotInteger
+  + ErrorNotInRange
+───
+$
+⤷ combinator
+⤷ +
+  ⤷ ErrorNotProvided
+  ⤷ +
+    ⤷ ErrorNotInteger
+    ⤷ ErrorNotInRange

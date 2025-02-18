@@ -1,0 +1,10 @@
+
+  + ErrorNotProvided
+  + ErrorNotInteger
+  + ErrorNotInRange
+───
++
+⤷ ErrorNotProvided
+⤷ +
+  ⤷ ErrorNotInteger
+  ⤷ ErrorNotInRange

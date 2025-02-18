@@ -35,8 +35,8 @@ treeificateLinear pt s@(z, state) = maybe s (\(term, zr) -> treeificateLinear pt
   where
     addTerm :: AST.Term -> InfixStack
     addTerm term = case (state, isInfixOp term) of
-      -- Infix operator after infix operator, not legal
-      (OperatorStack stack, Just ident) -> error $ "Unexpected infix operator " ++ ident
+      -- Infix operator after infix operator. Ignore to enable cleaner git diffs.
+      (stack@(OperatorStack _), Just _) -> stack
       -- Operand after infix operator
       (OperatorStack stack, Nothing)    -> OperandStack (Operand term stack)
       -- Infix operator after operand
