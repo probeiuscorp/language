@@ -5,6 +5,7 @@ module Compiler.Linearize (linearize, Linear, Linearized, Linearization, GLinear
 
 import Compiler.Tokenize
 import qualified Compiler.Zipper as Z
+import qualified Control.Monad.State as St
 
 type Tokens = Z.Zipper Token
 
@@ -16,6 +17,7 @@ type GLinearization a = [GLinearized a]
 -- first position of LinFunction.
 data GLinearized a
   = LinFunction (GLinearization a) (GLinearization a)
+  | LinWhere (GLinearization a) [GLinearization a]
   | LinBrackets (GLinearization a)
   | LinBraces (GLinearization a)
   | LinParens (GLinearization a)
@@ -52,6 +54,8 @@ matchHead p handleEmpty (t, zr) l = let con = content t in if
   | con == "(" -> pair LinParens ")"
   | con == "{" -> pair LinBraces "}"
   | con == "[" -> pair LinBrackets "]"
+  | con == "where" -> let (clauses, zrr) = St.runState offsides zr in
+    (pure $ LinWhere (reverse l) (linearize <$> clauses), zrr)
   | otherwise -> go zr $ LinToken t : l
   where
     go = linearizeOrClose p handleEmpty
@@ -76,3 +80,32 @@ shouldBeMadeParam :: Linearized -> Bool
 shouldBeMadeParam (LinToken t) = kind t /= SymbolIdentifier
 shouldBeMadeParam (LinFunction _ _ ) = False
 shouldBeMadeParam _ = True
+
+offsides :: St.State Tokens [Tokens]
+offsides = goNew Nothing
+  where
+    goNew s = St.modify (Z.eat $ (/= EOL) . kind) *> go s
+    go :: Maybe Int -> St.State Tokens [Tokens]
+    go runningCol = do
+      St.modify $ Z.eat isWhitespace
+      St.gets Z.right >>= \case
+        (Just (t, zr)) -> let col = colno $ posRangeStart $ posRange t in
+          case maybe EQ (compare col) runningCol of
+            -- Continue collecting
+            GT -> St.put zr *> go runningCol
+            -- Collect in new
+            EQ -> do
+              x <- St.gets $ Z.start . reverse . Z.done
+              St.modify Z.restart
+              xs <- goNew $ Just col
+              pure $ case runningCol of
+                Nothing -> xs  -- no clause yet, should not record
+                Just _ -> x : xs
+            LT -> St.put zr *> stop
+        _ -> stop
+      where
+        stop = do
+          x <- St.gets $ Z.start . reverse . Z.done
+          pure $ case runningCol of
+            Nothing -> []
+            Just _ -> [x]

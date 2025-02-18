@@ -1,7 +1,7 @@
 module Compiler.Tokenize (
-  tokenize, Token(Token), TokenKind(..),
+  tokenize, Token(..), FilePos(..), PosRange(..), TokenKind(..),
   NumberContents(..), Radix(..), parseIntegral, parseFractional, numScalar, baseOfRadix,
-  content, kind, isWhitespace, catTokens
+  isWhitespace, catTokens
 ) where
 
 import qualified Compiler.Zipper as Z

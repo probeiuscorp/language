@@ -1,0 +1,14 @@
+main = putStrLn
+  where
+───
+[
+  LinWhere [
+    LinToken "main",
+    LinToken " ",
+    LinToken "=",
+    LinToken " ",
+    LinToken "putStrLn",
+    LinToken "\n",
+    LinToken "  ",
+  ] [],
+]
