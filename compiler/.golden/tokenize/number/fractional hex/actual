@@ -14,12 +14,14 @@ Token
       }
     )
   , content = "0xFF.8"
-  , posStart = FilePos
-    { lineno = 1
-    , colno = 1
-    }
-  , posEnd = FilePos
-    { lineno = 1
-    , colno = 7
+  , posRange = PosRange
+    { posRangeStart = FilePos
+      { lineno = 1
+      , colno = 1
+      }
+    , posRangeEnd = FilePos
+      { lineno = 1
+      , colno = 7
+      }
     }
   }

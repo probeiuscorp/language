@@ -1,5 +1,5 @@
 "  \n  "
 ───
-Token {kind = InlineWhitespace, content = "  ", posStart = FilePos {lineno = 1, colno = 1}, posEnd = FilePos {lineno = 1, colno = 3}}
-Token {kind = EOL, content = "\n", posStart = FilePos {lineno = 1, colno = 3}, posEnd = FilePos {lineno = 2, colno = 1}}
-Token {kind = InlineWhitespace, content = "  ", posStart = FilePos {lineno = 2, colno = 1}, posEnd = FilePos {lineno = 2, colno = 3}}
+Token {kind = InlineWhitespace, content = "  ", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 1}, posRangeEnd = FilePos {lineno = 1, colno = 3}}}
+Token {kind = EOL, content = "\n", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 3}, posRangeEnd = FilePos {lineno = 2, colno = 1}}}
+Token {kind = InlineWhitespace, content = "  ", posRange = PosRange {posRangeStart = FilePos {lineno = 2, colno = 1}, posRangeEnd = FilePos {lineno = 2, colno = 3}}}

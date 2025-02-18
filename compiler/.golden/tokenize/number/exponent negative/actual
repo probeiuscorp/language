@@ -12,12 +12,14 @@ Token
       }
     )
   , content = "1e-4"
-  , posStart = FilePos
-    { lineno = 1
-    , colno = 1
-    }
-  , posEnd = FilePos
-    { lineno = 1
-    , colno = 5
+  , posRange = PosRange
+    { posRangeStart = FilePos
+      { lineno = 1
+      , colno = 1
+      }
+    , posRangeEnd = FilePos
+      { lineno = 1
+      , colno = 5
+      }
     }
   }

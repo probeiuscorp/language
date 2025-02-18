@@ -50,11 +50,12 @@ data TokenKind
   deriving (Eq, Show, Ord)
 data FilePos = FilePos { lineno :: Int, colno :: Int }
   deriving (Eq, Ord, Show)
+data PosRange = PosRange { posRangeStart :: FilePos, posRangeEnd :: FilePos }
+  deriving (Eq, Ord, Show)
 data Token = Token
   { kind :: TokenKind
   , content :: String
-  , posStart :: FilePos
-  , posEnd :: FilePos
+  , posRange :: PosRange
   } deriving (Eq, Show, Ord)
 type TokenMatch = (TokenKind, String)
 
@@ -78,7 +79,7 @@ isSymbol ch = not $ isDigit ch || isAlphaNum ch || isSpace ch || shouldTokenizeA
 
 goTokenize :: FilePos -> String -> [Token]
 goTokenize _ [] = []
-goTokenize currentPos (ch:rest) = Token tokenKind tokenContent currentPos nextPos : goTokenize nextPos nextSource
+goTokenize currentPos (ch:rest) = Token tokenKind tokenContent (PosRange currentPos nextPos) : goTokenize nextPos nextSource
   where
     ((tokenKind, tokenContent), nextSource) = fromMaybe tokenMatch blindMatches
     str = ch:|rest

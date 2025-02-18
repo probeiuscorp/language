@@ -11,136 +11,158 @@ import react/hooks {
   [ Token
     { kind = LetterIdentifier
     , content = "import"
-    , posStart = FilePos
-      { lineno = 1
-      , colno = 1
-      }
-    , posEnd = FilePos
-      { lineno = 1
-      , colno = 7
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 1
+        , colno = 1
+        }
+      , posRangeEnd = FilePos
+        { lineno = 1
+        , colno = 7
+        }
       }
     }
   , Token
     { kind = InlineWhitespace
     , content = " "
-    , posStart = FilePos
-      { lineno = 1
-      , colno = 7
-      }
-    , posEnd = FilePos
-      { lineno = 1
-      , colno = 8
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 1
+        , colno = 7
+        }
+      , posRangeEnd = FilePos
+        { lineno = 1
+        , colno = 8
+        }
       }
     }
   , Token
     { kind = LetterIdentifier
     , content = "react"
-    , posStart = FilePos
-      { lineno = 1
-      , colno = 8
-      }
-    , posEnd = FilePos
-      { lineno = 1
-      , colno = 13
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 1
+        , colno = 8
+        }
+      , posRangeEnd = FilePos
+        { lineno = 1
+        , colno = 13
+        }
       }
     }
   , Token
     { kind = InlineWhitespace
     , content = " "
-    , posStart = FilePos
-      { lineno = 1
-      , colno = 13
-      }
-    , posEnd = FilePos
-      { lineno = 1
-      , colno = 14
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 1
+        , colno = 13
+        }
+      , posRangeEnd = FilePos
+        { lineno = 1
+        , colno = 14
+        }
       }
     }
   , Token
     { kind = SymbolIdentifier
     , content = "{"
-    , posStart = FilePos
-      { lineno = 1
-      , colno = 14
-      }
-    , posEnd = FilePos
-      { lineno = 1
-      , colno = 15
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 1
+        , colno = 14
+        }
+      , posRangeEnd = FilePos
+        { lineno = 1
+        , colno = 15
+        }
       }
     }
   , Token
     { kind = EOL
     , content = "
       "
-    , posStart = FilePos
-      { lineno = 1
-      , colno = 15
-      }
-    , posEnd = FilePos
-      { lineno = 2
-      , colno = 1
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 1
+        , colno = 15
+        }
+      , posRangeEnd = FilePos
+        { lineno = 2
+        , colno = 1
+        }
       }
     }
   , Token
     { kind = InlineWhitespace
     , content = "\x9"
-    , posStart = FilePos
-      { lineno = 2
-      , colno = 1
-      }
-    , posEnd = FilePos
-      { lineno = 2
-      , colno = 2
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 2
+        , colno = 1
+        }
+      , posRangeEnd = FilePos
+        { lineno = 2
+        , colno = 2
+        }
       }
     }
   , Token
     { kind = LetterIdentifier
     , content = "ComponentsProps"
-    , posStart = FilePos
-      { lineno = 2
-      , colno = 2
-      }
-    , posEnd = FilePos
-      { lineno = 2
-      , colno = 17
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 2
+        , colno = 2
+        }
+      , posRangeEnd = FilePos
+        { lineno = 2
+        , colno = 17
+        }
       }
     }
   , Token
     { kind = EOL
     , content = "
       "
-    , posStart = FilePos
-      { lineno = 2
-      , colno = 17
-      }
-    , posEnd = FilePos
-      { lineno = 3
-      , colno = 1
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 2
+        , colno = 17
+        }
+      , posRangeEnd = FilePos
+        { lineno = 3
+        , colno = 1
+        }
       }
     }
   , Token
     { kind = SymbolIdentifier
     , content = "}"
-    , posStart = FilePos
-      { lineno = 3
-      , colno = 1
-      }
-    , posEnd = FilePos
-      { lineno = 3
-      , colno = 2
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 3
+        , colno = 1
+        }
+      , posRangeEnd = FilePos
+        { lineno = 3
+        , colno = 2
+        }
       }
     }
   , Token
     { kind = EOL
     , content = "
       "
-    , posStart = FilePos
-      { lineno = 3
-      , colno = 2
-      }
-    , posEnd = FilePos
-      { lineno = 4
-      , colno = 1
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 3
+        , colno = 2
+        }
+      , posRangeEnd = FilePos
+        { lineno = 4
+        , colno = 1
+        }
       }
     }
   ]
@@ -149,172 +171,200 @@ import react/hooks {
     { kind = EOL
     , content = "
       "
-    , posStart = FilePos
-      { lineno = 4
-      , colno = 1
-      }
-    , posEnd = FilePos
-      { lineno = 5
-      , colno = 1
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 4
+        , colno = 1
+        }
+      , posRangeEnd = FilePos
+        { lineno = 5
+        , colno = 1
+        }
       }
     }
   , Token
     { kind = LetterIdentifier
     , content = "import"
-    , posStart = FilePos
-      { lineno = 5
-      , colno = 1
-      }
-    , posEnd = FilePos
-      { lineno = 5
-      , colno = 7
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 5
+        , colno = 1
+        }
+      , posRangeEnd = FilePos
+        { lineno = 5
+        , colno = 7
+        }
       }
     }
   , Token
     { kind = InlineWhitespace
     , content = " "
-    , posStart = FilePos
-      { lineno = 5
-      , colno = 7
-      }
-    , posEnd = FilePos
-      { lineno = 5
-      , colno = 8
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 5
+        , colno = 7
+        }
+      , posRangeEnd = FilePos
+        { lineno = 5
+        , colno = 8
+        }
       }
     }
   , Token
     { kind = LetterIdentifier
     , content = "react"
-    , posStart = FilePos
-      { lineno = 5
-      , colno = 8
-      }
-    , posEnd = FilePos
-      { lineno = 5
-      , colno = 13
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 5
+        , colno = 8
+        }
+      , posRangeEnd = FilePos
+        { lineno = 5
+        , colno = 13
+        }
       }
     }
   , Token
     { kind = SymbolIdentifier
     , content = "/"
-    , posStart = FilePos
-      { lineno = 5
-      , colno = 13
-      }
-    , posEnd = FilePos
-      { lineno = 5
-      , colno = 14
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 5
+        , colno = 13
+        }
+      , posRangeEnd = FilePos
+        { lineno = 5
+        , colno = 14
+        }
       }
     }
   , Token
     { kind = LetterIdentifier
     , content = "hooks"
-    , posStart = FilePos
-      { lineno = 5
-      , colno = 14
-      }
-    , posEnd = FilePos
-      { lineno = 5
-      , colno = 19
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 5
+        , colno = 14
+        }
+      , posRangeEnd = FilePos
+        { lineno = 5
+        , colno = 19
+        }
       }
     }
   , Token
     { kind = InlineWhitespace
     , content = " "
-    , posStart = FilePos
-      { lineno = 5
-      , colno = 19
-      }
-    , posEnd = FilePos
-      { lineno = 5
-      , colno = 20
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 5
+        , colno = 19
+        }
+      , posRangeEnd = FilePos
+        { lineno = 5
+        , colno = 20
+        }
       }
     }
   , Token
     { kind = SymbolIdentifier
     , content = "{"
-    , posStart = FilePos
-      { lineno = 5
-      , colno = 20
-      }
-    , posEnd = FilePos
-      { lineno = 5
-      , colno = 21
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 5
+        , colno = 20
+        }
+      , posRangeEnd = FilePos
+        { lineno = 5
+        , colno = 21
+        }
       }
     }
   , Token
     { kind = EOL
     , content = "
       "
-    , posStart = FilePos
-      { lineno = 5
-      , colno = 21
-      }
-    , posEnd = FilePos
-      { lineno = 6
-      , colno = 1
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 5
+        , colno = 21
+        }
+      , posRangeEnd = FilePos
+        { lineno = 6
+        , colno = 1
+        }
       }
     }
   , Token
     { kind = InlineWhitespace
     , content = "\x9"
-    , posStart = FilePos
-      { lineno = 6
-      , colno = 1
-      }
-    , posEnd = FilePos
-      { lineno = 6
-      , colno = 2
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 6
+        , colno = 1
+        }
+      , posRangeEnd = FilePos
+        { lineno = 6
+        , colno = 2
+        }
       }
     }
   , Token
     { kind = LetterIdentifier
     , content = "useState"
-    , posStart = FilePos
-      { lineno = 6
-      , colno = 2
-      }
-    , posEnd = FilePos
-      { lineno = 6
-      , colno = 10
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 6
+        , colno = 2
+        }
+      , posRangeEnd = FilePos
+        { lineno = 6
+        , colno = 10
+        }
       }
     }
   , Token
     { kind = EOL
     , content = "
       "
-    , posStart = FilePos
-      { lineno = 6
-      , colno = 10
-      }
-    , posEnd = FilePos
-      { lineno = 7
-      , colno = 1
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 6
+        , colno = 10
+        }
+      , posRangeEnd = FilePos
+        { lineno = 7
+        , colno = 1
+        }
       }
     }
   , Token
     { kind = SymbolIdentifier
     , content = "}"
-    , posStart = FilePos
-      { lineno = 7
-      , colno = 1
-      }
-    , posEnd = FilePos
-      { lineno = 7
-      , colno = 2
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 7
+        , colno = 1
+        }
+      , posRangeEnd = FilePos
+        { lineno = 7
+        , colno = 2
+        }
       }
     }
   , Token
     { kind = EOL
     , content = "
       "
-    , posStart = FilePos
-      { lineno = 7
-      , colno = 2
-      }
-    , posEnd = FilePos
-      { lineno = 8
-      , colno = 1
+    , posRange = PosRange
+      { posRangeStart = FilePos
+        { lineno = 7
+        , colno = 2
+        }
+      , posRangeEnd = FilePos
+        { lineno = 8
+        , colno = 1
+        }
       }
     }
   ]

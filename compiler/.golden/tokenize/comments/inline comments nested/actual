@@ -1,7 +1,7 @@
 "/* /* */ /* /* */ */ */ outside /* inside again */"
 ───
-Token {kind = Comment InlineComment, content = "/* /* */ /* /* */ */ */", posStart = FilePos {lineno = 1, colno = 1}, posEnd = FilePos {lineno = 1, colno = 24}}
-Token {kind = InlineWhitespace, content = " ", posStart = FilePos {lineno = 1, colno = 24}, posEnd = FilePos {lineno = 1, colno = 25}}
-Token {kind = LetterIdentifier, content = "outside", posStart = FilePos {lineno = 1, colno = 25}, posEnd = FilePos {lineno = 1, colno = 32}}
-Token {kind = InlineWhitespace, content = " ", posStart = FilePos {lineno = 1, colno = 32}, posEnd = FilePos {lineno = 1, colno = 33}}
-Token {kind = Comment InlineComment, content = "/* inside again */", posStart = FilePos {lineno = 1, colno = 33}, posEnd = FilePos {lineno = 1, colno = 51}}
+Token {kind = Comment InlineComment, content = "/* /* */ /* /* */ */ */", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 1}, posRangeEnd = FilePos {lineno = 1, colno = 24}}}
+Token {kind = InlineWhitespace, content = " ", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 24}, posRangeEnd = FilePos {lineno = 1, colno = 25}}}
+Token {kind = LetterIdentifier, content = "outside", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 25}, posRangeEnd = FilePos {lineno = 1, colno = 32}}}
+Token {kind = InlineWhitespace, content = " ", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 32}, posRangeEnd = FilePos {lineno = 1, colno = 33}}}
+Token {kind = Comment InlineComment, content = "/* inside again */", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 33}, posRangeEnd = FilePos {lineno = 1, colno = 51}}}

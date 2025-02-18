@@ -16,12 +16,14 @@ Token
       }
     )
   , content = "+0x12B0"
-  , posStart = FilePos
-    { lineno = 1
-    , colno = 1
-    }
-  , posEnd = FilePos
-    { lineno = 1
-    , colno = 8
+  , posRange = PosRange
+    { posRangeStart = FilePos
+      { lineno = 1
+      , colno = 1
+      }
+    , posRangeEnd = FilePos
+      { lineno = 1
+      , colno = 8
+      }
     }
   }

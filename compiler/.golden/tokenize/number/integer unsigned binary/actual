@@ -20,12 +20,14 @@ Token
       }
     )
   , content = "0b01101001"
-  , posStart = FilePos
-    { lineno = 1
-    , colno = 1
-    }
-  , posEnd = FilePos
-    { lineno = 1
-    , colno = 11
+  , posRange = PosRange
+    { posRangeStart = FilePos
+      { lineno = 1
+      , colno = 1
+      }
+    , posRangeEnd = FilePos
+      { lineno = 1
+      , colno = 11
+      }
     }
   }

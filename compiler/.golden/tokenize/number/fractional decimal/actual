@@ -17,12 +17,14 @@ Token
       }
     )
   , content = "10.25"
-  , posStart = FilePos
-    { lineno = 1
-    , colno = 1
-    }
-  , posEnd = FilePos
-    { lineno = 1
-    , colno = 6
+  , posRange = PosRange
+    { posRangeStart = FilePos
+      { lineno = 1
+      , colno = 1
+      }
+    , posRangeEnd = FilePos
+      { lineno = 1
+      , colno = 6
+      }
     }
   }
