@@ -24,3 +24,13 @@ spec = describe "parseInfix" $ do
   test "single term" "a"
   test "non associative alone" "a \\ b"
   test "non associative complex" "a $ b c \\ d $ e"
+  test "ignore first operator"
+    "\n\
+    \  + ErrorNotProvided\n\
+    \  + ErrorNotInteger\n\
+    \  + ErrorNotInRange"
+  test "ignore first operator even after another operator"
+    "combinator $\n\
+    \  + ErrorNotProvided\n\
+    \  + ErrorNotInteger\n\
+    \  + ErrorNotInRange"
