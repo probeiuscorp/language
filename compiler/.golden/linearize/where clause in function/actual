@@ -1,0 +1,102 @@
+main = x y. putStrLn $ first id $ second id $ (3, 4)
+  where
+    first = f x.
+      (f $ fst x, snd x)
+    second = f x.
+      (fst x, f $ snd x)
+───
+[
+  LinToken "main",
+  LinToken " ",
+  LinToken "=",
+  LinFunction [
+    LinToken " ",
+    LinToken "x",
+    LinToken " ",
+    LinToken "y",
+  ] [
+    LinWhere [
+      LinToken " ",
+      LinToken "putStrLn",
+      LinToken " ",
+      LinToken "$",
+      LinToken " ",
+      LinToken "first",
+      LinToken " ",
+      LinToken "id",
+      LinToken " ",
+      LinToken "$",
+      LinToken " ",
+      LinToken "second",
+      LinToken " ",
+      LinToken "id",
+      LinToken " ",
+      LinToken "$",
+      LinToken " ",
+      LinParens [
+        LinToken "4",
+        LinToken " ",
+        LinToken ",",
+        LinToken "3",
+      ],
+      LinToken "\n",
+      LinToken "  ",
+    ] [
+      LinToken "first",
+      LinToken " ",
+      LinToken "=",
+      LinFunction [
+        LinToken " ",
+        LinToken "f",
+        LinToken " ",
+        LinToken "x",
+      ] [
+        LinToken "\n",
+        LinToken "      ",
+        LinParens [
+          LinToken "f",
+          LinToken " ",
+          LinToken "$",
+          LinToken " ",
+          LinToken "fst",
+          LinToken " ",
+          LinToken "x",
+          LinToken ",",
+          LinToken " ",
+          LinToken "snd",
+          LinToken " ",
+          LinToken "x",
+        ],
+        LinToken "\n",
+        LinToken "    ",
+      ],
+    ] [
+      LinToken "second",
+      LinToken " ",
+      LinToken "=",
+      LinFunction [
+        LinToken " ",
+        LinToken "f",
+        LinToken " ",
+        LinToken "x",
+      ] [
+        LinToken "\n",
+        LinToken "      ",
+        LinParens [
+          LinToken "fst",
+          LinToken " ",
+          LinToken "x",
+          LinToken ",",
+          LinToken " ",
+          LinToken "f",
+          LinToken " ",
+          LinToken "$",
+          LinToken " ",
+          LinToken "snd",
+          LinToken " ",
+          LinToken "x",
+        ],
+      ],
+    ],
+  ],
+]

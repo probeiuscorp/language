@@ -17,6 +17,7 @@ prettyPrintLinearization l = "[\n" ++ go "" l ++ "]"
     prettyPrintLinearized indent (LinParens lbody)   = indent ++ "LinParens" ++   showLinearization indent lbody ++ ",\n"
     prettyPrintLinearized indent (LinBraces lbody)   = indent ++ "LinBraces" ++   showLinearization indent lbody ++ ",\n"
     prettyPrintLinearized indent (LinBrackets lbody) = indent ++ "LinBrackets" ++ showLinearization indent lbody ++ ",\n"
+    prettyPrintLinearized indent (LinWhere lbody lclauses) = indent ++ "LinWhere" ++ showLinearization indent lbody ++ (if null lclauses then " []" else showLinearization indent =<< lclauses) ++ ",\n"
     showLinearization :: String -> Linearization -> String
     showLinearization indent lbody = " [\n" ++ go indent lbody ++ indent ++ "]"
 
@@ -53,3 +54,29 @@ spec = describe "linearize" $ do
     \  b = undefined,\n\
     \  c = x y. y\n\
     \}"
+  test "where clause simple"
+    "main = putStrLn $ first id $ second id $ (3, 4)\n\
+    \  where\n\
+    \    first = f x.\n\
+    \      (f $ fst x, snd x)\n\
+    \    second = f x.\n\
+    \      (fst x, f $ snd x)"
+  test "where clause blank lines"
+    "main = putStrLn $ first id $ second id $ (3, 4)\n\
+    \  where\n\
+    \  \n\
+    \    first = f x.\n\
+    \      (f $ fst x, snd x)\n\
+    \  \n\
+    \    second = f x.\n\
+    \      (fst x, f $ snd x)"
+  test "where clause in function"
+    "main = x y. putStrLn $ first id $ second id $ (3, 4)\n\
+    \  where\n\
+    \    first = f x.\n\
+    \      (f $ fst x, snd x)\n\
+    \    second = f x.\n\
+    \      (fst x, f $ snd x)"
+  test "where clause no clauses"
+    "main = putStrLn\n\
+    \  where"
