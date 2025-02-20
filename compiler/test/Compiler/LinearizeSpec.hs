@@ -18,6 +18,7 @@ prettyPrintLinearization l = "[\n" ++ go "" l ++ "]"
     prettyPrintLinearized indent (LinBraces lbody)   = indent ++ "LinBraces" ++   showLinearization indent lbody ++ ",\n"
     prettyPrintLinearized indent (LinBrackets lbody) = indent ++ "LinBrackets" ++ showLinearization indent lbody ++ ",\n"
     prettyPrintLinearized indent (LinWhere lbody lclauses) = indent ++ "LinWhere" ++ showLinearization indent lbody ++ (if null lclauses then " []" else showLinearization indent =<< lclauses) ++ ",\n"
+    prettyPrintLinearized indent (LinMultilineOperator operator lclauses) = indent ++ "LinMultilineOperator(" ++ operator ++ ")" ++ (if null lclauses then " []" else showLinearization indent =<< lclauses) ++ ",\n"
     showLinearization :: String -> Linearization -> String
     showLinearization indent lbody = " [\n" ++ go indent lbody ++ indent ++ "]"
 
@@ -80,3 +81,10 @@ spec = describe "linearize" $ do
   test "where clause no clauses"
     "main = putStrLn\n\
     \  where"
+  test "multiline operator"
+    "combinator $ `>>\n\
+    \  putStrLn \"Who are you?\"\n\
+    \  K $ getLine\n\
+    \  name. putStrLn $\n\
+    \    \"Hello, \" ++ name\n\
+    \  K $ putStrLn \"Wow, you have a long name!\" <* guard $$ length name > 10"

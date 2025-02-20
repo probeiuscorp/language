@@ -18,6 +18,7 @@ type GLinearization a = [GLinearized a]
 data GLinearized a
   = LinFunction (GLinearization a) (GLinearization a)
   | LinWhere (GLinearization a) [GLinearization a]
+  | LinMultilineOperator String [GLinearization a]
   | LinBrackets (GLinearization a)
   | LinBraces (GLinearization a)
   | LinParens (GLinearization a)
@@ -56,9 +57,15 @@ matchHead p handleEmpty (t, zr) l = let con = content t in if
   | con == "[" -> pair LinBrackets "]"
   | con == "where" -> let (clauses, zrr) = St.runState offsides zr in
     (pure $ LinWhere (reverse l) (linearize <$> clauses), zrr)
+  | kind t == SymbolIdentifier, Just operator <- startsWith '`' con ->
+    let (clauses, zrr) = St.runState offsides zr in
+      (LinMultilineOperator operator (linearize <$> clauses) : l, zrr)
   | otherwise -> go zr $ LinToken t : l
   where
     go = linearizeOrClose p handleEmpty
+    startsWith :: Eq a => a -> [a] -> Maybe [a]
+    startsWith _ [] = Nothing
+    startsWith a (x:xs) = if a == x then Just xs else Nothing
     pairlike construct lbefore (lcontents, tokensAfter) = go tokensAfter $ construct lcontents : lbefore
     tokenIs con t' = if content t' == con then Eat else Continue
     pair construct exitSeq = pairlike construct l $
