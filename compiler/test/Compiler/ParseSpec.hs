@@ -19,6 +19,10 @@ prettyPrintTerm indent (AST.TermApplication fn arg) = "(" ++ prettyPrintTerm ind
 prettyPrintTerm _ (AST.TermIdentifier ident) = ident
 prettyPrintTerm lastIndent (AST.TermFunction params body) = "TermFunction " ++ show params ++ " (\n" ++ indent ++ prettyPrintTerm indent body ++ "\n" ++ lastIndent ++ ")"
   where indent = "  " ++ lastIndent
+prettyPrintTerm lastIndent (AST.TermWhere body clauses) = "TermWhere (\n" ++ indent ++ prettyPrintTerm indent body ++ "\n" ++ lastIndent ++ ") [\n" ++ (clauses >>= showEntry) ++ lastIndent ++ "]"
+  where
+    showEntry (destruct, clause) = indent ++ show destruct ++ " = " ++ prettyPrintTerm indent clause ++ "\n"
+    indent = "  " ++ lastIndent
 prettyPrintTerm indent (AST.TermRecord fields) = "TermRecord {\n" ++ (fields >>= showField) ++ indent ++ "}"
   where
     nextIndent = "  " ++ indent
@@ -121,3 +125,10 @@ spec = describe "Compiler.Parse" $ do
       "f. match\n\
       \  (Cons x xs) = f x $ xs\n\
       \  (Nil) = Nil\n"
+    test "where clause in function"
+      "x y. putStrLn $ first id $ second id $ (x, y)\n\
+      \  where\n\
+      \    first = f x.\n\
+      \      (f $ fst x, snd x)\n\
+      \    second = f x.\n\
+      \      (fst x, f $ snd x)"

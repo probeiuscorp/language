@@ -1,0 +1,25 @@
+x y. putStrLn $ first id $ second id $ (x, y)
+  where
+    first = f x.
+      (f $ fst x, snd x)
+    second = f x.
+      (fst x, f $ snd x)
+───
+TermFunction [DestructBind "x",DestructBind "y"] (
+  TermWhere (
+    $
+    ⤷ putStrLn
+    ⤷ $
+      ⤷ (first id)
+      ⤷ $
+        ⤷ (second id)
+        ⤷ TermTuple [Just (TermIdentifier "y"),Just (TermIdentifier "x")]
+  ) [
+    DestructBind "first" = TermFunction [DestructBind "f",DestructBind "x"] (
+      TermTuple [Just (TermApplication (TermApplication (TermIdentifier "$") (TermIdentifier "f")) (TermApplication (TermIdentifier "fst") (TermIdentifier "x"))),Just (TermApplication (TermIdentifier "snd") (TermIdentifier "x"))]
+    )
+    DestructBind "second" = TermFunction [DestructBind "f",DestructBind "x"] (
+      TermTuple [Just (TermApplication (TermIdentifier "fst") (TermIdentifier "x")),Just (TermApplication (TermApplication (TermIdentifier "$") (TermIdentifier "f")) (TermApplication (TermIdentifier "snd") (TermIdentifier "x")))]
+    )
+  ]
+)

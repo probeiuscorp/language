@@ -16,6 +16,7 @@ data Term
   = TermFunction [Destructuring] Term
   | TermApplication Term Term
   | TermIdentifier ValidIdentifier
+  | TermWhere Term [(Destructuring, Term)]
   | TermNumberLiteral NumberContents
   | TermRecord [(String, Maybe Term)]
   | TermTuple [Maybe Term]
