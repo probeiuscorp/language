@@ -9,6 +9,7 @@ import Compiler.Linearize (linearize)
 import Compiler.SnapshotTesting (snapshot, prettyShow)
 import Control.Monad.State (evalState)
 
+parens str = "(" ++ str ++ ")"
 prettyPrintTerm :: String -> AST.Term -> String
 prettyPrintTerm lastIndent (AST.TermApplication (AST.TermApplication fn arg1) arg2) =
   prettyPrintTerm lastIndent fn
@@ -33,6 +34,7 @@ prettyPrintTerm indent (AST.TermMatch clauses) = "TermMatch [\n" ++ (clauses >>=
   where
     nextIndent = "  " ++ indent
     showField (destructurings, term) = nextIndent ++ show destructurings ++ " = " ++ prettyPrintTerm nextIndent term ++ "\n"
+prettyPrintTerm _ term@(AST.TermStringLiteral _) = parens $ show term
 prettyPrintTerm _ term = show term
 
 spec :: SpecWith ()

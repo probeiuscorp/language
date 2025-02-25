@@ -18,6 +18,7 @@ data Term
   | TermIdentifier ValidIdentifier
   | TermWhere Term [(Destructuring, Term)]
   | TermNumberLiteral NumberContents
+  | TermStringLiteral String
   | TermRecord [(String, Maybe Term)]
   | TermTuple [Maybe Term]
   | TermList [Maybe Term]

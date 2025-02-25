@@ -204,6 +204,7 @@ parseOneTerm z = Z.right z >>= \(lin, zr) -> let ok term = Just (term, zr) in ca
   (LinToken t) | content t == "match" -> Just $ runState parseMatch zr
   (LinToken t) | kind t == LetterIdentifier || kind t == SymbolIdentifier -> ok $ AST.TermIdentifier $ content t
   (LinToken (Token { kind = NumberLiteral numContents })) -> ok $ AST.TermNumberLiteral numContents
+  (LinToken (Token { kind = StringLiteral str })) -> ok $ AST.TermStringLiteral str
   (LinWhere body clauses) -> ok $ AST.TermWhere (parseTerm $ Z.start body) $ clauses <&> \l ->
     let (Just zBody, zDestruct) = breakWhen (is "=") $ Z.start l in
       (evalState parseDestructuring zDestruct, parseTerm zBody)
