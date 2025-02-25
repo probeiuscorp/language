@@ -17,6 +17,7 @@ data Term
   | TermApplication Term Term
   | TermIdentifier ValidIdentifier
   | TermWhere Term [(Destructuring, Term)]
+  | TermMultilineOperator Term [Term]
   | TermNumberLiteral NumberContents
   | TermStringLiteral String
   | TermRecord [(String, Maybe Term)]

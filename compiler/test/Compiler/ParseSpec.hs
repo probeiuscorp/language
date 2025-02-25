@@ -24,6 +24,7 @@ prettyPrintTerm lastIndent (AST.TermWhere body clauses) = "TermWhere (\n" ++ ind
   where
     showEntry (destruct, clause) = indent ++ show destruct ++ " = " ++ prettyPrintTerm indent clause ++ "\n"
     indent = "  " ++ lastIndent
+prettyPrintTerm lastIndent (AST.TermMultilineOperator op lines) = "TermMultilineOperator " ++ parens (show op) ++ "\n" ++ (lines >>= ((lastIndent ++ "\x2014 ") ++) . (++ "\n") . prettyPrintTerm ("  " ++ lastIndent))
 prettyPrintTerm indent (AST.TermRecord fields) = "TermRecord {\n" ++ (fields >>= showField) ++ indent ++ "}"
   where
     nextIndent = "  " ++ indent
@@ -134,3 +135,10 @@ spec = describe "Compiler.Parse" $ do
       \      (f $ fst x, snd x)\n\
       \    second = f x.\n\
       \      (fst x, f $ snd x)"
+    test "multiline operator"
+      "combinator $ `>>\n\
+      \  putStrLn \"Who are you?\"\n\
+      \  K $ getLine\n\
+      \  name. putStrLn $\n\
+      \    \"Hello, \" ++ name\n\
+      \  K $ putStrLn \"Wow, you have a long name!\" <* guard $$ length name > 10"

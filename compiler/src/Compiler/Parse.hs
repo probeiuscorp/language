@@ -208,6 +208,7 @@ parseOneTerm z = Z.right z >>= \(lin, zr) -> let ok term = Just (term, zr) in ca
   (LinWhere body clauses) -> ok $ AST.TermWhere (parseTerm $ Z.start body) $ clauses <&> \l ->
     let (Just zBody, zDestruct) = breakWhen (is "=") $ Z.start l in
       (evalState parseDestructuring zDestruct, parseTerm zBody)
+  (LinMultilineOperator op ls) -> ok $ AST.TermMultilineOperator (AST.TermIdentifier op) $ parseTerm . Z.start <$> ls
   (LinParens l) -> ok $ parseParens $ Z.start l
   (LinBrackets l) -> ok $ AST.TermList $ either (pure . Just) id $ parseCommaSeparated $ Z.start l
   (LinBraces l) -> ok $ parseRecordLiteral $ Z.start l

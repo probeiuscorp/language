@@ -1,0 +1,31 @@
+combinator $ `>>
+  putStrLn "Who are you?"
+  K $ getLine
+  name. putStrLn $
+    "Hello, " ++ name
+  K $ putStrLn "Wow, you have a long name!" <* guard $$ length name > 10
+───
+$
+⤷ combinator
+⤷ TermMultilineOperator (TermIdentifier ">>")
+  — (putStrLn (TermStringLiteral "Who are you?"))
+  — $
+    ⤷ K
+    ⤷ getLine
+  — TermFunction [DestructBind "name"] (
+      $
+      ⤷ putStrLn
+      ⤷ ++
+        ⤷ (TermStringLiteral "Hello, ")
+        ⤷ name
+    )
+  — $
+    ⤷ K
+    ⤷ <*
+      ⤷ (putStrLn (TermStringLiteral "Wow, you have a long name!"))
+      ⤷ $$
+        ⤷ guard
+        ⤷ >
+          ⤷ (length name)
+          ⤷ TermNumberLiteral (NumberContents {numIsPos = True, numRadix = RadixDec, numIntegral = [1,0], numFractional = Nothing, numExponent = Nothing})
+
