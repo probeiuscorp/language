@@ -16,8 +16,8 @@ tryIntFromDouble double = if ceiled == floor double
 type Semant a = ReaderT AST.VarSet (Writer [AST.ParseError]) (Maybe a)
 tellErr :: AST.ParseError -> Semant AST.Expression
 tellErr err = Nothing <$ tell (pure err)
-semanticValue :: AST.Term -> Either [AST.ParseError] AST.Expression
-semanticValue term = case runWriter $ runReaderT (go term) mempty of
+semanticValue :: AST.VarSet -> AST.Term -> Either [AST.ParseError] AST.Expression
+semanticValue knownVars term = case runWriter $ runReaderT (go term) knownVars of
   (Just expr, _) -> Right expr
   (_, errs) -> Left errs
   where

@@ -40,4 +40,5 @@ parseModule source = foldr (maybe id $ flip foldDeclaration) m0 declarations
 verifyModuleBuildable :: TillyModuleParsed -> Either [AST.ParseError] TillyModuleBuildable
 verifyModuleBuildable (_, _, terms) = ((),) <$> exprs
   where
-    exprs = toEither $ traverse (fromEither . semanticValue) terms
+    exprs = toEither $ traverse (fromEither . semanticValue knownVars) terms
+    knownVars = Map.keysSet terms
