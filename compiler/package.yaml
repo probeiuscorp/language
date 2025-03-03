@@ -21,6 +21,7 @@ dependencies:
 - lens
 - transformers
 - containers
+- filepath
 - directory
 - hspec
 - hspec-contrib
