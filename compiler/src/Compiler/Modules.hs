@@ -5,7 +5,7 @@ module Compiler.Modules where
 import qualified Compiler.AST as AST
 import qualified Compiler.Zipper as Z
 import Compiler.Tokenize (tokenize)
-import Compiler.Semantic (semanticValue)
+import Compiler.Semantic (semanticValue, collectBindings)
 import Compiler.Parse (splitDeclarations, parseDeclaration)
 import System.FilePath (takeDirectory, normalise, (</>))
 import qualified Data.Set as Set
@@ -23,8 +23,11 @@ newtype ModuleIdentifier = ModuleIdentifier { unModuleIdentifier :: FilePath }
 readModule = readFile . unModuleIdentifier
 
 type TillyModuleParsed = ([(ModuleSpecifier, AST.ImportListing)], Set.Set AST.ValidIdentifier, Map.Map AST.ValidIdentifier AST.Term)
+parModImports :: Lens' TillyModuleParsed [(ModuleSpecifier, AST.ImportListing)]
 parModImports = _1
+parModExposed :: Lens' TillyModuleParsed AST.VarSet
 parModExposed = _2
+parModBindings :: Lens' TillyModuleParsed (Map.Map AST.ValidIdentifier AST.Term)
 parModBindings = _3
 
 type TillyModuleBuildable = ((), Map.Map AST.ValidIdentifier AST.Expression)
@@ -55,8 +58,22 @@ parseModule source = foldr (maybe id $ flip foldDeclaration) m0 declarations
         maybe id (over parModBindings . Map.insert ident) maybeValue
       _ -> error "unsupported declaration"
 
-verifyModuleBuildable :: TillyModuleParsed -> Either [AST.ParseError] TillyModuleBuildable
-verifyModuleBuildable (_, _, terms) = ((),) <$> exprs
+getModuleScope :: Map.Map ModuleIdentifier TillyModuleParsed -> ModuleIdentifier -> AST.VarSet
+getModuleScope modules identifier = ownScope <> foldMap scopeFromListing imports
   where
-    exprs = toEither $ traverse (fromEither . semanticValue knownVars) terms
-    knownVars = Map.keysSet terms
+    ownScope = Map.keysSet $ view parModBindings parsedModule
+    parsedModule = modules Map.! identifier
+    imports = view parModImports parsedModule
+    scopeFromListing (specifier, listing) = let
+      modId = identifierFromSpecifier identifier specifier
+      exposed = view parModExposed $ modules Map.! modId
+      in case listing of
+        AST.ImportAll -> exposed
+        AST.ImportAs as -> Set.singleton as
+        AST.ImportOnly destruct -> collectBindings destruct
+        AST.ImportHiding destruct -> exposed Set.\\ collectBindings destruct
+
+verifyModuleBuildable :: AST.VarSet -> TillyModuleParsed -> Either [AST.ParseError] TillyModuleBuildable
+verifyModuleBuildable moduleScope (_, _, terms) = ((),) <$> exprs
+  where
+    exprs = toEither $ traverse (fromEither . semanticValue moduleScope) terms
