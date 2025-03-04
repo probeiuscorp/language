@@ -3,9 +3,11 @@ module Main (main) where
 import Options.Applicative
 import LLVM.Module
 import qualified Data.ByteString as BS
-import Compiler.Modules (parseModule, verifyModuleBuildable)
+import qualified Data.Map as Map
+import Compiler.Modules (findModules, verifyModuleBuildable, ModuleIdentifier (ModuleIdentifier))
 import Compiler.IR (mkMainModule)
 import LLVM.Context (withContext)
+import System.Directory (canonicalizePath)
 
 ($$) = ($)
 infixr 6 $$
@@ -39,8 +41,9 @@ opts = info (helper <*> parseOptions) $ mconcat
 main :: IO ()
 main = do
   options <- execParser opts
-  src <- readFile $ optMainFile options
-  let mainModule = verifyModuleBuildable $ parseModule src
+  mainIdentifier <- ModuleIdentifier <$> canonicalizePath $$ optMainFile options
+  modules <- findModules mainIdentifier mempty
+  let mainModule = verifyModuleBuildable $ modules Map.! mainIdentifier
   case mainModule of
     Left errs -> print errs
     Right llvmModule -> do
