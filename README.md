@@ -69,11 +69,24 @@ person = {
 }
 ```
 2. Reading and updating
+
+The value-level `&` operator can be used to combine the fields of two records
+into one. Right side values are preferred over left side values.
+
+An `update` function can be derived, which takes a record with the same fields
+but with each property as a function.
+
 ```
 ageWhenJoined = person.customerStatus.joined - person.birthdate
-// Speculative
-withNewAge = person | update {
-  name = const 'Alex Generic I'
+withNewAge = person & {
+  name = "Alex Generic I"
+  birthdate = person.birthdate + 1
+  customerStatus = person.customerStatus & {
+    loyaltyPoints = person.customerStatus + 30
+  }
+}
+withNewAgeUpdate = person | update {
+  name = K $ "Alex Generic I"
   birthdate = (+1)
   customerStatus = update {
     loyaltyPoints = (+30)
@@ -96,22 +109,6 @@ type Person = {
 type Quadratic = { a: Double, b: Double, c: Double }
 y: Quadratic -> Double -> Double
 y = { a, b, c } x. a * x ** 2 + b * x + c
-```
-### Advantages of structural typing
-Fun with unions, intersections and differences
-```
-type StructuralMaybe = a. {
-  type: 'some'
-  data: a
-} + {
-  type: 'none'
-}
-type StructuralSome = a. StructuralMaybe a & { type: 'some' }
-type StructuralNone = StructuralMaybe () \ StructuralSome ()
-```
-Top and bottom too.
-```
-type Id = a. (a & unknown) + never
 ```
 
 Time complexity for property access is currently undefined.
