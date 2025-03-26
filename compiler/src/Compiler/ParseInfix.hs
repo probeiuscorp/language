@@ -10,19 +10,34 @@ import Data.Bifunctor (Bifunctor(first))
 import Data.Char (isAlphaNum)
 import Data.Function (on)
 
-data Op = OpFn String | OpApplication
+data Op = OpFn String AST.Infix | OpApplication
   deriving (Eq, Show)
 data Operator = Operator Op Operand | StackDone
   deriving (Eq, Show)
-data Operand = Operand AST.Term Operator
+data OperandF a = Operand a Operator
   deriving (Eq, Show)
-data InfixStack = OperatorStack Operator | OperandStack Operand
+-- | May not contain unhandled prefix functions. Operator stacks can only be built
+-- off these kinds of stacks which do not have unhandled prefix functions.
+type Operand = OperandF AST.Term
+-- | A stack which may contain unhandled prefix function
+type OperandAccum = OperandF StackValue
+data StackValue
+  = ValRegular AST.Term
+  | ValPrefix (NE.NonEmpty AST.Term)
+  deriving (Eq, Ord, Show)
+data InfixStack = OperatorStack Operator | OperandStack OperandAccum
   deriving (Eq, Show)
+
+expectRegularVal :: StackValue -> AST.Term
+expectRegularVal (ValRegular term) = term
+expectRegularVal _ = error "missing expression after prefix operator"
+expectRegular :: OperandAccum -> Operand
+expectRegular (Operand val stack) = Operand (expectRegularVal val) stack
 
 type ParseOneTerm = Linear -> Maybe (AST.Term, Linear)
 parseInfix :: ParseOneTerm -> Linear -> AST.Term
 parseInfix pt z = let (zr, stack) = treeificateLinear pt (z, OperatorStack StackDone) in case stack of
-  OperandStack operand -> collapseStep operand
+  OperandStack operand -> collapseStep $ expectRegular operand
   _ -> error "unclosed function"
   where
     collapseStep :: Operand -> AST.Term
@@ -34,21 +49,35 @@ treeificateLinear :: ParseOneTerm -> ParseState -> ParseState
 treeificateLinear pt s@(z, state) = maybe s (\(term, zr) -> treeificateLinear pt (zr, addTerm term)) $ pt z
   where
     addTerm :: AST.Term -> InfixStack
-    addTerm term = case (state, isInfixOp term) of
-      -- Infix operator after infix operator. Ignore to enable cleaner git diffs.
-      (stack@(OperatorStack _), Just _) -> stack
-      -- Operand after infix operator
-      (OperatorStack stack, Nothing)    -> OperandStack (Operand term stack)
-      -- Infix operator after operand
-      (OperandStack stack, Just ident)  -> addStack ident stack
-      -- Operand after operand, treat as application
-      (OperandStack stack, Nothing)     -> OperandStack (Operand term $ Operator OpApplication stack)
+    addTerm term = case (state, (\op -> (op, opFixity op)) <$> isInfixOp term) of
+      -- ADDING OPERANDS. Prefix operators are treated like regular values unless regular values appear before them.
+      (OperatorStack stack, Nothing) -> OperandStack $ Operand (ValRegular term) stack
+      (OperatorStack stack, Just (_, AST.FixityPrefix)) -> OperandStack $ Operand (ValPrefix $ NE.singleton term) stack
+
+      -- ADDING OPERAND AFTER OPERAND
+      -- Operand after regular operand, treat as application
+      (OperandStack (Operand (ValRegular regularTerm) stackr), Nothing) -> OperandStack $ Operand (ValRegular term) $ Operator OpApplication $ Operand regularTerm stackr
+      -- Operand after prefix operand, add to stack after applying prefix fn
+      (OperandStack (Operand (ValPrefix fs) stack), Nothing) -> OperandStack $ Operand (ValRegular $ foldl (flip AST.TermApplication) term fs) stack
+      -- Prefix after regular operand
+      (OperandStack (Operand (ValRegular regularTerm) stackr), Just (_, AST.FixityPrefix)) -> OperandStack $ Operand (ValPrefix $ NE.singleton term) $ Operator OpApplication $ Operand regularTerm stackr
+      -- Prefix after operand, add to prefix stack
+      (OperandStack (Operand (ValPrefix fs) stack), Just (_, AST.FixityPrefix)) -> OperandStack $ Operand (ValPrefix $ term NE.<| fs) stack
+
+      -- INFIX OPERATOR AFTER OPERAND
+      (OperandStack stack, Just (ident, AST.FixityInfix inf)) -> addStack (OpFn ident inf) $ expectRegular stack
+      -- Postfix operator: apply to top of stack
+      (OperandStack stack, Just (_, AST.FixityPostfix)) -> let (Operand termE stackr) = stack in
+        OperandStack $ Operand (ValRegular $ AST.TermApplication term $ expectRegularVal termE) stackr
+
+      -- INFIX OPERATOR AFTER INFIX OPERATOR. Ignore to enable cleaner git diffs.
+      (stack@(OperatorStack _), Just (_, AST.FixityInfix _)) -> stack
+      (OperatorStack _, Just (_, AST.FixityPostfix)) -> error "missing expression before postfix operator"
       where
-        addStack :: String -> Operand -> InfixStack
-        addStack ident stack = let
-          finishStack stack = OperatorStack (Operator (OpFn ident) stack)
-          in case peekOperator stack of
-            Just op | opPrecedence op > opPrecedence (OpFn ident) ->
+        addStack :: Op -> Operand -> InfixStack
+        addStack op0 stack = let finishStack = OperatorStack . Operator op0 in
+          case peekOperator stack of
+            Just op | opPrecedence op > opPrecedence op0 ->
               finishStack $ collapseStack op stack
             _ -> finishStack stack
 
@@ -56,8 +85,8 @@ type Terms = [(AST.Term, Op)]
 collapseStack :: Op -> Operand -> Operand
 collapseStack op stack = uncurry Operand $ collapseWhile stack []
   where
-    append op = case op of
-      OpFn ident -> AST.TermApplication . AST.TermApplication (AST.TermIdentifier ident)
+    append = \case
+      OpFn ident _ -> AST.TermApplication . AST.TermApplication (AST.TermIdentifier ident)
       OpApplication -> AST.TermApplication
     fold :: AST.Term -> Terms -> AST.Term
     fold term [] = term
@@ -88,19 +117,32 @@ isInfixOp :: AST.Term -> Maybe String
 isInfixOp (AST.TermIdentifier ident) | not $ all isAlphaNum ident = Just ident
 isInfixOp _ = Nothing
 
-opPrecedence :: Op -> Int
+opFixity :: String -> AST.Fixity
+opFixity "¬" = AST.FixityPrefix
+opFixity "~" = AST.FixityPrefix
+opFixity "!" = AST.FixityPostfix
+opFixity "?" = AST.FixityPostfix
+opFixity ident = AST.FixityInfix $ AST.Infix (getOpPrecedence ident) (getOpAssociativity ident)
+
+opPrecedence :: Op -> Double
+opPrecedence (OpFn _ inf) = AST.infPrecedence inf
 opPrecedence OpApplication = 10
-opPrecedence (OpFn "$") = 1
-opPrecedence (OpFn "-") = 4
-opPrecedence (OpFn "^") = 8
-opPrecedence (OpFn "^^") = 8
-opPrecedence _ = 6
 
 opAssociativity :: Op -> AST.Associativity
+opAssociativity (OpFn _ inf) = AST.infAssociativity inf
 opAssociativity OpApplication = AST.LeftAssociative
-opAssociativity (OpFn "$") = AST.RightAssociative
-opAssociativity (OpFn "-") = AST.LeftAssociative
-opAssociativity (OpFn "*") = AST.LeftAssociative
-opAssociativity (OpFn "/") = AST.LeftAssociative
-opAssociativity (OpFn "\\") = AST.NonAssociative
-opAssociativity _ = AST.RightAssociative
+
+getOpPrecedence :: String -> Double
+getOpPrecedence "$" = 1
+getOpPrecedence "-" = 4
+getOpPrecedence "^" = 8
+getOpPrecedence "^^" = 8
+getOpPrecedence _ = 6
+
+getOpAssociativity :: String -> AST.Associativity
+getOpAssociativity "$" = AST.RightAssociative
+getOpAssociativity "-" = AST.LeftAssociative
+getOpAssociativity "*" = AST.LeftAssociative
+getOpAssociativity "/" = AST.LeftAssociative
+getOpAssociativity "\\" = AST.NonAssociative
+getOpAssociativity _ = AST.RightAssociative

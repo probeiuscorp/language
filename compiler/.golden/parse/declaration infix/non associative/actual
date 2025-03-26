@@ -1,3 +1,10 @@
 infix 1 \
 ───
-InfixDeclaration "\" 1.0 NonAssociative
+InfixDeclaration "\"
+  ( FixityInfix
+    ( Infix
+      { infPrecedence = 1.0
+      , infAssociativity = NonAssociative
+      }
+    )
+  )

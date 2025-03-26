@@ -10,6 +10,7 @@ import Control.Monad.State (State, MonadState (state, get, put), gets, evalState
 import Data.Functor ((<&>), ($>))
 import Data.Maybe (fromMaybe)
 import qualified Data.List.NonEmpty as NE
+import Control.Applicative ((<|>))
 import Data.Bifunctor (Bifunctor(first, bimap, second))
 import Compiler.Zipper (filterMaybe)
 
@@ -122,12 +123,14 @@ parseImportDeclaration = do
 
 parseInfixDeclaration :: StateT Tokens Maybe AST.TopLevelDeclaration
 parseInfixDeclaration = do
-  associativity <- msum [ifIs "infixl" AST.LeftAssociative, ifIs "infixr" AST.RightAssociative, ifIs "infix" AST.NonAssociative]
-  liftState eatWhitespaceTokens
-  Token { kind = NumberLiteral numContents } <- liftState right
+  fixity <- msum [ifIs "prefix" AST.FixityPrefix, ifIs "postfix" AST.FixityPostfix] <|> do
+    associativity <- msum [ifIs "infixl" AST.LeftAssociative, ifIs "infixr" AST.RightAssociative, ifIs "infix" AST.NonAssociative]
+    liftState eatWhitespaceTokens
+    Token { kind = NumberLiteral numContents } <- liftState right
+    pure $ AST.FixityInfix $ AST.Infix (parsePrecedence numContents) associativity
   liftState eatWhitespaceTokens
   identifier <- content <$> liftState right
-  pure $ AST.InfixDeclaration identifier (parsePrecedence numContents) associativity
+  pure $ AST.InfixDeclaration identifier fixity
   where
     ifIs :: String -> a -> StateT Tokens Maybe a
     ifIs keyword value = (guard =<< state (Z.eatIf $ is keyword)) $> value

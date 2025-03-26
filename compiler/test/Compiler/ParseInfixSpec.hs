@@ -24,6 +24,13 @@ spec = describe "parseInfix" $ do
   test "single term" "a"
   test "non associative alone" "a \\ b"
   test "non associative complex" "a $ b c \\ d $ e"
+  test "prefix operator simple" "~a"
+  test "prefix operator simple after function" "f ~a"
+  test "prefix operator consecutive" "~ ~ a"
+  test "prefix operator repeated" "union $ ~ ¬ a ¬ ~ b"
+  test "prefix operator simple multi argument" "union ~a ¬b"
+  test "prefix operator complex multi argument" "union ~ ¬ a ¬ ~ b"
+  test "postfix operators" "a ? ! + b ! ?"
   test "ignore first operator"
     "\n\
     \  + ErrorNotProvided\n\

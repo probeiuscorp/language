@@ -75,6 +75,8 @@ spec = describe "Compiler.Parse" $ do
     test "non associative" "infix 1 \\"
     test "fractional precedence" "infixr 2.110 |"
     test "complex precedence" "infixr 0x20 |"
+    test "prefix declaration" "prefix ¬"
+    test "postfix declaration" "postfix !"
   describe "parseDestructuring" $ do
     let prettyParseDestructuring = show . evalState parseDestructuring . source
     let test = snapshot "parse/parseDestructuring/" prettyParseDestructuring

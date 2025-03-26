@@ -1,3 +1,10 @@
 infixl 1 $$
 ───
-InfixDeclaration "$$" 1.0 LeftAssociative
+InfixDeclaration "$$"
+  ( FixityInfix
+    ( Infix
+      { infPrecedence = 1.0
+      , infAssociativity = LeftAssociative
+      }
+    )
+  )
