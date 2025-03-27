@@ -1,5 +1,3 @@
-{-# LANGUAGE MultiWayIf #-}
-
 module Compiler.ParseInfix (parseInfix) where
 
 import qualified Compiler.AST as AST
@@ -50,30 +48,30 @@ treeificateLinear pt s@(z, state) = maybe s (\(term, zr) -> treeificateLinear pt
   where
     addTerm :: AST.Term -> InfixStack
     addTerm term = case (state, (\op -> (op, opFixity op)) <$> isInfixOp term) of
-      -- ADDING OPERANDS. Prefix operators are treated like regular values unless regular values appear before them.
-      (OperatorStack stack, Nothing) -> OperandStack $ Operand (ValRegular term) stack
-      (OperatorStack stack, Just (_, AST.FixityPrefix)) -> OperandStack $ Operand (ValPrefix $ NE.singleton term) stack
+      -- ADDING OPERANDS
+      (OperatorStack stack, Nothing) -> ValRegular term `addTo` stack
+      (OperatorStack stack, Just (_, AST.FixityPrefix)) -> ValPrefix (NE.singleton term) `addTo` stack
 
       -- ADDING OPERAND AFTER OPERAND
       -- Operand after regular operand, treat as application
-      (OperandStack (Operand (ValRegular regularTerm) stackr), Nothing) -> OperandStack $ Operand (ValRegular term) $ Operator OpApplication $ Operand regularTerm stackr
+      (OperandStack (Operand (ValRegular regularTerm) stackr), Nothing) -> ValRegular term `addTo` Operator OpApplication (Operand regularTerm stackr)
       -- Operand after prefix operand, add to stack after applying prefix fn
-      (OperandStack (Operand (ValPrefix fs) stack), Nothing) -> OperandStack $ Operand (ValRegular $ foldl (flip AST.TermApplication) term fs) stack
+      (OperandStack (Operand (ValPrefix fs) stack), Nothing) -> ValRegular (foldl (flip AST.TermApplication) term fs) `addTo` stack
       -- Prefix after regular operand
-      (OperandStack (Operand (ValRegular regularTerm) stackr), Just (_, AST.FixityPrefix)) -> OperandStack $ Operand (ValPrefix $ NE.singleton term) $ Operator OpApplication $ Operand regularTerm stackr
+      (OperandStack (Operand (ValRegular regularTerm) stackr), Just (_, AST.FixityPrefix)) -> ValPrefix (NE.singleton term) `addTo` Operator OpApplication (Operand regularTerm stackr)
       -- Prefix after operand, add to prefix stack
-      (OperandStack (Operand (ValPrefix fs) stack), Just (_, AST.FixityPrefix)) -> OperandStack $ Operand (ValPrefix $ term NE.<| fs) stack
+      (OperandStack (Operand (ValPrefix fs) stack), Just (_, AST.FixityPrefix)) -> ValPrefix (term NE.<| fs) `addTo` stack
 
       -- INFIX OPERATOR AFTER OPERAND
       (OperandStack stack, Just (ident, AST.FixityInfix inf)) -> addStack (OpFn ident inf) $ expectRegular stack
       -- Postfix operator: apply to top of stack
-      (OperandStack stack, Just (_, AST.FixityPostfix)) -> let (Operand termE stackr) = stack in
-        OperandStack $ Operand (ValRegular $ AST.TermApplication term $ expectRegularVal termE) stackr
+      (OperandStack (Operand termE stack), Just (_, AST.FixityPostfix)) -> ValRegular (AST.TermApplication term $ expectRegularVal termE) `addTo` stack
 
       -- INFIX OPERATOR AFTER INFIX OPERATOR. Ignore to enable cleaner git diffs.
       (stack@(OperatorStack _), Just (_, AST.FixityInfix _)) -> stack
       (OperatorStack _, Just (_, AST.FixityPostfix)) -> error "missing expression before postfix operator"
       where
+        addTo term' stack = OperandStack $ Operand term' stack
         addStack :: Op -> Operand -> InfixStack
         addStack op0 stack = let finishStack = OperatorStack . Operator op0 in
           case peekOperator stack of
@@ -83,7 +81,7 @@ treeificateLinear pt s@(z, state) = maybe s (\(term, zr) -> treeificateLinear pt
 
 type Terms = [(AST.Term, Op)]
 collapseStack :: Op -> Operand -> Operand
-collapseStack op stack = uncurry Operand $ collapseWhile stack []
+collapseStack op0 stack = uncurry Operand $ collapseWhile stack []
   where
     append = \case
       OpFn ident _ -> AST.TermApplication . AST.TermApplication (AST.TermIdentifier ident)
@@ -97,16 +95,15 @@ collapseStack op stack = uncurry Operand $ collapseWhile stack []
         [] -> append op term t
         _ -> error "cannot mix non-associative infix operators"
     collapseWhile :: Operand -> Terms -> (AST.Term, Operator)
-    collapseWhile (Operand term n@(Operator nextOp xs)) terms = if
+    collapseWhile (Operand term n@(Operator nextOp xs)) terms = case (compare `on` opPrecedence) nextOp op0 of
       -- Keep collapsing
-      | ord == EQ -> if ((==) `on` opAssociativity) op nextOp
+      EQ -> if ((==) `on` opAssociativity) op0 nextOp
         then collapseWhile xs $ (term, nextOp):terms
         else error "cannot mix operations with different associativity and of same precedence"
       -- Collapse next group too
-      | ord == GT -> collapseWhile (collapseStack nextOp (Operand term n)) terms
+      GT -> collapseWhile (collapseStack nextOp (Operand term n)) terms
       -- Done
-      | otherwise -> (fold term terms, n)
-      where ord = (compare `on` opPrecedence) nextOp op
+      LT -> (fold term terms, n)
     collapseWhile (Operand term StackDone) terms = (fold term terms, StackDone)
 
 peekOperator :: Operand -> Maybe Op
