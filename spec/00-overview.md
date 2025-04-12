@@ -101,7 +101,7 @@ They can be either prefix or postfix operators.
 
 ```
 pow -b 3
-type (Union ~k ~~k)
+type (Union ~k ¬(~k))
 ```
 
 ## Infix functions

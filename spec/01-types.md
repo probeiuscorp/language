@@ -6,7 +6,7 @@ that they are given.
 
 - `&` Intersection: At least one binary function must be given to relate types.
 - `¬` (U+00ac) Complement: Should be a given since it defines what `unknown` is and includes.
-- `~` \<unnamed>: Should be a given since it defines how the types interact. `~` is unary and will evaluate to `unknown` if its argument is `never`, and otherwise will evaluate to `never`.
+- `~` \<unnamed>: Should be a given since it defines how the types interact. `~` is unary and will evaluate to `never` if its argument is `never`, and otherwise will evaluate to `unknown`.
 
 ### Axiomatic type system
 
@@ -20,12 +20,12 @@ Union and difference can be defined with `&` and `\`:
 
 Given some type `k`, `isNever` evaluates to a Church boolean. It is defined as follows:
 ```
-type isNever = k. a b. (~~k & a) + (~k & b)
+type isNever = k. a b. (¬(~k) & a) + (~k & b)
 ```
 
 Type compatibility is thus defined:
 ```
-type (<=) = a b. isNever $ b \ a
+type (>=) = a b. isNever $ b \ a
 ```
 
 Internally the type checker applies the branching of `~` on `b \ a` to decide
