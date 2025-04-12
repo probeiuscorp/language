@@ -82,7 +82,7 @@ withNewAge = person & {
   name = "Alex Generic I"
   birthdate = person.birthdate + 1
   customerStatus = person.customerStatus & {
-    loyaltyPoints = person.customerStatus + 30
+    loyaltyPoints = person.customerStatus.loyaltyPoints + 30
   }
 }
 withNewAgeUpdate = person | update {

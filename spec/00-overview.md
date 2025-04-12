@@ -45,7 +45,7 @@ Only nominal types may be instances of typeclasses. Each nominal type may only
 have one instance of each typeclass.
 ```
 data Maybe = a. Some a + None
-instance Functor Maybe
+instance Functor Maybe where
   fmap = f. match
     Some a = Some $ f a
     None = None
@@ -58,8 +58,7 @@ mempty: ∀a: Monoid. a
 mappend: ∀a: Monoid. a -> a -> a
 mconcat: ∀a: Monoid. List a -> a
 ```
-where `Monoid` is a type which happens to have complete intersections with types
-such as `List`.
+where `Monoid` is the XOR of its instances.
 
 There is no supertype for all typeclasses.
 
@@ -87,7 +86,7 @@ x . x // composition (c)
 
 // f
 main = none | x.
-    (x, x)
+  (x, x)
 
 // a
 fmap (.x)
@@ -97,8 +96,8 @@ fmap (. x)
 ```
 
 ## Unary operators
-Unless a unary operator is separated from its expression by any whitespace, it
-will be applied first, with highest precedence.
+Unary operators are applied with highest precedence.
+They can be either prefix or postfix operators.
 
 ```
 pow -b 3
@@ -115,8 +114,8 @@ inline whitespace, that infix function will be ignored.
 
 ```
 type StructuralMaybe = a.
-    + { type: 'some', data: a }
-    + { type: 'none' }
+  + { type: 'some', data: a }
+  + { type: 'none' }
 ```
 
 is equal to

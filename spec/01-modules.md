@@ -34,7 +34,7 @@ Export lists can rename:
 ```
 putHelloWorld = putStrLn "Hello, world"
 export {
-    main = putHelloWorld
+  main = putHelloWorld
 }
 ```
 
