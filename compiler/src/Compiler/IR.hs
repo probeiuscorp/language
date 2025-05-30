@@ -179,7 +179,7 @@ demandRoutine argument = mdo
   L.br mergeThunk
   --
   mergeThunk <- block
-  thunkValue <- L.phi [(suspendedValue, ifSuspended), (evaluatedValue, ifEvaluated)]
+  thunkValue <- demand =<< L.phi [(suspendedValue, ifSuspended), (evaluatedValue, ifEvaluated)]
   L.br merge
   --
   notThunk <- block
