@@ -1,19 +1,21 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecursiveDo #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Compiler.IR where
 
 import qualified Compiler.AST as AST
 import Compiler.Modules (TillyModuleBuildable)
 import LLVM.AST.Operand (Operand(ConstantOperand, LocalReference))
-import LLVM.AST.Constant (Constant(Undef, GlobalReference, Int))
-import LLVM.IRBuilder.Module (function, extern, ParameterName (NoParameterName), ModuleBuilderT, buildModuleT)
+import LLVM.AST.Constant (Constant(Undef, GlobalReference, Int, Struct, PtrToInt))
+import LLVM.IRBuilder.Module (function, extern, ParameterName (NoParameterName), ModuleBuilderT, buildModuleT, global)
 import LLVM.IRBuilder.Monad (IRBuilderT, named, block)
 import LLVM.IRBuilder.Constant (int32, int64, double)
 import qualified LLVM.IRBuilder.Instruction as L
 import qualified LLVM.AST.Type as Type
 import LLVM.AST (Module, Name (Name))
 import Control.Monad (foldM, forM_, void)
+import Control.Monad.Reader (ReaderT, ask, runReaderT)
 import Control.Monad.State.Strict (MonadTrans (lift), State, evalState, MonadState (state))
 import Data.Foldable (Foldable(toList))
 import GHC.Num (integerFromInt)
@@ -23,18 +25,22 @@ import qualified Data.Set as Set
 
 -- | The state is the next global name. The supply of freshUnName is not preserved
 -- between `lift`s. The State is innermost to be preserved while dropping IRBuilderT.
-type Codegen = IRBuilderT (ModuleBuilderT (State Int))
+type Codegen = IRBuilderT (ModuleBuilderT (ReaderT AST.VarSet (State Int)))
 
 userIdentifier ident = fromString $ 'u' : '_' : ident
 -- llvm-hs tries to unique names, so the first unique identifier will have an "_0" appended.
 -- However, it does not reverse this process, so it has to be done here instead.
-userReference :: AST.ValidIdentifier -> Operand
-userReference = LocalReference anyValueType . userIdentifier . (++ "_0")
+userReference :: AST.ValidIdentifier -> Codegen Operand
+userReference ident = do
+  globalSet <- ask
+  if ident `Set.member` globalSet
+    then L.load anyValueType (ConstantOperand . GlobalReference . userIdentifier $ ident) 0
+    else pure . LocalReference anyValueType . userIdentifier . (++ "_0") $ ident
 emitExpr :: AST.Expression -> Codegen Operand
 emitExpr expr = defer (collectFreeVariablesExpr expr) $ getExpr expr
   where
     getExpr = \case
-      (AST.ExprIdentifier ident) -> pure $ userReference ident
+      (AST.ExprIdentifier ident) -> userReference ident
       (AST.ExprApplication termTarget termArgument) -> do
         target <- emitExpr termTarget
         argument <- emitExpr termArgument
@@ -78,12 +84,12 @@ prepEnv envType idents offset = (writeEnv, readEnv)
     getAddr operand i = L.gep envType operand [int32 0, int32 $ offset i]
     writeEnv target = forM_ xs $ \(ident, i) -> do
       addr <- getAddr target i
-      L.store addr 0 $ userReference ident
+      L.store addr 0 =<< userReference ident
     readEnv env = forM_ xs $ \(ident, i) -> do
       addr <- getAddr env i
       L.load anyValueType addr 0 `named` userIdentifier ident
 
-nextName :: Codegen Name
+nextName :: MonadState Int m => m Name
 nextName = state $ \x -> (Name $ fromString $ 'g' : '_' : show x, x + 1)
 
 functionExpression :: AST.Destructuring -> AST.VarSet -> AST.Expression -> Codegen Operand
@@ -158,7 +164,7 @@ demandRoutine argument = mdo
   thunkEnvOrKindPtr <- getThunkEnvOrKindPtr thunk
   thunkFnOrContentPtr <- getThunkFnOrContentPtr thunk
   thunkStatus <- L.load Type.i1 thunkStatusPtr 0
-  envOrKind <- L.load Type.i64 thunkEnvOrKindPtr 0
+  envOrKind <- L.load Type.ptr thunkEnvOrKindPtr 0
   fnOrContent <- L.load Type.ptr thunkFnOrContentPtr 0
   L.switch thunkStatus ifSuspended [(thunkEvaluated, ifEvaluated)]
   --
@@ -173,7 +179,7 @@ demandRoutine argument = mdo
   L.br mergeThunk
   --
   ifEvaluated <- block
-  let kind = envOrKind
+  kind <- ptrtoint envOrKind
   content <- ptrtoint fnOrContent
   evaluatedValue <- buildStruct anyValueType [kind, content]
   L.br mergeThunk
@@ -200,10 +206,18 @@ collectFreeVariablesExpr = \case
   where collect = foldMap collectFreeVariablesExpr
 
 mkMainModule :: TillyModuleBuildable -> Module
-mkMainModule (_, exprs) = flip evalState 0 . buildModuleT "main" $ do
+mkMainModule (_, exprs) = flip evalState 0 . flip runReaderT (Map.keysSet exprs) . buildModuleT "main" $ do
   void $ extern "malloc" [Type.i64] Type.ptr
   forM_ (Map.toList exprs) $ \(ident, expr) -> do
-    function (userIdentifier ident) [] anyValueType $ const $ do
+    fnName <- nextName
+    -- TODO: this is quite some duplication with `defer`. Unify.
+    -- thunk with no captures
+    void $ function fnName [(anyValueType, NoParameterName)] anyValueType $ const $ do
       L.ret =<< emitExpr expr
+    thunkName <- nextName
+    void $ global thunkName thunkType $ Struct Nothing False
+      [thunkSuspended, GlobalReference fnName, GlobalReference fnName]
+    global (userIdentifier ident) anyValueType $ Struct Nothing False
+      [Int 64 . integerFromInt . fromEnum $ KindThunk, PtrToInt (GlobalReference thunkName) Type.i64]
   function demandReference [(anyValueType, NoParameterName)] anyValueType $ \[thunk] -> do
     L.ret =<< demandRoutine thunk
