@@ -8,7 +8,7 @@ import qualified Compiler.AST as AST
 import Compiler.Modules (TillyModuleBuildable)
 import LLVM.AST.Operand (Operand(ConstantOperand, LocalReference))
 import LLVM.AST.Constant (Constant(Undef, GlobalReference, Int, Struct, PtrToInt))
-import LLVM.IRBuilder.Module (function, extern, ParameterName (NoParameterName), ModuleBuilderT, buildModuleT, global, emitDefn)
+import LLVM.IRBuilder.Module (function, extern, ParameterName (NoParameterName), ModuleBuilderT, buildModuleT, global)
 import LLVM.IRBuilder.Monad (IRBuilderT, named, block)
 import LLVM.IRBuilder.Constant (int32, int64, double)
 import qualified LLVM.IRBuilder.Instruction as L
@@ -227,7 +227,7 @@ mkMainModule (_, exprs) = flip evalState 0 . flip runReaderT globalIdents . buil
     let sCaptures = inits names
     let is = pure
     deferredData <- is $ defer names $ do
-      let dataType = structure $ Type.i64 : (anyValueType <$ sCaptures)
+      let dataType = structure $ Type.i64 : (anyValueType <$ names)
       dataBlock <- malloc dataType
       L.store dataBlock 0 $ int64 tag
       forM_ (zip names [1..]) $ \(pIdent, i) -> do
@@ -240,7 +240,13 @@ mkMainModule (_, exprs) = flip evalState 0 . flip runReaderT globalIdents . buil
     deferGlobal ident $ emitExpr expr
   function demandReference [(anyValueType, NoParameterName)] anyValueType $ \[thunk] -> do
     L.ret =<< demandRoutine thunk
+  function "evaluateClosure" [(anyValueType, NoParameterName), (anyValueType, NoParameterName)] anyValueType $ \[f, x] -> do
+    L.ret =<< functionCall f x
+  function "valueOfChar" [(Type.i64, NoParameterName)] anyValueType $ \[ch] -> do
+    L.ret =<< valueOf KindInt ch
   where
     globalIdents = Map.keysSet exprs <> Set.fromList (fst <$> dataDeclarationsNoTags)
-    dataDeclarationsNoTags = [("Some", 1), ("None", 0), ("Cons", 2), ("Nil", 0)] :: [(AST.ValidIdentifier, Int)]
+    dataIO = [("IOmap", 2), ("IOapply", 2), ("IOjoin", 1), ("getLine", 0), ("putStrLn", 1)]
+    dataStandard = [("Unit", 0), ("Some", 1), ("None", 0), ("Cons", 2), ("Nil", 0)]
+    dataDeclarationsNoTags = dataIO <> dataStandard :: [(AST.ValidIdentifier, Int)]
     dataDeclarations = zip dataDeclarationsNoTags [0..]
