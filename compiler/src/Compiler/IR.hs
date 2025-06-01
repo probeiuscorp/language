@@ -8,7 +8,7 @@ import qualified Compiler.AST as AST
 import Compiler.Modules (TillyModuleBuildable)
 import LLVM.AST.Operand (Operand(ConstantOperand, LocalReference))
 import LLVM.AST.Constant (Constant(Undef, GlobalReference, Int, Struct, PtrToInt))
-import LLVM.IRBuilder.Module (function, extern, ParameterName (NoParameterName), ModuleBuilderT, buildModuleT, global)
+import LLVM.IRBuilder.Module (function, extern, ParameterName (NoParameterName), ModuleBuilderT, buildModuleT, global, emitDefn)
 import LLVM.IRBuilder.Monad (IRBuilderT, named, block)
 import LLVM.IRBuilder.Constant (int32, int64, double)
 import qualified LLVM.IRBuilder.Instruction as L
@@ -22,10 +22,12 @@ import GHC.Num (integerFromInt)
 import Data.String (IsString(fromString))
 import qualified Data.Map as Map
 import qualified Data.Set as Set
+import Data.List (inits)
 
 -- | The state is the next global name. The supply of freshUnName is not preserved
 -- between `lift`s. The State is innermost to be preserved while dropping IRBuilderT.
-type Codegen = IRBuilderT (ModuleBuilderT (ReaderT AST.VarSet (State Int)))
+type ModuleCodegen = ModuleBuilderT (ReaderT AST.VarSet (State Int))
+type Codegen = IRBuilderT ModuleCodegen
 
 userIdentifier ident = fromString $ 'u' : '_' : ident
 -- llvm-hs tries to unique names, so the first unique identifier will have an "_0" appended.
@@ -45,7 +47,7 @@ emitExpr expr = defer (collectFreeVariablesExpr expr) $ getExpr expr
         target <- emitExpr termTarget
         argument <- emitExpr termArgument
         functionCall target argument
-      (AST.ExprFunction free destruct body) -> functionExpression destruct free body
+      (AST.ExprFunction free destruct body) -> functionExpression destruct free $ emitExpr body
       (AST.ExprIntegral int) -> valueOf KindInt $ int64 $ integerFromInt int
       (AST.ExprDouble dbl) -> valueOf KindDouble $ double dbl
       _ -> undefined
@@ -92,7 +94,7 @@ prepEnv envType idents offset = (writeEnv, readEnv)
 nextName :: MonadState Int m => m Name
 nextName = state $ \x -> (Name $ fromString $ 'g' : '_' : show x, x + 1)
 
-functionExpression :: AST.Destructuring -> AST.VarSet -> AST.Expression -> Codegen Operand
+functionExpression :: Foldable t => AST.Destructuring -> t AST.ValidIdentifier -> Codegen Operand -> Codegen Operand
 functionExpression (AST.DestructBind bind) freeset body = do
   fnName <- nextName
   fn <- lift $ def fnName
@@ -107,7 +109,7 @@ functionExpression (AST.DestructBind bind) freeset body = do
     def name = function name [(Type.ptr, NoParameterName), (anyValueType, userIdentifier bind)] anyValueType $ \case
       [env, _] -> do
         readEnv env
-        L.ret =<< emitExpr body
+        L.ret =<< body
       _ -> undefined
 functionExpression _ _ _ = undefined
 
@@ -126,7 +128,7 @@ getThunkEnvOrKindPtr thunk = L.gep thunkType thunk [int32 0, int32 1]
 getThunkFnOrContentPtr thunk = L.gep thunkType thunk [int32 0, int32 2]
 thunkSuspended = Int 1 0
 thunkEvaluated = Int 1 1
-defer :: AST.VarSet -> Codegen Operand -> Codegen Operand
+defer :: Foldable t => t AST.ValidIdentifier -> Codegen Operand -> Codegen Operand
 defer freeset body = do
   let free = toList freeset
   let envType = structure $ anyValueType <$ free
@@ -147,6 +149,18 @@ defer freeset body = do
   L.store thunkEnvOrKindPtr 0 env
   L.store thunkFnOrContentPtr 0 fn
   valueOf KindThunk =<< ptrtoint thunk
+deferGlobal :: AST.ValidIdentifier -> Codegen Operand -> ModuleCodegen ()
+deferGlobal ident body = do
+  fnName <- nextName
+  -- TODO: this is quite some duplication with `defer`. Unify.
+  -- thunk with no captures
+  void $ function fnName [(anyValueType, NoParameterName)] anyValueType $ const $ do
+    L.ret =<< body
+  thunkName <- nextName
+  void $ global thunkName thunkType $ Struct Nothing False
+    [thunkSuspended, GlobalReference fnName, GlobalReference fnName]
+  void $ global (userIdentifier ident) anyValueType $ Struct Nothing False
+    [Int 64 . integerFromInt . fromEnum $ KindThunk, PtrToInt (GlobalReference thunkName) Type.i64]
 
 demandReference :: Name
 demandReference = "demand"
@@ -206,18 +220,27 @@ collectFreeVariablesExpr = \case
   where collect = foldMap collectFreeVariablesExpr
 
 mkMainModule :: TillyModuleBuildable -> Module
-mkMainModule (_, exprs) = flip evalState 0 . flip runReaderT (Map.keysSet exprs) . buildModuleT "main" $ do
+mkMainModule (_, exprs) = flip evalState 0 . flip runReaderT globalIdents . buildModuleT "main" $ do
   void $ extern "malloc" [Type.i64] Type.ptr
+  forM_ dataDeclarations $ \((fnIdent, arity), tag) -> do
+    let names = ('_' :) . show <$> take arity [0..] :: [AST.ValidIdentifier]
+    let sCaptures = inits names
+    let is = pure
+    deferredData <- is $ defer names $ do
+      let dataType = structure $ Type.i64 : (anyValueType <$ sCaptures)
+      dataBlock <- malloc dataType
+      L.store dataBlock 0 $ int64 tag
+      forM_ (zip names [1..]) $ \(pIdent, i) -> do
+        ptr <- L.gep dataType dataBlock [int32 0, int32 i]
+        L.store ptr 0 =<< userReference pIdent
+      valueOf KindData =<< ptrtoint dataBlock
+    deferGlobal fnIdent $ (\f -> foldr f deferredData (zip names sCaptures)) $ \(name, captures) ->
+      functionExpression (AST.DestructBind name) captures
   forM_ (Map.toList exprs) $ \(ident, expr) -> do
-    fnName <- nextName
-    -- TODO: this is quite some duplication with `defer`. Unify.
-    -- thunk with no captures
-    void $ function fnName [(anyValueType, NoParameterName)] anyValueType $ const $ do
-      L.ret =<< emitExpr expr
-    thunkName <- nextName
-    void $ global thunkName thunkType $ Struct Nothing False
-      [thunkSuspended, GlobalReference fnName, GlobalReference fnName]
-    global (userIdentifier ident) anyValueType $ Struct Nothing False
-      [Int 64 . integerFromInt . fromEnum $ KindThunk, PtrToInt (GlobalReference thunkName) Type.i64]
+    deferGlobal ident $ emitExpr expr
   function demandReference [(anyValueType, NoParameterName)] anyValueType $ \[thunk] -> do
     L.ret =<< demandRoutine thunk
+  where
+    globalIdents = Map.keysSet exprs <> Set.fromList (fst <$> dataDeclarationsNoTags)
+    dataDeclarationsNoTags = [("Some", 1), ("None", 0), ("Cons", 2), ("Nil", 0)] :: [(AST.ValidIdentifier, Int)]
+    dataDeclarations = zip dataDeclarationsNoTags [0..]
