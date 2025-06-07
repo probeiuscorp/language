@@ -16,3 +16,7 @@ spec = describe "Compiler.Semantic" $ do
   test "int" "-144"
   test "basic double" "-12.25"
   test "double with no fractions" "10e-2"
+  test "match expression"
+    "Some None. match {\n\
+    \  (Some x) = x\n\
+    \  (None) = None\n}"

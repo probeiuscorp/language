@@ -1,0 +1,26 @@
+Some None. match {
+  (Some x) = x
+  (None) = None
+}
+───
+Right
+  ( ExprFunction
+    ( fromList [] )
+    ( DestructBind "Some" )
+    ( ExprFunction
+      ( fromList [] )
+      ( DestructBind "None" )
+      ( ExprMatch
+        [
+          ( DestructNominal "Some"
+            [ DestructBind "x" ]
+          , ExprIdentifier "x"
+          )
+        ,
+          ( DestructNominal "None" []
+          , ExprIdentifier "None"
+          )
+        ]
+      )
+    )
+  )

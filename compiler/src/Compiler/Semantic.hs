@@ -46,6 +46,10 @@ semanticValue knownVars term = case runWriter $ runReaderT (go term) knownVars o
         dblScalar = Tok.numScalar numContents
         mScalar = maybe (Left dblScalar) Right $ tryIntFromDouble dblScalar
         integralPart = Tok.parseIntegral base integral
+    go (AST.TermMatch clauses) = fmap AST.ExprMatch . sequence <$> traverse visitClause clauses
+      where
+        visitClause ([destruct], term') = fmap (destruct, ) <$> local (<> collectBindings destruct) (go term')
+        visitClause _ = undefined
     go _ = undefined
 
 collectFreeVariables :: AST.Term -> AST.VarSet
