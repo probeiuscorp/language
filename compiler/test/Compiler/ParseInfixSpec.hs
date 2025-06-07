@@ -1,6 +1,7 @@
 module Compiler.ParseInfixSpec (spec) where
 
 import Test.Hspec
+import qualified Compiler.AST as AST
 import qualified Compiler.Zipper as Z
 import Compiler.Parse (parseOneTerm)
 import Compiler.Tokenize (tokenize)
@@ -9,9 +10,31 @@ import Compiler.ParseInfix (parseInfix)
 import Compiler.ParseSpec (prettyPrintTerm)
 import Compiler.SnapshotTesting (snapshot)
 
+opFixity :: String -> AST.Fixity
+opFixity "¬" = AST.FixityPrefix
+opFixity "~" = AST.FixityPrefix
+opFixity "!" = AST.FixityPostfix
+opFixity "?" = AST.FixityPostfix
+opFixity ident = AST.FixityInfix $ AST.Infix (getOpPrecedence ident) (getOpAssociativity ident)
+
+getOpPrecedence :: String -> Double
+getOpPrecedence "$" = 1
+getOpPrecedence "-" = 4
+getOpPrecedence "^" = 8
+getOpPrecedence "^^" = 8
+getOpPrecedence _ = 6
+
+getOpAssociativity :: String -> AST.Associativity
+getOpAssociativity "$" = AST.RightAssociative
+getOpAssociativity "-" = AST.LeftAssociative
+getOpAssociativity "*" = AST.LeftAssociative
+getOpAssociativity "/" = AST.LeftAssociative
+getOpAssociativity "\\" = AST.NonAssociative
+getOpAssociativity _ = AST.RightAssociative
+
 spec :: SpecWith ()
 spec = describe "parseInfix" $ do
-  let prettyParseInfix = prettyPrintTerm "" . parseInfix parseOneTerm . Z.start . linearize . Z.start . tokenize
+  let prettyParseInfix = prettyPrintTerm "" . parseInfix (Just . opFixity, parseOneTerm) . Z.start . linearize . Z.start . tokenize
   let test = snapshot "parseInfix/" prettyParseInfix
   test "right associativity" "a $ b $ c $ d"
   test "left associativity" "a - b - c - d"

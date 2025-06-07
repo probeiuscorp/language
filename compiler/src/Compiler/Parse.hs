@@ -199,7 +199,7 @@ matchIdentifier = right <&> \case
   _ -> Nothing
 
 parseTerm :: Linear -> AST.Term
-parseTerm = parseInfix parseOneTerm
+parseTerm = parseInfix (const Nothing, parseOneTerm)
 
 parseOneTerm :: Linear -> Maybe (AST.Term, Linear)
 parseOneTerm z = Z.right z >>= \(lin, zr) -> let ok term = Just (term, zr) in case lin of

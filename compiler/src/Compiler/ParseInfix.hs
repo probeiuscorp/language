@@ -1,12 +1,11 @@
 module Compiler.ParseInfix (parseInfix) where
 
 import qualified Compiler.AST as AST
-import Compiler.Linearize (Linear, Linearized, GLinearized(..))
-import qualified Compiler.Zipper as Z
+import Compiler.Linearize (Linear)
 import qualified Data.List.NonEmpty as NE
-import Data.Bifunctor (Bifunctor(first))
 import Data.Char (isAlphaNum)
 import Data.Function (on)
+import Data.Maybe (fromMaybe)
 
 data Op = OpFn String AST.Infix | OpApplication
   deriving (Eq, Show)
@@ -32,7 +31,8 @@ expectRegularVal _ = error "missing expression after prefix operator"
 expectRegular :: OperandAccum -> Operand
 expectRegular (Operand val stack) = Operand (expectRegularVal val) stack
 
-type ParseOneTerm = Linear -> Maybe (AST.Term, Linear)
+type AboutOperators = String -> Maybe AST.Fixity
+type ParseOneTerm = (AboutOperators, Linear -> Maybe (AST.Term, Linear))
 parseInfix :: ParseOneTerm -> Linear -> AST.Term
 parseInfix pt z = let (zr, stack) = treeificateLinear pt (z, OperatorStack StackDone) in case stack of
   OperandStack operand -> collapseStep $ expectRegular operand
@@ -44,10 +44,10 @@ parseInfix pt z = let (zr, stack) = treeificateLinear pt (z, OperatorStack Stack
 
 type ParseState = (Linear, InfixStack)
 treeificateLinear :: ParseOneTerm -> ParseState -> ParseState
-treeificateLinear pt s@(z, state) = maybe s (\(term, zr) -> treeificateLinear pt (zr, addTerm term)) $ pt z
+treeificateLinear pt@(info, parseOne) s@(z, state) = maybe s (\(term, zr) -> treeificateLinear pt (zr, addTerm term)) $ parseOne z
   where
     addTerm :: AST.Term -> InfixStack
-    addTerm term = case (state, (\op -> (op, opFixity op)) <$> isInfixOp term) of
+    addTerm term = case (state, (\op -> (op, opFixity info op)) <$> isInfixOp term) of
       -- ADDING OPERANDS
       (OperatorStack stack, Nothing) -> ValRegular term `addTo` stack
       (OperatorStack stack, Just (_, AST.FixityPrefix)) -> ValPrefix (NE.singleton term) `addTo` stack
@@ -114,12 +114,8 @@ isInfixOp :: AST.Term -> Maybe String
 isInfixOp (AST.TermIdentifier ident) | not $ all isAlphaNum ident = Just ident
 isInfixOp _ = Nothing
 
-opFixity :: String -> AST.Fixity
-opFixity "¬" = AST.FixityPrefix
-opFixity "~" = AST.FixityPrefix
-opFixity "!" = AST.FixityPostfix
-opFixity "?" = AST.FixityPostfix
-opFixity ident = AST.FixityInfix $ AST.Infix (getOpPrecedence ident) (getOpAssociativity ident)
+opFixity :: AboutOperators -> String -> AST.Fixity
+opFixity = (fromMaybe (AST.FixityInfix $ AST.Infix 6 AST.RightAssociative) .)
 
 opPrecedence :: Op -> Double
 opPrecedence (OpFn _ inf) = AST.infPrecedence inf
@@ -128,18 +124,3 @@ opPrecedence OpApplication = 10
 opAssociativity :: Op -> AST.Associativity
 opAssociativity (OpFn _ inf) = AST.infAssociativity inf
 opAssociativity OpApplication = AST.LeftAssociative
-
-getOpPrecedence :: String -> Double
-getOpPrecedence "$" = 1
-getOpPrecedence "-" = 4
-getOpPrecedence "^" = 8
-getOpPrecedence "^^" = 8
-getOpPrecedence _ = 6
-
-getOpAssociativity :: String -> AST.Associativity
-getOpAssociativity "$" = AST.RightAssociative
-getOpAssociativity "-" = AST.LeftAssociative
-getOpAssociativity "*" = AST.LeftAssociative
-getOpAssociativity "/" = AST.LeftAssociative
-getOpAssociativity "\\" = AST.NonAssociative
-getOpAssociativity _ = AST.RightAssociative
