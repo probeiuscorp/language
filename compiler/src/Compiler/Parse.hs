@@ -67,7 +67,7 @@ parseBindingDeclaration = do
   pure $ AST.ValueDeclaration (AST.DeclarationModule
     { AST.identifier = identifier
     , AST.isExported = isExported
-    }) (Just term) Nothing
+    }) term
 
 parseDataDeclaration :: StateT Tokens Maybe AST.TopLevelDeclaration
 parseDataDeclaration = do

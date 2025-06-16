@@ -6,11 +6,9 @@ ValueDeclaration
     , isExported = False
     }
   )
-  ( Just
-    ( TermFunction
-      [ DestructBind "x"
-      , DestructBind "y"
-      ]
-      ( TermIdentifier "x" )
-    )
-  ) Nothing
+  ( TermFunction
+    [ DestructBind "x"
+    , DestructBind "y"
+    ]
+    ( TermIdentifier "x" )
+  )

@@ -6,9 +6,7 @@ ValueDeclaration
     , isExported = True
     }
   )
-  ( Just
-    ( TermApplication
-      ( TermIdentifier "pure" )
-      ( TermTuple [] )
-    )
-  ) Nothing
+  ( TermApplication
+    ( TermIdentifier "pure" )
+    ( TermTuple [] )
+  )

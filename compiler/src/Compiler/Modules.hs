@@ -53,9 +53,10 @@ parseModule source = foldr (maybe id $ flip foldDeclaration) m0 declarations
     foldDeclaration :: TillyModuleParsed -> AST.TopLevelDeclaration -> TillyModuleParsed
     foldDeclaration m = ($ m) . \case
       AST.ImportDeclaration specifier listing -> over parModImports ((ModuleSpecifier specifier, listing) :)
-      AST.ValueDeclaration (AST.DeclarationModule ident isExported) maybeValue _ ->
+      AST.ValueDeclaration (AST.DeclarationModule ident isExported) value ->
         bool id (over parModExposed (Set.insert ident)) isExported .
-        maybe id (over parModBindings . Map.insert ident) maybeValue
+        over parModBindings (Map.insert ident value)
+      AST.DataDeclaration _ _ -> id
       _ -> error "unsupported declaration"
 
 getModuleScope :: Map.Map ModuleIdentifier TillyModuleParsed -> ModuleIdentifier -> AST.VarSet

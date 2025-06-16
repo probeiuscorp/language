@@ -57,7 +57,7 @@ data TopLevelDeclaration
   = ImportDeclaration String ImportListing
   | ExportDeclaration [(ValidIdentifier, Term)]
   | DataDeclaration DeclarationModule (Maybe Term)
-  | ValueDeclaration DeclarationModule (Maybe Term) (Maybe Term)
+  | ValueDeclaration DeclarationModule Term
   | TypeDeclaration DeclarationModule Term
   | InfixDeclaration ValidIdentifier Fixity
   deriving (Eq, Show, Ord)
