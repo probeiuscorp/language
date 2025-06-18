@@ -1,14 +1,13 @@
 true = x y. x
 ───
-ValueDeclaration
-  ( DeclarationModule
-    { identifier = "true"
-    , isExported = False
-    }
-  )
-  ( TermFunction
-    [ DestructBind "x"
-    , DestructBind "y"
-    ]
-    ( TermIdentifier "x" )
-  )
+( "ValueDeclaration"
+, DeclarationModule
+  { identifier = "true"
+  , isExported = False
+  }
+, TermFunction
+  [ DestructBind "x"
+  , DestructBind "y"
+  ]
+  ( TermIdentifier "x" )
+)

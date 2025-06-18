@@ -53,15 +53,10 @@ data DeclarationModule = DeclarationModule
 data Associativity = NonAssociative | LeftAssociative | RightAssociative deriving (Eq, Show, Ord)
 data Infix = Infix { infPrecedence :: Double, infAssociativity :: Associativity } deriving (Eq, Ord, Show)
 data Fixity = FixityInfix Infix | FixityPrefix | FixityPostfix deriving (Eq, Ord, Show)
-data TopLevelDeclaration
-  = ImportDeclaration String ImportListing
-  | ExportDeclaration [(ValidIdentifier, Term)]
-  | DataDeclaration DeclarationModule (Maybe Term)
-  | ValueDeclaration DeclarationModule Term
-  | TypeDeclaration DeclarationModule Term
-  | InfixDeclaration ValidIdentifier Fixity
-  deriving (Eq, Show, Ord)
+type AboutOperators = ValidIdentifier -> Maybe Fixity
 
 data ParseError
   = ErrUnknownIdentifier String
+  | ErrFixityDeclarationSubjectNotLocal String
+  | ErrFixityDeclarationOverwriting String
   deriving (Eq, Show, Ord)

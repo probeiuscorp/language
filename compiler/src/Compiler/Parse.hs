@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleContexts #-}
+
 module Compiler.Parse where
 
 import Compiler.Tokenize
@@ -31,15 +33,25 @@ doesDeclarationContinue :: Token -> Bool
 doesDeclarationContinue t = con == ")" || con == "}" || con == "]" || kind t == InlineWhitespace
   where con = content t
 
-parseDeclaration :: State Tokens (Maybe AST.TopLevelDeclaration)
+data DeclarationContextFree
+  = ImportDeclaration String AST.ImportListing
+  | ExportDeclaration [(AST.ValidIdentifier, AST.Term)]
+  | InfixDeclaration AST.ValidIdentifier AST.Fixity
+  deriving (Eq, Ord, Show)
+data DeclarationNeedContext
+  = DataDeclaration AST.DeclarationModule (Maybe (AST.AboutOperators -> AST.Term))
+  | ValueDeclaration AST.DeclarationModule (AST.AboutOperators -> AST.Term)
+  | TypeDeclaration AST.DeclarationModule (AST.AboutOperators -> AST.Term)
+type TopLevelDeclaration = Either DeclarationContextFree DeclarationNeedContext
+parseDeclaration :: State Tokens (Maybe TopLevelDeclaration)
 parseDeclaration = do
   eatWhitespaceTokens
   gets Z.isDone >>= \case
     True -> pure Nothing
     False -> do
-      maybeBinding <- gets . evalStateT $ msum [parseBindingDeclaration, parseDataDeclaration, parseInfixDeclaration]
+      maybeBinding <- gets . evalStateT $ msum [Right <$> parseBindingDeclaration, Right <$> parseDataDeclaration, Left <$> parseInfixDeclaration]
       specialDeclaration <- parseSpecialDeclaration
-      pure . Just $ fromMaybe specialDeclaration maybeBinding
+      pure . Just $ fromMaybe (Left specialDeclaration) maybeBinding
   where
     parseSpecialDeclaration = do
       token <- right
@@ -47,7 +59,7 @@ parseDeclaration = do
       case content token of
         "export" -> undefined
         "import" -> parseImportDeclaration
-        _ -> undefined
+        _ -> error $ content token
 
 is :: String -> Token -> Bool
 is str = (== str) . content
@@ -55,7 +67,7 @@ eatIsExported :: StateT Tokens Maybe Bool
 eatIsExported = state $ Z.eatIf $ is "export"
 eatIdentifier :: StateT Tokens Maybe String
 eatIdentifier = catTokens <$> state (Z.match . filterMaybe $ not . isWhitespace)
-parseBindingDeclaration :: StateT Tokens Maybe AST.TopLevelDeclaration
+parseBindingDeclaration :: StateT Tokens Maybe DeclarationNeedContext
 parseBindingDeclaration = do
   liftState eatWhitespaceTokens
   isExported <- eatIsExported
@@ -63,13 +75,10 @@ parseBindingDeclaration = do
   identifier <- eatIdentifier
   liftState eatWhitespaceTokens
   guard =<< state (Z.eatIf $ is "=")
-  term <- gets $ parseTerm . Z.start . linearize
-  pure $ AST.ValueDeclaration (AST.DeclarationModule
-    { AST.identifier = identifier
-    , AST.isExported = isExported
-    }) term
+  gets $ \z -> ValueDeclaration (AST.DeclarationModule identifier isExported)
+    $ \ctx -> parseTerm ctx $ Z.start $ linearize z
 
-parseDataDeclaration :: StateT Tokens Maybe AST.TopLevelDeclaration
+parseDataDeclaration :: StateT Tokens Maybe DeclarationNeedContext
 parseDataDeclaration = do
   liftState eatWhitespaceTokens
   isExported <- eatIsExported
@@ -79,20 +88,20 @@ parseDataDeclaration = do
   identifier <- eatIdentifier
   liftState eatWhitespaceTokens
   hasBody <- state $ Z.eatIf $ is "="
-  AST.DataDeclaration (AST.DeclarationModule identifier isExported) <$> if hasBody
-    then gets $ Just . parseTerm . Z.start . linearize
-    else pure Nothing
+  gets $ \z -> DataDeclaration (AST.DeclarationModule identifier isExported) $ if hasBody
+    then Just $ \ctx -> parseTerm ctx $ Z.start $ linearize z
+    else Nothing
 
 type ParseAttempt = StateT Tokens Maybe AST.ImportListing
 liftState :: State s a -> StateT s Maybe a
 liftState f = StateT $ pure . runState f
-parseImportDeclaration :: State Tokens AST.TopLevelDeclaration
+parseImportDeclaration :: State Tokens DeclarationContextFree
 parseImportDeclaration = do
   eatWhitespaceTokens
   specifier <- catTokens <$> state (Z.match . filterMaybe $ not . isWhitespace)
   eatWhitespaceTokens
   importListing <- gets . runStateT $ msum [matchAs, matchHiding, matchOnly, matchAll]
-  pure . AST.ImportDeclaration specifier $ maybe undefined fst importListing
+  pure . ImportDeclaration specifier $ maybe undefined fst importListing
   where
     matchAs :: ParseAttempt
     matchAs = do
@@ -121,7 +130,7 @@ parseImportDeclaration = do
       guard $ Z.isDone z
       pure AST.ImportAll
 
-parseInfixDeclaration :: StateT Tokens Maybe AST.TopLevelDeclaration
+parseInfixDeclaration :: StateT Tokens Maybe DeclarationContextFree
 parseInfixDeclaration = do
   fixity <- msum [ifIs "prefix" AST.FixityPrefix, ifIs "postfix" AST.FixityPostfix] <|> do
     associativity <- msum [ifIs "infixl" AST.LeftAssociative, ifIs "infixr" AST.RightAssociative, ifIs "infix" AST.NonAssociative]
@@ -130,7 +139,7 @@ parseInfixDeclaration = do
     pure $ AST.FixityInfix $ AST.Infix (parsePrecedence numContents) associativity
   liftState eatWhitespaceTokens
   identifier <- content <$> liftState right
-  pure $ AST.InfixDeclaration identifier fixity
+  pure $ InfixDeclaration identifier fixity
   where
     ifIs :: String -> a -> StateT Tokens Maybe a
     ifIs keyword value = (guard =<< state (Z.eatIf $ is keyword)) $> value
@@ -198,25 +207,26 @@ matchIdentifier = right <&> \case
   LinToken t | kind t == LetterIdentifier -> Just $ content t
   _ -> Nothing
 
-parseTerm :: Linear -> AST.Term
-parseTerm = parseInfix (const Nothing, parseOneTerm)
+type ParseContext = AST.AboutOperators
+parseTerm :: ParseContext -> (Linear -> AST.Term)
+parseTerm ctx = parseInfix (ctx, parseOneTerm ctx)
 
-parseOneTerm :: Linear -> Maybe (AST.Term, Linear)
-parseOneTerm z = Z.right z >>= \(lin, zr) -> let ok term = Just (term, zr) in case lin of
-  (LinToken t) | isWhitespace t -> parseOneTerm zr
-  (LinToken t) | content t == "match" -> Just $ runState parseMatch zr
+parseOneTerm :: ParseContext -> Linear -> Maybe (AST.Term, Linear)
+parseOneTerm ctx z = Z.right z >>= \(lin, zr) -> let ok term = Just (term, zr) in case lin of
+  (LinToken t) | isWhitespace t -> parseOneTerm ctx zr
+  (LinToken t) | content t == "match" -> Just $ runState (parseMatch ctx) zr
   (LinToken t) | kind t == LetterIdentifier || kind t == SymbolIdentifier -> ok $ AST.TermIdentifier $ content t
   (LinToken (Token { kind = NumberLiteral numContents })) -> ok $ AST.TermNumberLiteral numContents
   (LinToken (Token { kind = StringLiteral str })) -> ok $ AST.TermStringLiteral str
-  (LinWhere body clauses) -> ok $ AST.TermWhere (parseTerm $ Z.start body) $ clauses <&> \l ->
+  (LinWhere body clauses) -> ok $ AST.TermWhere (parseTerm ctx $ Z.start body) $ clauses <&> \l ->
     let (Just zBody, zDestruct) = breakWhen (is "=") $ Z.start l in
-      (evalState parseDestructuring zDestruct, parseTerm zBody)
-  (LinMultilineOperator op ls) -> ok $ AST.TermMultilineOperator (AST.TermIdentifier op) $ parseTerm . Z.start <$> ls
-  (LinParens l) -> ok $ parseParens $ Z.start l
-  (LinBrackets l) -> ok $ AST.TermList $ either (pure . Just) id $ parseCommaSeparated $ Z.start l
-  (LinBraces l) -> ok $ parseRecordLiteral $ Z.start l
+      (evalState parseDestructuring zDestruct, parseTerm ctx zBody)
+  (LinMultilineOperator op ls) -> ok $ AST.TermMultilineOperator (AST.TermIdentifier op) $ parseTerm ctx . Z.start <$> ls
+  (LinParens l) -> ok $ parseParens ctx $ Z.start l
+  (LinBrackets l) -> ok $ AST.TermList $ either (pure . Just) id $ parseCommaSeparated ctx $ Z.start l
+  (LinBraces l) -> ok $ parseRecordLiteral ctx $ Z.start l
   (LinFunction lparams lbody) ->
-    ok $ AST.TermFunction (evalState (exhaustively parseDestructuring) $ Z.start lparams) (parseTerm $ Z.start lbody)
+    ok $ AST.TermFunction (evalState (exhaustively parseDestructuring) $ Z.start lparams) (parseTerm ctx $ Z.start lbody)
   l -> error $ "term not supported yet: " ++ show l
 
 breakWhen :: (Token -> Bool) -> Linear -> (Maybe Linear, Linear)
@@ -228,8 +238,8 @@ breakWhen p z0 = go z0
       _ -> go zr) $ Z.right z
 
 data ParenParseState = ExpectTuple [Maybe AST.Term] | ExpectGroup
-parseCommaSeparated :: Linear -> Either AST.Term [Maybe AST.Term]
-parseCommaSeparated = go ExpectGroup
+parseCommaSeparated :: AST.AboutOperators -> Linear -> Either AST.Term [Maybe AST.Term]
+parseCommaSeparated ctx = go ExpectGroup
   where
     go :: ParenParseState -> Linear -> Either AST.Term [Maybe AST.Term]
     go s z = case (s, zr) of
@@ -239,8 +249,8 @@ parseCommaSeparated = go ExpectGroup
       (ExpectTuple terms, Just xs) -> go (ExpectTuple $ term : terms) xs
       where
         (zr, z') = second (execState eatWhitespace) $ breakWhen (is ",") z
-        term = if Z.isDone z' then Nothing else Just $ parseTerm z'
-parseParens = either id AST.TermTuple . parseCommaSeparated
+        term = if Z.isDone z' then Nothing else Just $ parseTerm ctx z'
+parseParens ctx = either id AST.TermTuple . parseCommaSeparated ctx
 
 parseDestructuring :: ParseState AST.Destructuring
 parseDestructuring = eatWhitespace >> right >>= \case
@@ -281,15 +291,15 @@ braceParser :: (Linear -> a) -> (Linear -> b) -> String -> Linear -> [(a, Maybe 
 braceParser fLHS fRHS sep z = bimap fLHS (fmap fRHS) <$> splitRecordClauses sep z
 
 onlyIdentifier = evalState $ only $ expect matchIdentifier
-parseRecordLiteral = AST.TermRecord . braceParser onlyIdentifier parseTerm "="
+parseRecordLiteral ctx = AST.TermRecord . braceParser onlyIdentifier (parseTerm ctx) "="
 parseRecordDestructure = AST.DestructRecord . braceParser onlyIdentifier (evalState parseDestructuring) "as"
 
 revZ :: Linear -> Linear
 revZ (Z.Zipper bt ft) = Z.Zipper (reverse bt) (reverse ft)
 rtl :: (Linear -> (Maybe Linear, Linear)) -> Linear -> (Maybe Linear, Linear)
 rtl f z = bimap (fmap revZ) revZ $ f (revZ z)
-parseMatchClauses :: Linear -> AST.Term
-parseMatchClauses z0 = AST.TermMatch $ go firstClause otherClauses
+parseMatchClauses :: ParseContext -> Linear -> AST.Term
+parseMatchClauses ctx z0 = AST.TermMatch $ go firstClause otherClauses
   where
     go :: Linear -> [Linear] -> [([AST.Destructuring], AST.Term)]
     go lhs [] | onlyWhitespaceLeft lhs = []
@@ -297,15 +307,15 @@ parseMatchClauses z0 = AST.TermMatch $ go firstClause otherClauses
     go lhs (clause:clauses) = (evalState (exhaustively parseDestructuring) lhs, term) : go nextLHS clauses
       where
         (rhs, nextLHS) = rtl (breakWhen (\t -> kind t == EOL || content t == ",")) clause
-        term = parseTerm $ fromMaybe (error "match clauses must be separated by newline or comma") rhs
+        term = parseTerm ctx $ fromMaybe (error "match clauses must be separated by newline or comma") rhs
     (firstClause NE.:| otherClauses) = splitClauses "=" z0
 
-parseMatch :: ParseState AST.Term
-parseMatch = eatWhitespace >> gets Z.peek >>= \case
+parseMatch :: ParseContext -> ParseState AST.Term
+parseMatch ctx = eatWhitespace >> gets Z.peek >>= \case
   (Just (LinBraces l)) -> do
     modify Z.eatOne
-    pure $ parseMatchClauses $ Z.start l
+    pure $ parseMatchClauses ctx $ Z.start l
   _ -> do
-    term <- gets parseMatchClauses
+    term <- gets $ parseMatchClauses ctx
     put $ Z.start []
     pure term

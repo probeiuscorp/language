@@ -1,4 +1,4 @@
-module Compiler.ParseSpec (spec, prettyPrintTerm) where
+module Compiler.ParseSpec (spec, prettyPrintTerm, testAboutOperators) where
 
 import Test.Hspec
 import Compiler.Parse
@@ -38,6 +38,36 @@ prettyPrintTerm indent (AST.TermMatch clauses) = "TermMatch [\n" ++ (clauses >>=
 prettyPrintTerm _ term@(AST.TermStringLiteral _) = parens $ show term
 prettyPrintTerm _ term = show term
 
+prettyPrintDeclaration :: TopLevelDeclaration -> String
+prettyPrintDeclaration (Left x) = prettyShow x
+prettyPrintDeclaration (Right (DataDeclaration decl mt)) = prettyShow ("DataDeclaration", decl, ($ testAboutOperators) <$> mt)
+prettyPrintDeclaration (Right (ValueDeclaration decl t)) = prettyShow ("ValueDeclaration", decl, t testAboutOperators)
+prettyPrintDeclaration (Right (TypeDeclaration decl t)) = prettyShow ("TypeDeclaration", decl, t testAboutOperators)
+
+opFixity :: String -> AST.Fixity
+opFixity "¬" = AST.FixityPrefix
+opFixity "~" = AST.FixityPrefix
+opFixity "!" = AST.FixityPostfix
+opFixity "?" = AST.FixityPostfix
+opFixity ident = AST.FixityInfix $ AST.Infix (getOpPrecedence ident) (getOpAssociativity ident)
+
+getOpPrecedence :: String -> Double
+getOpPrecedence "$" = 1
+getOpPrecedence "-" = 4
+getOpPrecedence "^" = 8
+getOpPrecedence "^^" = 8
+getOpPrecedence _ = 6
+
+getOpAssociativity :: String -> AST.Associativity
+getOpAssociativity "$" = AST.RightAssociative
+getOpAssociativity "-" = AST.LeftAssociative
+getOpAssociativity "*" = AST.LeftAssociative
+getOpAssociativity "/" = AST.LeftAssociative
+getOpAssociativity "\\" = AST.NonAssociative
+getOpAssociativity _ = AST.RightAssociative
+
+testAboutOperators = Just . opFixity
+
 spec :: SpecWith ()
 spec = describe "Compiler.Parse" $ do
   describe "splitDeclarations" $ do
@@ -48,7 +78,7 @@ spec = describe "Compiler.Parse" $ do
     test "continue on closing brace" "import react/hooks {\n\tuseState\n}\n"
     test "continue on closing parenthesis" "pair = a. (\n\ta,\n\ta)\n"
     test "basic multi declaration" "import react {\n\tComponentsProps\n}\n\nimport react/hooks {\n\tuseState\n}\n"
-  let prettyParseDeclaration = (\case Just x -> prettyShow x; Nothing -> "Nothing") . evalState parseDeclaration . Z.start . tokenize
+  let prettyParseDeclaration = (\case Just x -> prettyPrintDeclaration x; Nothing -> "Nothing") . evalState parseDeclaration . Z.start . tokenize
   describe "parseImportDeclaration" $ do
     let test = snapshot "parse/parseImport/" prettyParseDeclaration
     test "import all" "import react/hooks"
@@ -90,7 +120,7 @@ spec = describe "Compiler.Parse" $ do
     test "as pattern" "list@(Cons x xs)"
     test "as pattern record" "{ pos as pos@{ x, y } }"
   describe "parseTerm" $ do
-    let prettyParseTerm = prettyPrintTerm "" . parseTerm . source
+    let prettyParseTerm = prettyPrintTerm "" . parseTerm testAboutOperators . source
     let test = snapshot "parse/parseTerm/" prettyParseTerm
     test "identity function" "x. x"
     test "multiple bindings function" "x y. x"

@@ -1,8 +1,9 @@
 export data None
 ───
-DataDeclaration
-  ( DeclarationModule
-    { identifier = "None"
-    , isExported = True
-    }
-  ) Nothing
+( "DataDeclaration"
+, DeclarationModule
+  { identifier = "None"
+  , isExported = True
+  }
+, Nothing
+)

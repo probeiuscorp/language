@@ -31,8 +31,7 @@ expectRegularVal _ = error "missing expression after prefix operator"
 expectRegular :: OperandAccum -> Operand
 expectRegular (Operand val stack) = Operand (expectRegularVal val) stack
 
-type AboutOperators = String -> Maybe AST.Fixity
-type ParseOneTerm = (AboutOperators, Linear -> Maybe (AST.Term, Linear))
+type ParseOneTerm = (AST.AboutOperators, Linear -> Maybe (AST.Term, Linear))
 parseInfix :: ParseOneTerm -> Linear -> AST.Term
 parseInfix pt z = let (zr, stack) = treeificateLinear pt (z, OperatorStack StackDone) in case stack of
   OperandStack operand -> collapseStep $ expectRegular operand
@@ -114,7 +113,7 @@ isInfixOp :: AST.Term -> Maybe String
 isInfixOp (AST.TermIdentifier ident) | not $ all isAlphaNum ident = Just ident
 isInfixOp _ = Nothing
 
-opFixity :: AboutOperators -> String -> AST.Fixity
+opFixity :: AST.AboutOperators -> String -> AST.Fixity
 opFixity = (fromMaybe (AST.FixityInfix $ AST.Infix 6 AST.RightAssociative) .)
 
 opPrecedence :: Op -> Double

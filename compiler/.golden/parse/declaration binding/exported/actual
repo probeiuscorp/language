@@ -1,12 +1,11 @@
 export main = pure ()
 ───
-ValueDeclaration
-  ( DeclarationModule
-    { identifier = "main"
-    , isExported = True
-    }
-  )
-  ( TermApplication
-    ( TermIdentifier "pure" )
-    ( TermTuple [] )
-  )
+( "ValueDeclaration"
+, DeclarationModule
+  { identifier = "main"
+  , isExported = True
+  }
+, TermApplication
+  ( TermIdentifier "pure" )
+  ( TermTuple [] )
+)

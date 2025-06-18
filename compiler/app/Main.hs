@@ -3,8 +3,7 @@ module Main (main) where
 import Options.Applicative
 import LLVM.Module
 import qualified Data.ByteString as BS
-import qualified Data.Map as Map
-import Compiler.Modules (findModules, getModuleScope, verifyModuleBuildable, ModuleIdentifier (ModuleIdentifier))
+import Compiler.Modules (buildModules, ModuleIdentifier (ModuleIdentifier))
 import Compiler.IR (mkMainModule)
 import LLVM.Context (withContext)
 import System.Directory (canonicalizePath)
@@ -42,9 +41,8 @@ main :: IO ()
 main = do
   options <- execParser opts
   mainIdentifier <- ModuleIdentifier <$> canonicalizePath $$ optMainFile options
-  modules <- findModules mainIdentifier mempty
-  let mainModule = verifyModuleBuildable (getModuleScope modules mainIdentifier) $ modules Map.! mainIdentifier
-  case mainModule of
+  modules <- buildModules mainIdentifier
+  case modules of
     Left errs -> print errs
     Right llvmModule -> do
       llvm <- withContext $ \context ->
