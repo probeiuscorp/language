@@ -1,2 +1,8 @@
 cradle:
   stack:
+    - path: app
+      component: compiler:exe:compiler-exe
+    - path: src
+      component: compiler:lib
+    - path: test
+      component: compiler:test:compiler-test
