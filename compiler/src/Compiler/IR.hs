@@ -124,12 +124,17 @@ emitFunction freeset receive = do
 functionExpression :: Foldable t => AST.Destructuring -> t AST.ValidIdentifier -> Codegen Operand -> Codegen Operand
 functionExpression destruct freeset body = emitFunction freeset $ \param -> loadDestruct destruct param *> body
 
-loadDestruct :: AST.Destructuring -> Operand -> Codegen ()
-loadDestruct (AST.DestructBind ident) parameter = void $ mdo
-  -- Straightforward but silly way to introduce an named alias to `parameter`
+-- | Straightforward but silly way to introduce an named alias to `parameter`
+introduceAlias :: AST.ValidIdentifier -> Operand -> Codegen ()
+introduceAlias ident op = void $ mdo
   L.br x; x <- block
   L.br y; y <- block
-  L.phi [(parameter, x)] `named` userIdentifier ident
+  L.phi [(op, x)] `named` userIdentifier ident
+loadDestruct :: AST.Destructuring -> Operand -> Codegen ()
+loadDestruct (AST.DestructBind ident) parameter = introduceAlias ident parameter
+loadDestruct (AST.DestructAs ident destruct) parameter = do
+  introduceAlias ident parameter
+  loadDestruct destruct parameter
 loadDestruct (AST.DestructNominal _ positions) parameter = do
   dataBodyPtr <- inttoptr =<< flip L.extractValue [1] =<< demand parameter
   forM_ (zipWithIndices 1 positions) $ \(destruct, i) -> do
@@ -162,6 +167,8 @@ matchExpression clauses free = emitFunction free $ \param -> mdo
       tryClause <- block `named` n1
       case destruct of
         AST.DestructBind _ -> pure ()
+        -- TODO: recursive matching
+        AST.DestructAs _ _ -> pure ()
         AST.DestructNominal constructor positions -> mdo
           getWantTag <- askTagOfConstructor
           dataBlockPtr <- inttoptr =<< flip L.extractValue [1] =<< demand param
