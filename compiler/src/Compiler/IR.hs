@@ -9,12 +9,13 @@ import LLVM.AST.Operand (Operand(ConstantOperand, LocalReference))
 import LLVM.AST.Constant (Constant(Undef, GlobalReference, Int, Struct, PtrToInt))
 import LLVM.IRBuilder.Module (function, extern, ParameterName (NoParameterName), ModuleBuilderT, buildModuleT, global)
 import LLVM.IRBuilder.Monad (IRBuilderT, named, block)
+import LLVM.AST.Name (Name)
 import LLVM.IRBuilder.Constant (int32, int64, double)
 import qualified LLVM.IRBuilder.Instruction as L
 import qualified LLVM.AST.Type as Type
 import LLVM.AST (Module, Name (Name))
 import Control.Monad (foldM, forM_, void)
-import Control.Monad.Reader (ReaderT, ask, runReaderT)
+import Control.Monad.Reader (ReaderT, runReaderT, asks)
 import Control.Monad.State.Strict (MonadTrans (lift), State, evalState, MonadState (state))
 import Data.Foldable (Foldable(toList))
 import GHC.Num (integerFromInt)
@@ -22,24 +23,29 @@ import Data.String (IsString(fromString))
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import Data.List (inits)
+import Data.Bifunctor (Bifunctor(first))
+import Compiler.Semantic (collectBindings)
 
 -- | The state is the next global name. The supply of freshUnName is not preserved
 -- between `lift`s. The State is innermost to be preserved while dropping IRBuilderT.
-type ModuleCodegen = ModuleBuilderT (ReaderT AST.VarSet (State Int))
+type ModuleCodegen = ModuleBuilderT (ReaderT (AST.VarSet, AST.ValidIdentifier -> Integer) (State Int))
 type Codegen = IRBuilderT ModuleCodegen
+askKnownGlobals = asks fst
+askTagOfConstructor = asks snd
 
 userIdentifier ident = fromString $ 'u' : '_' : ident
 -- llvm-hs tries to unique names, so the first unique identifier will have an "_0" appended.
 -- However, it does not reverse this process, so it has to be done here instead.
 userReference :: AST.ValidIdentifier -> Codegen Operand
 userReference ident = do
-  globalSet <- ask
+  globalSet <- askKnownGlobals
   if ident `Set.member` globalSet
     then L.load anyValueType (ConstantOperand . GlobalReference . userIdentifier $ ident) 0
     else pure . LocalReference anyValueType . userIdentifier . (++ "_0") $ ident
 emitExpr :: AST.Expression -> Codegen Operand
-emitExpr expr = defer (collectFreeVariablesExpr expr) $ getExpr expr
+emitExpr expr = defer freeset $ getExpr expr
   where
+    freeset = collectFreeVariablesExpr expr
     getExpr = \case
       (AST.ExprIdentifier ident) -> userReference ident
       (AST.ExprApplication termTarget termArgument) -> do
@@ -49,6 +55,7 @@ emitExpr expr = defer (collectFreeVariablesExpr expr) $ getExpr expr
       (AST.ExprFunction free destruct body) -> functionExpression destruct free $ emitExpr body
       (AST.ExprIntegral int) -> valueOf KindInt $ int64 $ integerFromInt int
       (AST.ExprDouble dbl) -> valueOf KindDouble $ double dbl
+      (AST.ExprMatch clauses) -> matchExpression clauses freeset
       _ -> undefined
 
 mallocType = Type.FunctionType Type.ptr [Type.i64] False
@@ -59,6 +66,9 @@ malloc ty = do
 
 undef = ConstantOperand . Undef
 structure = Type.StructureType False
+taggedType ty xs = structure $ ty : (anyValueType <$ xs)
+ptrTaggedType = taggedType Type.ptr
+dataType = taggedType Type.i64
 zipWithIndices :: Enum b => b -> [a] -> [(a, b)]
 zipWithIndices n = flip zip [n..]
 buildStruct :: Type.Type -> [Operand] -> Codegen Operand
@@ -93,8 +103,8 @@ prepEnv envType idents offset = (writeEnv, readEnv)
 nextName :: MonadState Int m => m Name
 nextName = state $ \x -> (Name $ fromString $ 'g' : '_' : show x, x + 1)
 
-functionExpression :: Foldable t => AST.Destructuring -> t AST.ValidIdentifier -> Codegen Operand -> Codegen Operand
-functionExpression (AST.DestructBind bind) freeset body = do
+emitFunction :: Foldable t => t AST.ValidIdentifier -> (Operand -> Codegen Operand) -> Codegen Operand
+emitFunction freeset receive = do
   fnName <- nextName
   fn <- lift $ def fnName
   closure <- malloc envType
@@ -103,14 +113,29 @@ functionExpression (AST.DestructBind bind) freeset body = do
   valueOf KindClosure =<< ptrtoint closure
   where
     free = toList freeset
-    envType = structure $ Type.ptr : (anyValueType <$ free)
+    envType = ptrTaggedType free
     (writeEnv, readEnv) = prepEnv envType free (+1)
-    def name = function name [(Type.ptr, NoParameterName), (anyValueType, userIdentifier bind)] anyValueType $ \case
-      [env, _] -> do
+    def name = function name [(Type.ptr, NoParameterName), (anyValueType, NoParameterName)] anyValueType $ \case
+      [env, parameter] -> do
         readEnv env
-        L.ret =<< body
+        L.ret =<< receive parameter
       _ -> undefined
-functionExpression _ _ _ = undefined
+
+functionExpression :: Foldable t => AST.Destructuring -> t AST.ValidIdentifier -> Codegen Operand -> Codegen Operand
+functionExpression destruct freeset body = emitFunction freeset $ \param -> loadDestruct destruct param *> body
+
+loadDestruct :: AST.Destructuring -> Operand -> Codegen ()
+loadDestruct (AST.DestructBind ident) parameter = void $ mdo
+  -- Straightforward but silly way to introduce an named alias to `parameter`
+  L.br x; x <- block
+  L.br y; y <- block
+  L.phi [(parameter, x)] `named` userIdentifier ident
+loadDestruct (AST.DestructNominal _ positions) parameter = do
+  dataBodyPtr <- inttoptr =<< flip L.extractValue [1] =<< demand parameter
+  forM_ (zipWithIndices 1 positions) $ \(destruct, i) -> do
+    ptr <- L.gep (dataType positions) dataBodyPtr [int32 0, int32 i]
+    loadDestruct destruct =<< L.load anyValueType ptr 0
+loadDestruct _ _ = undefined
 
 fnType = Type.FunctionType anyValueType [Type.ptr, anyValueType] False
 functionCall :: Operand -> Operand -> Codegen Operand
@@ -120,6 +145,38 @@ functionCall thunk argument = do
   fnPtrPtr <- L.gep (structure [Type.ptr]) closure [int32 0, int32 0]
   fnPtr <- L.load Type.ptr fnPtrPtr 0
   L.call fnType fnPtr [(closure, []), (argument, [])]
+
+matchExpression :: [(AST.Destructuring, AST.Expression)] -> AST.VarSet -> Codegen Operand
+matchExpression clauses free = emitFunction free $ \param -> mdo
+  let entryEnum = fromString . show <$> zipWith const [(0 :: Integer)..] clauses
+  let endLabel = "unreachable"
+  let entryNames = zip entryEnum $ drop 1 entryEnum ++ [endLabel]
+  nodes <- foldM (appendClause param end) [] (zip entryNames clauses)
+  _ <- block `named` endLabel
+  L.unreachable
+  end <- block
+  L.phi nodes
+  where
+    appendClause param endLabel xs ((n1, n2), (destruct, expr)) = mdo
+      L.br tryClause
+      tryClause <- block `named` n1
+      case destruct of
+        AST.DestructBind _ -> pure ()
+        AST.DestructNominal constructor positions -> mdo
+          getWantTag <- askTagOfConstructor
+          dataBlockPtr <- inttoptr =<< flip L.extractValue [1] =<< demand param
+          tagPtr <- L.gep (dataType positions) dataBlockPtr [int32 0, int32 0]
+          tag <- L.load Type.i64 tagPtr 0
+          L.switch tag (Name $ n2 <> "_0") [(Int 64 $ getWantTag constructor, ifMatch)]
+          ifMatch <- block
+          pure ()
+        _ -> undefined
+      loadDestruct destruct param
+      result <- emitExpr expr
+      L.br after
+      after <- block
+      L.br endLabel
+      pure ((result, after) : xs)
 
 thunkType = structure [Type.i1, Type.ptr, Type.ptr]
 getThunkStatusPtr thunk = L.gep thunkType thunk [int32 0, int32 0]
@@ -215,11 +272,12 @@ collectFreeVariablesExpr = \case
   AST.ExprIdentifier ident -> Set.singleton ident
   AST.ExprList els -> collect els
   AST.ExprTuple els -> collect els
+  AST.ExprMatch clauses -> collect (snd <$> clauses) Set.\\ foldMap (collectBindings . fst) clauses
   _ -> Set.empty
   where collect = foldMap collectFreeVariablesExpr
 
 mkMainModule :: TillyModuleBuildable -> Module
-mkMainModule (_, exprs) = flip evalState 0 . flip runReaderT globalIdents . buildModuleT "main" $ do
+mkMainModule (_, exprs) = flip evalState 0 . flip runReaderT readerContext . buildModuleT "main" $ do
   void $ extern "malloc" [Type.i64] Type.ptr
   forM_ dataDeclarations $ \((fnIdent, arity), tag) -> do
     let names = ('_' :) . show <$> take arity [0..] :: [AST.ValidIdentifier]
@@ -244,6 +302,7 @@ mkMainModule (_, exprs) = flip evalState 0 . flip runReaderT globalIdents . buil
   function "valueOfChar" [(Type.i64, NoParameterName)] anyValueType $ \[ch] -> do
     L.ret =<< valueOf KindInt ch
   where
+    readerContext = (globalIdents, (Map.fromList (first fst <$> dataDeclarations) Map.!))
     globalIdents = Map.keysSet exprs <> Set.fromList (fst <$> dataDeclarationsNoTags)
     dataIO = [("IOmap", 2), ("IOapply", 2), ("IOjoin", 1), ("getLine", 0), ("putStrLn", 1)]
     dataStandard = [("Unit", 0), ("Some", 1), ("None", 0), ("Cons", 2), ("Nil", 0)]
