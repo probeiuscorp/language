@@ -214,7 +214,7 @@ parseTerm ctx = parseInfix (ctx, parseOneTerm ctx)
 parseOneTerm :: ParseContext -> Linear -> Maybe (AST.Term, Linear)
 parseOneTerm ctx z = Z.right z >>= \(lin, zr) -> let ok term = Just (term, zr) in case lin of
   (LinToken t) | isWhitespace t -> parseOneTerm ctx zr
-  (LinToken t) | content t == "match" -> Just $ runState (parseMatch ctx) zr
+  (LinToken t) | content t == "match" -> Just $ runState (parseMatch ctx) (Z.restart zr)
   (LinToken t) | kind t == LetterIdentifier || kind t == SymbolIdentifier -> ok $ AST.TermIdentifier $ content t
   (LinToken (Token { kind = NumberLiteral numContents })) -> ok $ AST.TermNumberLiteral numContents
   (LinToken (Token { kind = StringLiteral str })) -> ok $ AST.TermStringLiteral str

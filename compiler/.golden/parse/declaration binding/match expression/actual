@@ -1,0 +1,47 @@
+double = match
+  (Cons x xs) = Cons x $ Cons x $ double list
+  (Nil) = Nil
+
+───
+( "ValueDeclaration"
+, DeclarationModule
+  { identifier = "double"
+  , isExported = False
+  }
+, TermMatch
+  [
+    (
+      [ DestructNominal "Cons"
+        [ DestructBind "x"
+        , DestructBind "xs"
+        ]
+      ]
+    , TermApplication
+      ( TermApplication
+        ( TermIdentifier "$" )
+        ( TermApplication
+          ( TermIdentifier "Cons" )
+          ( TermIdentifier "x" )
+        )
+      )
+      ( TermApplication
+        ( TermApplication
+          ( TermIdentifier "$" )
+          ( TermApplication
+            ( TermIdentifier "Cons" )
+            ( TermIdentifier "x" )
+          )
+        )
+        ( TermApplication
+          ( TermIdentifier "double" )
+          ( TermIdentifier "list" )
+        )
+      )
+    )
+  ,
+    (
+      [ DestructNominal "Nil" [] ]
+    , TermIdentifier "Nil"
+    )
+  ]
+)

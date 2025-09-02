@@ -1,0 +1,11 @@
+match {
+  list@(Cons x xs) = f x $ xs
+  (Nil) = Nil
+}
+───
+TermMatch [
+  [DestructAs "list" (DestructNominal "Cons" [DestructBind "x",DestructBind "xs"])] = $
+  ⤷ (f x)
+  ⤷ xs
+  [DestructNominal "Nil" []] = Nil
+]

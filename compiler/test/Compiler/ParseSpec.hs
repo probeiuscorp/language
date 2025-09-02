@@ -91,6 +91,9 @@ spec = describe "Compiler.Parse" $ do
     let test = snapshot "parse/declaration binding/" prettyParseDeclaration
     test "simple" "true = x y. x"
     test "exported" "export main = pure ()"
+    test "match expression" "double = match\n\
+      \  (Cons x xs) = Cons x $ Cons x $ double list\n\
+      \  (Nil) = Nil\n"
   describe "data declarations" $ do
     let test = snapshot "parse/declaration data/" prettyParseDeclaration
     test "no body" "data None"
@@ -156,6 +159,11 @@ spec = describe "Compiler.Parse" $ do
       \  (Cons x xs) = f x $ xs\n\
       \  (Nil) = Nil\n\
       \} list"
+    test "match, as destruct"
+      "match {\n\
+      \  list@(Cons x xs) = f x $ xs\n\
+      \  (Nil) = Nil\n\
+      \}"
     test "match no braces"
       "f. match\n\
       \  (Cons x xs) = f x $ xs\n\
