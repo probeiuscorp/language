@@ -1,6 +1,7 @@
 module Compiler.AST where
 import Compiler.Tokenize (NumberContents)
 import qualified Data.Set as Set
+import qualified Data.List.NonEmpty as NE
 
 type ValidIdentifier = String
 
@@ -21,6 +22,8 @@ data Term
   | TermNumberLiteral NumberContents
   | TermStringLiteral String
   | TermRecord [(String, Maybe Term)]
+  | TermMemberAccess Term ValidIdentifier
+  | TermMemberSection (NE.NonEmpty ValidIdentifier)
   | TermTuple [Maybe Term]
   | TermList [Maybe Term]
   | TermMatch [([Destructuring], Term)]

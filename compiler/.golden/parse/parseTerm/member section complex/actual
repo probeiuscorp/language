@@ -1,0 +1,5 @@
+user | .user.id
+───
+|
+⤷ user
+⤷ TermMemberSection ("user" :| ["id"])

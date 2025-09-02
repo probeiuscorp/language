@@ -4,8 +4,8 @@ import Test.Hspec
 import Compiler.Parse
 import qualified Compiler.AST as AST
 import qualified Compiler.Zipper as Z
-import Compiler.Tokenize (tokenize)
-import Compiler.Linearize (linearize)
+import Compiler.Tokenize (tokenize, content, kind)
+import Compiler.Linearize (linearize, GLinearized(..))
 import Compiler.SnapshotTesting (snapshot, prettyShow)
 import Control.Monad.State (evalState)
 
@@ -148,6 +148,12 @@ spec = describe "Compiler.Parse" $ do
     test "record literal one line no trailing comma" "{ a, b, c = undefined, d }"
     test "record literals nested" "{ a, b = { this }, c, d = {}}"
     test "record literal in function" "x y. { x, y }"
+    test "member access one" "config.user"
+    test "member access many" "config.user.id"
+    test "member access complex" "config.user.firstName <> config.user.lastName"
+    test "member section one" ".user"
+    test "member section many" ".user.id"
+    test "member section complex" "user | .user.id"
     test "match empty" "match { }"
     test "match simple"
       "f. match {\n\

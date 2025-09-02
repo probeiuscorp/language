@@ -212,20 +212,27 @@ parseTerm :: ParseContext -> (Linear -> AST.Term)
 parseTerm ctx = parseInfix (ctx, parseOneTerm ctx)
 
 parseOneTerm :: ParseContext -> Linear -> Maybe (AST.Term, Linear)
-parseOneTerm ctx z = Z.right z >>= \(lin, zr) -> let ok term = Just (term, zr) in case lin of
-  (LinToken t) | isWhitespace t -> parseOneTerm ctx zr
-  (LinToken t) | content t == "match" -> Just $ runState (parseMatch ctx) (Z.restart zr)
-  (LinToken t) | kind t == LetterIdentifier || kind t == SymbolIdentifier -> ok $ AST.TermIdentifier $ content t
-  (LinToken (Token { kind = NumberLiteral numContents })) -> ok $ AST.TermNumberLiteral numContents
-  (LinToken (Token { kind = StringLiteral str })) -> ok $ AST.TermStringLiteral str
-  (LinWhere body clauses) -> ok $ AST.TermWhere (parseTerm ctx $ Z.start body) $ clauses <&> \l ->
+parseOneTerm ctx z = Z.right z >>= \(lin, zr) -> let ok term = Just (term, zr) in case (lin, Z.right zr) of
+  (LinToken t, _) | isWhitespace t -> parseOneTerm ctx zr
+  (LinToken t, _) | content t == "match" -> Just $ runState (parseMatch ctx) (Z.restart zr)
+  -- Member access and sections
+  (LinToken t, Just (LinToken tr, _)) | content tr == "." && kind t == LetterIdentifier ->
+    Just . first (\(x NE.:| xs) -> foldr (flip AST.TermMemberAccess) (AST.TermIdentifier x) xs) $ parseMemberSequence t zr
+  (LinToken t, Just (LinToken tr, zrr)) | content t == "." && not (isWhitespace tr) ->
+    Just . first AST.TermMemberSection $ parseMemberSequence tr zrr
+  -- Identifiers
+  (LinToken t, _) | kind t == LetterIdentifier || kind t == SymbolIdentifier -> ok $ AST.TermIdentifier $ content t
+  -- Literals
+  (LinToken (Token { kind = NumberLiteral numContents }), _) -> ok $ AST.TermNumberLiteral numContents
+  (LinToken (Token { kind = StringLiteral str }), _) -> ok $ AST.TermStringLiteral str
+  (LinWhere body clauses, _) -> ok $ AST.TermWhere (parseTerm ctx $ Z.start body) $ clauses <&> \l ->
     let (Just zBody, zDestruct) = breakWhen (is "=") $ Z.start l in
       (evalState parseDestructuring zDestruct, parseTerm ctx zBody)
-  (LinMultilineOperator op ls) -> ok $ AST.TermMultilineOperator (AST.TermIdentifier op) $ parseTerm ctx . Z.start <$> ls
-  (LinParens l) -> ok $ parseParens ctx $ Z.start l
-  (LinBrackets l) -> ok $ AST.TermList $ either (pure . Just) id $ parseCommaSeparated ctx $ Z.start l
-  (LinBraces l) -> ok $ parseRecordLiteral ctx $ Z.start l
-  (LinFunction lparams lbody) ->
+  (LinMultilineOperator op ls, _) -> ok $ AST.TermMultilineOperator (AST.TermIdentifier op) $ parseTerm ctx . Z.start <$> ls
+  (LinParens l, _) -> ok $ parseParens ctx $ Z.start l
+  (LinBrackets l, _) -> ok $ AST.TermList $ either (pure . Just) id $ parseCommaSeparated ctx $ Z.start l
+  (LinBraces l, _) -> ok $ parseRecordLiteral ctx $ Z.start l
+  (LinFunction lparams lbody, _) ->
     ok $ AST.TermFunction (evalState (exhaustively parseDestructuring) $ Z.start lparams) (parseTerm ctx $ Z.start lbody)
   l -> error $ "term not supported yet: " ++ show l
 
@@ -289,6 +296,17 @@ splitRecordClauses sep z0 = NE.toList (splitClauses "," z0) >>= parseClause
 
 braceParser :: (Linear -> a) -> (Linear -> b) -> String -> Linear -> [(a, Maybe b)]
 braceParser fLHS fRHS sep z = bimap fLHS (fmap fRHS) <$> splitRecordClauses sep z
+
+-- | z0 should be sitting where there might be a "." Token
+parseMemberSequence :: Token -> Linear -> (NE.NonEmpty AST.ValidIdentifier, Linear)
+parseMemberSequence x0 z0 = first (content x0 NE.:|) $ go z0 []
+  where
+    go :: Linear -> [AST.ValidIdentifier] -> ([AST.ValidIdentifier], Linear)
+    go z xs = case Z.right z of
+      Just (LinToken (Token { content = "." }), zr) -> case Z.right zr of
+        Just (LinToken t, zrr) -> go zrr $ content t : xs
+        _ -> (xs, z)
+      _ -> (xs, z)
 
 onlyIdentifier = evalState $ only $ expect matchIdentifier
 parseRecordLiteral ctx = AST.TermRecord . braceParser onlyIdentifier (parseTerm ctx) "="

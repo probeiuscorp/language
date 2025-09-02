@@ -1,0 +1,5 @@
+config.user.firstName <> config.user.lastName
+───
+<>
+⤷ TermMemberAccess (TermMemberAccess (TermIdentifier "config") "user") "firstName"
+⤷ TermMemberAccess (TermMemberAccess (TermIdentifier "config") "user") "lastName"
