@@ -53,6 +53,7 @@ semanticValue knownVars term = case runWriter $ runReaderT (go term) knownVars o
         traversed = (\(key, mTerm) -> (key, go $ fromMaybe (AST.TermIdentifier key) mTerm)) <$> members
         sequenced = sequence <$> traverse distributeOut2ARight traversed
         distributeOut2ARight (a, mb) = fmap (a,) <$> mb
+    go (AST.TermMemberAccess target member) = fmap (`AST.ExprMemberAccess` member) <$> go target
     go (AST.TermMatch clauses) = fmap AST.ExprMatch . sequence <$> traverse visitClause clauses
       where
         visitClause ([destruct], term') = fmap (destruct, ) <$> local (<> collectBindings destruct) (go term')

@@ -38,6 +38,8 @@ data Expression
   | ExprIntegral Int
   | ExprDouble Double
   | ExprRecord [(String, Expression)]
+  | ExprMemberAccess Expression ValidIdentifier
+  | ExprMemberSection (NE.NonEmpty ValidIdentifier)
   | ExprTuple [Expression]
   | ExprList [Expression]
   | ExprMatch [(Destructuring, Expression)]

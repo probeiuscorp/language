@@ -10,6 +10,7 @@ import LLVM.AST.Constant (Constant(Undef, GlobalReference, Int, Struct, PtrToInt
 import LLVM.IRBuilder.Module (function, extern, ParameterName (NoParameterName), ModuleBuilderT, buildModuleT, global)
 import LLVM.IRBuilder.Monad (IRBuilderT, named, block)
 import LLVM.AST.Name (Name)
+import qualified LLVM.AST.IntegerPredicate as Predicate
 import LLVM.IRBuilder.Constant (int32, int64, double)
 import qualified LLVM.IRBuilder.Instruction as L
 import qualified LLVM.AST.Type as Type
@@ -56,6 +57,7 @@ emitExpr expr = defer freeset $ getExpr expr
       (AST.ExprIntegral int) -> valueOf KindInt $ int64 $ integerFromInt int
       (AST.ExprDouble dbl) -> valueOf KindDouble $ double dbl
       (AST.ExprRecord members) -> emitRecord members
+      (AST.ExprMemberAccess target member) -> emitMemberAccess target member
       (AST.ExprMatch clauses) -> matchExpression clauses freeset
       _ -> undefined
 
@@ -85,7 +87,9 @@ data ValueKind = KindThunk | KindClosure | KindData | KindRecord | KindInt | Kin
 kindOf :: ValueKind -> Operand
 kindOf = int64 . integerFromInt . fromEnum
 valueOf :: ValueKind -> Operand -> Codegen Operand
-valueOf kind operand = buildStruct anyValueType [kindOf kind, operand]
+valueOf = valueFrom . kindOf
+valueFrom :: Operand -> Operand -> Codegen Operand
+valueFrom kind operand = buildStruct anyValueType [kind, operand]
 ptrtoint :: Operand -> Codegen Operand
 ptrtoint operand = L.ptrtoint operand Type.i64
 inttoptr :: Operand -> Codegen Operand
@@ -208,6 +212,30 @@ emitRecord members = do
       ptr <- L.gep recordType record [int32 0, int32 (iStart + offset)]
       L.store ptr 0 op
   valueOf KindRecord =<< ptrtoint record
+
+emitMemberAccess :: AST.Expression -> String -> Codegen Operand
+emitMemberAccess expr member = mdo
+  let recordType = Type.ArrayType 0 Type.i64
+  op <- demand =<< emitExpr expr
+  record <- inttoptr =<< L.extractValue op [1]
+  L.br before
+  before <- block
+  L.br loop
+  loop <- block
+  i <- L.phi [(int64 1, before), (iNext, loop)]
+  iNext <- L.add i $ int64 3
+  tagCheckPtr <- L.gep recordType record [int32 0, i]
+  tagCheck <- L.load Type.i64 tagCheckPtr 0
+  isZero <- L.icmp Predicate.EQ tagCheck $ int64 $ keyId member
+  L.condBr isZero done loop
+  done <- block
+  i1 <- L.add i $ int64 1
+  i2 <- L.add i $ int64 2
+  p1 <- L.gep recordType record [int32 0, i1]
+  p2 <- L.gep recordType record [int32 0, i2]
+  v1 <- L.load Type.i64 p1 0
+  v2 <- L.load Type.i64 p2 0
+  valueFrom v1 v2
 
 thunkType = structure [Type.i1, Type.ptr, Type.ptr]
 getThunkStatusPtr thunk = L.gep thunkType thunk [int32 0, int32 0]
