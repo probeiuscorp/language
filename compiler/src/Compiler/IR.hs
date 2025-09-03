@@ -55,6 +55,7 @@ emitExpr expr = defer freeset $ getExpr expr
       (AST.ExprFunction free destruct body) -> functionExpression destruct free $ emitExpr body
       (AST.ExprIntegral int) -> valueOf KindInt $ int64 $ integerFromInt int
       (AST.ExprDouble dbl) -> valueOf KindDouble $ double dbl
+      (AST.ExprRecord members) -> emitRecord members
       (AST.ExprMatch clauses) -> matchExpression clauses freeset
       _ -> undefined
 
@@ -76,8 +77,10 @@ buildStruct recordType = foldM (\currentRecord (operand, i) ->
     L.insertValue currentRecord operand [i]
   ) (undef recordType) . zipWithIndices 0
 
+anyValueTypePositions :: [Type.Type]
+anyValueTypePositions = [Type.i64, Type.i64]
 anyValueType :: Type.Type
-anyValueType = structure [Type.i64, Type.i64]
+anyValueType = structure anyValueTypePositions
 data ValueKind = KindThunk | KindClosure | KindData | KindRecord | KindInt | KindDouble deriving (Eq, Ord, Show, Enum)
 kindOf :: ValueKind -> Operand
 kindOf = int64 . integerFromInt . fromEnum
@@ -184,6 +187,27 @@ matchExpression clauses free = emitFunction free $ \param -> mdo
       after <- block
       L.br endLabel
       pure ((result, after) : xs)
+
+keyId :: String -> Integer
+keyId = fromIntegral . length
+
+emitRecord :: [(String, AST.Expression)] -> Codegen Operand
+emitRecord members = do
+  -- Each member gets the 1) key id; 2) kind; 3) data
+  let recordType = structure $ Type.i64 : (members *> (Type.i64 : anyValueTypePositions))
+  record <- malloc recordType
+  L.store record 0 $ int64 $ fromIntegral $ length members
+  forM_ (zipWithIndices 0 members) $ \((key, expr), i) -> do
+    let iStart = i * 3 + 1
+    value <- emitExpr expr `named` userIdentifier key
+    -- TODO: can this be memcpy?
+    a1 <- L.extractValue value [0]
+    a2 <- L.extractValue value [1]
+    let positions = [int64 $ keyId key, a1, a2]
+    forM_ (zipWithIndices 0 positions) $ \(op, offset) -> do
+      ptr <- L.gep recordType record [int32 0, int32 (iStart + offset)]
+      L.store ptr 0 op
+  valueOf KindRecord =<< ptrtoint record
 
 thunkType = structure [Type.i1, Type.ptr, Type.ptr]
 getThunkStatusPtr thunk = L.gep thunkType thunk [int32 0, int32 0]
