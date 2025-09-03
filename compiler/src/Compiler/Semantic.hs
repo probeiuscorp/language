@@ -6,6 +6,7 @@ import qualified Data.Set as Set
 import Control.Monad.Reader (Reader, MonadReader (ask, local), runReader, ReaderT (runReaderT))
 import Control.Monad.Writer (tell, Writer, runWriter)
 import Data.Function (on)
+import Data.Maybe (fromMaybe)
 
 tryIntFromDouble :: Double -> Maybe Int
 tryIntFromDouble double = if ceiled == floor double
@@ -46,6 +47,12 @@ semanticValue knownVars term = case runWriter $ runReaderT (go term) knownVars o
         dblScalar = Tok.numScalar numContents
         mScalar = maybe (Left dblScalar) Right $ tryIntFromDouble dblScalar
         integralPart = Tok.parseIntegral base integral
+    go (AST.TermRecord members) = local (<> Set.fromList newKnownVars) $ fmap AST.ExprRecord <$> sequenced
+      where
+        newKnownVars = members >>= \case { (key, Just _) -> [key]; (_, Nothing) -> [] }
+        traversed = (\(key, mTerm) -> (key, go $ fromMaybe (AST.TermIdentifier key) mTerm)) <$> members
+        sequenced = sequence <$> traverse distributeOut2ARight traversed
+        distributeOut2ARight (a, mb) = fmap (a,) <$> mb
     go (AST.TermMatch clauses) = fmap AST.ExprMatch . sequence <$> traverse visitClause clauses
       where
         visitClause ([destruct], term') = fmap (destruct, ) <$> local (<> collectBindings destruct) (go term')

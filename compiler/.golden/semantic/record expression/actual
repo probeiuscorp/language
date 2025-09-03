@@ -1,0 +1,16 @@
+{ x = 5, y = x x }
+───
+Right
+  ( ExprRecord
+    [
+      ( "x"
+      , ExprIntegral 5
+      )
+    ,
+      ( "y"
+      , ExprApplication
+        ( ExprIdentifier "x" )
+        ( ExprIdentifier "x" )
+      )
+    ]
+  )
