@@ -14,13 +14,24 @@ tryIntFromDouble double = if ceiled == floor double
   else Nothing
   where ceiled = ceiling double
 
-type Semant a = ReaderT AST.VarSet (Writer [AST.ParseError]) (Maybe a)
+data SemantInfo = SemantInfo
+  { infoErr :: [AST.ParseError] -> [AST.ParseError]
+  , infoMembers :: Set.Set String -> Set.Set String
+  }
+tellMembers = tell . SemantInfo id
+instance Semigroup SemantInfo where
+  a <> b = SemantInfo (infoErr a . infoErr b) (infoMembers a . infoMembers b)
+instance Monoid SemantInfo where
+  mempty = SemantInfo id id
+
+type Semant a = ReaderT AST.VarSet (Writer SemantInfo) (Maybe a)
+type SemantOut = (AST.Expression, Set.Set String)
 tellErr :: AST.ParseError -> Semant AST.Expression
-tellErr err = Nothing <$ tell (pure err)
-semanticValue :: AST.VarSet -> AST.Term -> Either [AST.ParseError] AST.Expression
+tellErr err = Nothing <$ tell (SemantInfo (err :) id)
+semanticValue :: AST.VarSet -> AST.Term -> Either [AST.ParseError] SemantOut
 semanticValue knownVars term = case runWriter $ runReaderT (go term) knownVars of
-  (Just expr, _) -> Right expr
-  (_, errs) -> Left errs
+  (Just expr, SemantInfo _ xmembers) -> Right (expr, xmembers Set.empty)
+  (_, SemantInfo xerrs _) -> Left $ xerrs []
   where
     ok = pure . pure
     go :: AST.Term -> Semant AST.Expression
@@ -47,13 +58,17 @@ semanticValue knownVars term = case runWriter $ runReaderT (go term) knownVars o
         dblScalar = Tok.numScalar numContents
         mScalar = maybe (Left dblScalar) Right $ tryIntFromDouble dblScalar
         integralPart = Tok.parseIntegral base integral
-    go (AST.TermRecord members) = local (<> Set.fromList newKnownVars) $ fmap AST.ExprRecord <$> sequenced
+    go (AST.TermRecord members) = do
+      tellMembers (<> Set.fromList (fst <$> members))
+      local (<> Set.fromList newKnownVars) $ fmap AST.ExprRecord <$> sequenced
       where
         newKnownVars = members >>= \case { (key, Just _) -> [key]; (_, Nothing) -> [] }
         traversed = (\(key, mTerm) -> (key, go $ fromMaybe (AST.TermIdentifier key) mTerm)) <$> members
         sequenced = sequence <$> traverse distributeOut2ARight traversed
         distributeOut2ARight (a, mb) = fmap (a,) <$> mb
-    go (AST.TermMemberAccess target member) = fmap (`AST.ExprMemberAccess` member) <$> go target
+    go (AST.TermMemberAccess target member) = do
+      tellMembers $ Set.insert member
+      fmap (`AST.ExprMemberAccess` member) <$> go target
     go (AST.TermMatch clauses) = fmap AST.ExprMatch . sequence <$> traverse visitClause clauses
       where
         visitClause ([destruct], term') = fmap (destruct, ) <$> local (<> collectBindings destruct) (go term')

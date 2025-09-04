@@ -5,7 +5,7 @@ module Compiler.Modules where
 import qualified Compiler.AST as AST
 import qualified Compiler.Zipper as Z
 import Compiler.Tokenize (tokenize)
-import Compiler.Semantic (semanticValue, collectBindings)
+import Compiler.Semantic (semanticValue, collectBindings, SemantOut)
 import Compiler.Parse (splitDeclarations, parseDeclaration, TopLevelDeclaration, ParseContext)
 import qualified Compiler.Parse as AST
 import System.FilePath (takeDirectory, normalise, (</>))
@@ -39,10 +39,11 @@ makeLenses ''TillyModuleAccum
 data TillyModuleParsed = TillyModuleParsed
   { _parModImports :: [(ModuleSpecifier, AST.ImportListing)]
   , _parModExposed :: Set.Set AST.ValidIdentifier
+  , _parModMemberIds :: Map.Map String Integer
   , _parModBindings :: Map.Map AST.ValidIdentifier (Maybe AST.Fixity, ParseContext -> AST.Term)
   }
 makeLenses ''TillyModuleParsed
-type TillyModuleBuildable = ((), Map.Map AST.ValidIdentifier AST.Expression)
+type TillyModuleBuildable = ((), Map.Map AST.ValidIdentifier SemantOut)
 
 identifierFromSpecifier :: ModuleIdentifier -> ModuleSpecifier -> ModuleIdentifier
 identifierFromSpecifier baseModule specifier = ModuleIdentifier . normalise $ takeDirectory (unModuleIdentifier baseModule) </> unModuleSpecifier specifier
@@ -74,7 +75,7 @@ parseModule source = processModule $ foldr (maybe id $ flip foldDeclaration) m0 
       _ -> error "unsupported declaration"
 
 processModule :: TillyModuleAccum -> Validated TillyModuleParsed
-processModule m = TillyModuleParsed (view accModImports m) (view accModExposed m) <$> addFixities (view accModFixities m)
+processModule m = TillyModuleParsed (view accModImports m) (view accModExposed m) undefined <$> addFixities (view accModFixities m)
   where
     bindings = view accModBindings m
     addFixities :: [(AST.ValidIdentifier, AST.Fixity)] -> Validated (Map.Map AST.ValidIdentifier (Maybe AST.Fixity, ParseContext -> AST.Term))

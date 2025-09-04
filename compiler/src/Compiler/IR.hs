@@ -15,6 +15,7 @@ import LLVM.IRBuilder.Constant (int32, int64, double)
 import qualified LLVM.IRBuilder.Instruction as L
 import qualified LLVM.AST.Type as Type
 import LLVM.AST (Module, Name (Name))
+import qualified Control.Lens as Lens
 import Control.Monad (foldM, forM_, void)
 import Control.Monad.Reader (ReaderT, runReaderT, asks)
 import Control.Monad.State.Strict (MonadTrans (lift), State, evalState, MonadState (state))
@@ -29,10 +30,12 @@ import Compiler.Semantic (collectBindings)
 
 -- | The state is the next global name. The supply of freshUnName is not preserved
 -- between `lift`s. The State is innermost to be preserved while dropping IRBuilderT.
-type ModuleCodegen = ModuleBuilderT (ReaderT (AST.VarSet, AST.ValidIdentifier -> Integer) (State Int))
+type ModuleCodegen = ModuleBuilderT (ReaderT CodegenContext (State Int))
 type Codegen = IRBuilderT ModuleCodegen
-askKnownGlobals = asks fst
-askTagOfConstructor = asks snd
+type CodegenContext = (AST.VarSet, AST.ValidIdentifier -> Integer, Map.Map String Integer)
+askKnownGlobals = asks $ Lens.view Lens._1
+askTagOfConstructor = asks $ Lens.view Lens._2
+askMemberIdByString = asks $ (Map.!) . Lens.view Lens._3
 
 userIdentifier ident = fromString $ 'u' : '_' : ident
 -- llvm-hs tries to unique names, so the first unique identifier will have an "_0" appended.
@@ -192,11 +195,9 @@ matchExpression clauses free = emitFunction free $ \param -> mdo
       L.br endLabel
       pure ((result, after) : xs)
 
-keyId :: String -> Integer
-keyId = fromIntegral . length
-
 emitRecord :: [(String, AST.Expression)] -> Codegen Operand
 emitRecord members = do
+  keyId <- askMemberIdByString
   -- Each member gets the 1) key id; 2) kind; 3) data
   let recordType = structure $ Type.i64 : (members *> (Type.i64 : anyValueTypePositions))
   record <- malloc recordType
@@ -215,6 +216,7 @@ emitRecord members = do
 
 emitMemberAccess :: AST.Expression -> String -> Codegen Operand
 emitMemberAccess expr member = mdo
+  keyId <- askMemberIdByString
   let recordType = Type.ArrayType 0 Type.i64
   op <- demand =<< emitExpr expr
   record <- inttoptr =<< L.extractValue op [1]
@@ -336,7 +338,7 @@ collectFreeVariablesExpr = \case
   where collect = foldMap collectFreeVariablesExpr
 
 mkMainModule :: TillyModuleBuildable -> Module
-mkMainModule (_, exprs) = flip evalState 0 . flip runReaderT readerContext . buildModuleT "main" $ do
+mkMainModule (_, outs) = flip evalState 0 . flip runReaderT readerContext . buildModuleT "main" $ do
   void $ extern "malloc" [Type.i64] Type.ptr
   forM_ dataDeclarations $ \((fnIdent, arity), tag) -> do
     let names = ('_' :) . show <$> take arity [0..] :: [AST.ValidIdentifier]
@@ -361,7 +363,9 @@ mkMainModule (_, exprs) = flip evalState 0 . flip runReaderT readerContext . bui
   function "valueOfChar" [(Type.i64, NoParameterName)] anyValueType $ \[ch] -> do
     L.ret =<< valueOf KindInt ch
   where
-    readerContext = (globalIdents, (Map.fromList (first fst <$> dataDeclarations) Map.!))
+    exprs = fst <$> outs
+    memberIdByKey = Map.fromList $ zipWithIndices (0 :: Integer) $ concatMap (toList . snd) outs
+    readerContext = (globalIdents, (Map.fromList (first fst <$> dataDeclarations) Map.!), memberIdByKey)
     globalIdents = Map.keysSet exprs <> Set.fromList (fst <$> dataDeclarationsNoTags)
     dataIO = [("IOmap", 2), ("IOapply", 2), ("IOjoin", 1), ("getLine", 0), ("putStrLn", 1)]
     dataStandard = [("Unit", 0), ("Some", 1), ("None", 0), ("Cons", 2), ("Nil", 0)]
