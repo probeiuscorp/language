@@ -24,7 +24,7 @@ import GHC.Num (integerFromInt)
 import Data.String (IsString(fromString))
 import qualified Data.Map as Map
 import qualified Data.Set as Set
-import Data.List (inits)
+import Data.List (inits, sortOn)
 import Data.Bifunctor (Bifunctor(first))
 import Compiler.Semantic (collectBindings)
 
@@ -202,7 +202,7 @@ emitRecord members = do
   let recordType = structure $ Type.i64 : (members *> (Type.i64 : anyValueTypePositions))
   record <- malloc recordType
   L.store record 0 $ int64 $ fromIntegral $ length members
-  forM_ (zipWithIndices 0 members) $ \((key, expr), i) -> do
+  forM_ (sortOn (keyId.fst.fst) $ zipWithIndices 0 members) $ \((key, expr), i) -> do
     let iStart = i * 3 + 1
     value <- emitExpr expr `named` userIdentifier key
     -- TODO: can this be memcpy?
