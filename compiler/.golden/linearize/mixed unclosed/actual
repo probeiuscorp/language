@@ -1,0 +1,54 @@
+x = ({ w: 5 }) & ({
+x = (z. z + 10),
+y = 20,
+
+───
+[
+  LinToken "x",
+  LinToken " ",
+  LinToken "=",
+  LinToken " ",
+  LinParens [
+    LinBraces [
+      LinToken " ",
+      LinToken "w",
+      LinToken ":",
+      LinToken " ",
+      LinToken "5",
+      LinToken " ",
+    ],
+  ],
+  LinToken " ",
+  LinToken "&",
+  LinToken " ",
+  LinParens [
+    LinBraces [
+      LinToken "\n",
+      LinToken "x",
+      LinToken " ",
+      LinToken "=",
+      LinToken " ",
+      LinParens [
+        LinFunction [
+          LinToken "z",
+        ] [
+          LinToken " ",
+          LinToken "z",
+          LinToken " ",
+          LinToken "+",
+          LinToken " ",
+          LinToken "10",
+        ],
+      ],
+      LinToken ",",
+      LinToken "\n",
+      LinToken "y",
+      LinToken " ",
+      LinToken "=",
+      LinToken " ",
+      LinToken "20",
+      LinToken ",",
+      LinToken "\n",
+    ],
+  ],
+]

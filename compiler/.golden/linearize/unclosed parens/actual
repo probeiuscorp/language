@@ -1,0 +1,15 @@
+a b (c d e
+───
+[
+  LinToken "a",
+  LinToken " ",
+  LinToken "b",
+  LinToken " ",
+  LinParens [
+    LinToken "c",
+    LinToken " ",
+    LinToken "d",
+    LinToken " ",
+    LinToken "e",
+  ],
+]

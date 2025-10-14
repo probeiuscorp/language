@@ -27,8 +27,17 @@ spec = describe "linearize" $ do
   let prettyParseLinearization = prettyPrintLinearization . linearize . Z.start . tokenize
   let test = snapshot "linearize/" prettyParseLinearization
   test "parens" "a (b c d) e"
+  test "unclosed parens" "a b (c d e"
   test "nested parens" "a ((b c) d) e"
   test "braces" "a {b c d} e"
+  test "unclosed braces"
+    "{\n\
+    \x = 10,\n\
+    \y = 20,\n"
+  test "mixed unclosed"
+    "x = ({ w: 5 }) & ({\n\
+    \x = (z. z + 10),\n\
+    \y = 20,\n"
   test "nested braces" "a {{b c} d} e"
   test "mixed nestings" "(a {b c}) d (e)"
   test "functions" "x y. x"

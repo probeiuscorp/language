@@ -69,7 +69,7 @@ matchHead p handleEmpty (t, zr) l = let con = content t in if
     pairlike construct lbefore (lcontents, tokensAfter) = go tokensAfter $ construct lcontents : lbefore
     tokenIs con t' = if content t' == con then Eat else Continue
     pair construct exitSeq = pairlike construct l $
-      linearizeOrClose (tokenIs exitSeq) (const $ error "unclosed group") zr []
+      linearizeOrClose (tokenIs exitSeq) id zr []
     -- Linearizing functions
     (Z.Zipper lparams lpreparams) = Z.eat shouldBeMadeParam $ Z.start l
     pFnBody t'

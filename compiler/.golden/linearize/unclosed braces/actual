@@ -1,0 +1,24 @@
+{
+x = 10,
+y = 20,
+
+───
+[
+  LinBraces [
+    LinToken "\n",
+    LinToken "x",
+    LinToken " ",
+    LinToken "=",
+    LinToken " ",
+    LinToken "10",
+    LinToken ",",
+    LinToken "\n",
+    LinToken "y",
+    LinToken " ",
+    LinToken "=",
+    LinToken " ",
+    LinToken "20",
+    LinToken ",",
+    LinToken "\n",
+  ],
+]
