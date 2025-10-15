@@ -111,7 +111,7 @@ y: Quadratic -> Double -> Double
 y = { a, b, c } x. a * x ** 2 + b * x + c
 ```
 
-Time complexity for property access is currently undefined.
+Time complexity for property access is guaranteed to be no worse than O(log n).
 
 ## Concerns
 1. Recommended practice for orphan instances
