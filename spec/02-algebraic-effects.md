@@ -1,6 +1,6 @@
 # Algebraic Effects
 
-> ![NOTE]
+> [!NOTE]
 > I'm not entirely decided on this spec.
 > This documents my preferences right now.
 
@@ -25,7 +25,7 @@ while the monad family will be left to solve the rest.
 Tilly's algebraic effect system then is only the `ask` effect.
 Tilly then may not rightly have an algebraic effect system (if that is the case, sorry!).
 
-> ![NOTE]
+> [!NOTE]
 > **I don't know:** Is `ask` the only commutative algebraic effect?
 
 The `ask` effect is offered to solve the configuration problem,
