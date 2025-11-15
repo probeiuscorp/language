@@ -116,28 +116,28 @@ _TODO_: this rule fails for `const`.
 Does it also fail for inserting into a collection?
 There must be a better reduction out there.
 
-$$
+```math
 \frac
 {\Gamma \vdash f \colon \tau_1 \to \tau_2 \text{ and } x \colon \tau_1 \;!\; \epsilon}
 {\Gamma \vdash f x \colon (\tau_1 \to \tau_2)\;\tau_1 \;!\; \epsilon}
-$$
+```
 
 2. If the supplied function is under an effect,
 move that effect out to the result of the application.
 
-$$
+```math
 \frac
 {\Gamma \vdash f \colon (\tau_1 \to \tau_2) \;!\; \epsilon \text{ and } x \colon \tau_1}
 {\Gamma \vdash f x \colon (\tau_1 \to \tau_2)\;\tau_1 \;!\; \epsilon}
-$$
+```
 
 3. If neither are under effects, use regular function type-checking.
 
-$$
+```math
 \frac
 {\Gamma \vdash f \colon \tau_1 \to \tau_2 \text{ and } x \colon \tau_1}
 {\Gamma \vdash f x \colon \tau_2}
-$$
+```
 
 Finally, strict evaluation needs consideration.
 Luckily `seq` is a language primitive and can be retyped to `a ! e -> b -> b ! e`.
