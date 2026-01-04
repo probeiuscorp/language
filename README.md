@@ -1,123 +1,61 @@
 <img alt="Tilly Logo" src="tilly-logo-full.png" />
 
-A pure, functional programming language inspired most by Haskell, but a bit by TypeScript.
+A pure, functional programming language inspired most by Haskell, but a bit by TypeScript and Elixir.
 
-Notable features and differences from Haskell:
-- **Complement types**, as the (¬) function. For example:
-```
-data Errors = NotProvided + NotInteger + NotInRange
-replaceLeft = f. match
-  (Left e) = f e
-  right = right
-defaultToZero: ∀e. Either e Int -> Either (e & ¬NotProvided) Int
-defaultToZero = replaceLeft $ match
-  NotProvided = Right 0
-  left = left
-```
-From this function and the intersection (&), the type checker is sound and [axiomatic](spec/01-types.md#given-type-constructors).
-- Subtyping:
-```
-getRight: ∀a. Either ⊥ a -> a
-getRight = match
-  Left e = e  // Since `e` is ⊥, it is compatible with `a`
-  Right a = a
-```
-- Expression oriented and point-free. No special syntax in declarations.
-Anonymous function expressions are focused, with concise syntax for functions as well as for [pattern matching](spec/01-pattern-matching.md):
-```
-id = x. x
-type id = x. x
-S = x y z. x z $ y z
-type S = x y z. x z $ y z
-mapMaybe = f. match
-  (Some x) = Some $ f x
-  (None) = None
-```
-- ECMAScript-like [module system](spec/01-modules.md).
+# What makes Tilly special?
 
-Notable features kept from Haskell:
-- Lazy evaluation
-- Typeclassing
-- Curried by default
+1. **Complement types.**
+Tilly has a set-theoretic type system, with complement and intersection types (union comes for free).
+Together with a function to inspect whether any given type is null/empty,
+Tilly's type system is [axiomatic](./spec/01-types.md#axiomatic-type-system).
+Tilly's type checker _is_ essentially that inspecting function — TypeScript's conditional types thus come for free.
 
-Some changes from Haskell:
-- Emphasis on pipe operator `|` (type `∀a b. a -> (a -> b) -> b`)
-- List types are `List a` instead of `[a]`
-- Do notation dropped
+2. **Expression-oriented.**
+Tilly has no statements and all its declarations are single-purpose.
+Functions, conditionals, pattern matching, and type annotations are all expressions and so can be manipulated like expressions.
 
-## Non-Goals
+3. **Line-oriented syntax.**
+I optimized Tilly's syntax to produce the cleanest Git diffs and avoid unnecessary diff churn and merge conflicts.
+Not allowing trailing commas is a classic example of diff churn.
+Tilly tries to go a step farther so that there aren't silly reindents, churning imports, or misalignment due to operators.
 
-### Respecting precedent
+4. **Anonymous records + nominal types.**
+Tilly offers two kinds of data types:
+anonymous records which will be very familiar to TypeScript users,
+and nominal types which will be very familiar to Haskell users.
+Neither are exactly as from prior art, being designed to play nice with both the typeclassing sort of polymorphism
+as well as highly expressive (such as parameterized + mutually recursive) data modeling problems.
 
-For example, `Maybe`'s constructors are `Some` and `None`. I like `Maybe` more than
-`Option` since it is more distinctive (more searchable, filters down autosuggest more).
-I like `Some` and `None` and I dislike `Just` and `Nothing`.
+5. **(Commutative) algebraic effects.**
+Inspired by React Context and offered to address the configuration problem,
+"ask" effects allow highly nested code to implicitly receive parameters from high up in the evaluation tree.
+I hate how Koka does algeraic effects so Tilly only offers [_commutative_ algebraic effects](./spec/02-algebraic-effects.md) — there is **no** evaluation order in Tilly.
+Non-commutative effects remain the business of monads.
 
-## Structural typing
-Add structurally typed records inspired by TypeScript.
+6. **Preludes and module system.**
+OK, this one is basically more on point (3).
+TypeScript's module system is a never ending source of diff churn:
+importing small utils followed by dropping unused imports.
+In what world is `useState` going to refer to _anything_ in my frontend code except for the one from `react`?
+Tilly allows users to create scoped, custom preludes.
+Anything in a prelude will be immediately available to all the source files it is scoped for.
 
-1. Syntax
-```
-person = {
-  name = 'Alex Generic'
-  birthdate = Date 1821 4 20
-  customerStatus = {
-    joined = Date 2024 02 10
-    loyaltyPoints = 140
-    balance = 12310
-  }
-}
-```
-2. Reading and updating
+7. **Non-stratified typeclasses**.
+In Haskell, typeclasses are `Constraint`s, not `Type`s at all.
+In Tilly typeclasses are just types like any other.
+Simply letting a typeclass be the union of all its instances though [doesn't work](./spec/02-typeclassing.md#value),
+instead a typeclass must be the **XOR** (yes, Boolean XOR!) of all its instances.
 
-The value-level `&` operator can be used to combine the fields of two records
-into one. Right side values are preferred over left side values.
+# Status of the project
 
-An `update` function can be derived, which takes a record with the same fields
-but with each property as a function.
+Currently the compiler parses most of the language and will generate runtime code for a small number of features.
+The simplest runtime system does exist, and line-based stdin/stdout monadic IO works.
+A VSCode extension for simple syntax highlighting is available.
 
-```
-ageWhenJoined = person.customerStatus.joined - person.birthdate
-withNewAge = person & {
-  name = "Alex Generic I"
-  birthdate = person.birthdate + 1
-  customerStatus = person.customerStatus & {
-    loyaltyPoints = person.customerStatus.loyaltyPoints + 30
-  }
-}
-withNewAgeUpdate = person | update {
-  name = K $ "Alex Generic I"
-  birthdate = (+1)
-  customerStatus = update {
-    loyaltyPoints = (+30)
-  }
-}
-```
-3. Typing
-```
-type Person = {
-  name: String
-  birthdate: Date
-  customerStatus: {
-    joined: Date
-    loyaltyPoints: Int
-  }
-}
-```
-4. Destructuring
-```
-type Quadratic = { a: Double, b: Double, c: Double }
-y: Quadratic -> Double -> Double
-y = { a, b, c } x. a * x ** 2 + b * x + c
-```
+These things are not done:
 
-Time complexity for property access is guaranteed to be no worse than O(log n).
-
-## Concerns
-1. Recommended practice for orphan instances
-2. Optional fields in records
-3. Type union operator. `|` is taken for the pipe function, and union is not
-divisible as `+` would imply.
-
-## Ideas
-1. Algebraic effects
+- Typechecker, especially anything relating to quantified types
+- Module system
+- Runtime generation of non-core language features like records
+- Garbage collector
+- Anything resembling a standard library
