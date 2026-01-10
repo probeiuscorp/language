@@ -59,3 +59,79 @@ These things are not done:
 - Runtime generation of non-core language features like records
 - Garbage collector
 - Anything resembling a standard library
+
+# Tour
+
+What does Tilly code look like?
+
+## External effects
+
+Tilly is a pure language so there are no side effects.
+However, that doesn't mean Tilly can't have external effects.
+Tilly uses monadic IO, where your code creates IO expressions the runtime then interprets and executes.
+The following defines `main` to be the IO expression requesting that "Hello, world" be put on stdout.
+
+```tilly
+main = putStrLn "Hello, world"
+```
+
+These IO expressions are manipulated like any other,
+with the specific interface being the monad interface.
+The `*>` function yields a new IO expression that requests executing the LHS before the RHS.
+
+```haksell
+main =
+  *> putStrLn "Hello..."
+  *> putStrLn "world!"
+```
+
+The `>>` function yields a new IO expression that, after executing the LHS,
+will take the result of the LHS and apply it to the RHS function (here `line. putStrLn line`),
+getting a new IO expression it will then execute.
+
+```tilly
+main = getLine >> line. putStrLn line
+-- or...
+main = getLine >> putStrLn
+```
+
+Because Tilly is a lazy language,
+all expressions can be recursively defined, not just functions.
+This `main` will echo forever.
+
+
+```tilly
+main = (getLine >> putStrLn) *> main
+```
+
+Put together, we can express any kind of external effect we want.
+
+```tilly
+-- prompt has type:
+-- String -> (String -> Either String a) -> IO a
+prompt = promptMessage parse.
+  promptAgain = >>
+    getLine
+    validate > match
+      (Left errorMessage). *>
+        putStrLn $ "Please enter a valid value: " <> errorMessage
+        promptAgain
+      (Right goodValue). of goodValue
+  putStrLn promptMessage *> promptAgain
+
+-- main has type:
+-- IO ()
+main = >>
+  sequence (prompt "First name" Right, prompt "Last name" Right)
+  (first, last). putStrLn $
+    <> "Good to meet you, "
+    <> first <> " " <> last <> "!"
+  -- join takes IO (IO a) -> IO a
+  -- Here we return an IO action based off the user's response
+  join $ prompt "Rate this Italian salad" $ toLower > match
+    | anyp [(== "good"), (== "ok")].
+      Right $ putStrLn "Awesome! I made it just for you!"
+    | anyp [(== "not good"), (== "bad")].
+      Right $ putStrLn "Snap! I'll try harder for next time."
+    input. Left $ "I don't understand " <> input
+```
