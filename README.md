@@ -2,7 +2,7 @@
 
 A pure, functional programming language inspired most by Haskell, but a bit by TypeScript and Elixir.
 
-# What makes Tilly special?
+# What defines Tilly?
 
 1. **Complement types.**
 Tilly has a set-theoretic type system, with complement and intersection types (union comes for free).
