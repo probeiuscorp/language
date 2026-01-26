@@ -8,7 +8,7 @@ import Compiler.Modules (TillyModuleBuildable)
 import LLVM.AST.Operand (Operand(ConstantOperand, LocalReference))
 import LLVM.AST.Constant (Constant(Undef, GlobalReference, Int, Struct, PtrToInt))
 import LLVM.IRBuilder.Module (function, extern, ParameterName (NoParameterName), ModuleBuilderT, buildModuleT, global)
-import LLVM.IRBuilder.Monad (IRBuilderT, named, block)
+import LLVM.IRBuilder.Monad (IRBuilderT, named, block, freshUnName, emitInstr)
 import LLVM.AST.Name (Name)
 import qualified LLVM.AST.IntegerPredicate as Predicate
 import LLVM.IRBuilder.Constant (int32, int64, double)
@@ -65,10 +65,9 @@ emitExpr expr = defer freeset $ getExpr expr
       _ -> undefined
 
 mallocType = Type.FunctionType Type.ptr [Type.i64] False
+mallocRaw size = L.call mallocType (ConstantOperand $ GlobalReference "malloc") [(size, [])]
 malloc :: Type.Type -> Codegen Operand
-malloc ty = do
-  size <- L.sizeof 64 ty
-  L.call mallocType (ConstantOperand $ GlobalReference "malloc") [(size, [])]
+malloc ty = mallocRaw =<< L.sizeof 64 ty
 
 undef = ConstantOperand . Undef
 structure = Type.StructureType False
@@ -86,17 +85,18 @@ anyValueTypePositions :: [Type.Type]
 anyValueTypePositions = [Type.i64, Type.i64]
 anyValueType :: Type.Type
 anyValueType = structure anyValueTypePositions
-data ValueKind = KindThunk | KindClosure | KindData | KindRecord | KindInt | KindDouble deriving (Eq, Ord, Show, Enum)
+data ValueKind = KindThunk | KindClosure | KindData | KindRecord | KindInt | KindDouble
+  deriving (Eq, Ord, Show, Enum)
 kindOf :: ValueKind -> Operand
 kindOf = int64 . integerFromInt . fromEnum
 valueOf :: ValueKind -> Operand -> Codegen Operand
 valueOf = valueFrom . kindOf
 valueFrom :: Operand -> Operand -> Codegen Operand
 valueFrom kind operand = buildStruct anyValueType [kind, operand]
-ptrtoint :: Operand -> Codegen Operand
+ptrtoint, inttoptr, getDataAsPtr :: Operand -> Codegen Operand
 ptrtoint operand = L.ptrtoint operand Type.i64
-inttoptr :: Operand -> Codegen Operand
 inttoptr operand = L.inttoptr operand Type.ptr
+getDataAsPtr op = inttoptr =<< L.extractValue ??? [1] =<< demand op
 
 prepEnv :: Type.Type -> [AST.ValidIdentifier] -> (Integer -> Integer) -> (Operand -> Codegen (), Operand -> Codegen ())
 prepEnv envType idents offset = (writeEnv, readEnv)
@@ -214,12 +214,47 @@ emitRecord members = do
       L.store ptr 0 op
   valueOf KindRecord =<< ptrtoint record
 
+(???) = flip
+infix 9 ???
+data DeconsRecord = DeconsRecord
+  { dcrRecord :: Operand
+  , dcrSize :: Codegen Operand
+  , dcrWriteSize :: Operand -> Codegen ()
+  , dcrReadSlot :: Operand -> Codegen (Operand, Operand, Operand)
+  , dcrWriteSlot :: Operand -> (Operand, Operand, Operand) -> Codegen ()
+  }
+deconsRecord :: Operand -> DeconsRecord
+deconsRecord record = DeconsRecord record size writeSize readSlot writeSlot
+  where
+    unknownRecordType = Type.VectorType 32 Type.i64
+    size = do
+      ptr <- L.gep unknownRecordType record [int32 0, int32 1]
+      L.load Type.i64 ptr 0
+    writeSize recordSize = do
+      L.store record 0 recordSize
+    getPtrs i = do
+      iId <- L.add (int64 2) =<< L.mul i (int64 3)
+      iKind <- L.add iId $ int64 1
+      iData <- L.add iId $ int64 2
+      seqt3 $ (iId, iKind, iData) `pipet3` \iPos ->
+        L.gep unknownRecordType record [int32 0, iPos]
+    readSlot i = do
+      ptrs <- getPtrs i
+      seqt3 $ ptrs `pipet3` L.load Type.i64 ??? 0
+    writeSlot i ops = do
+      ptrs <- getPtrs i
+      void . seqt3 $ zipt3 ops ptrs `pipet3` \(v, ptr) ->
+        L.store ptr 0 v
+    infix 6 `pipet3`
+    pipet3 (a, b, c) f = (f a, f b, f c)
+    seqt3 :: Applicative f => (f a, f b, f c) -> f (a, b, c)
+    seqt3 (ma, mb, mc) = (,,) <$> ma <*> mb <*> mc
+    zipt3 (a, b, c) (d, e, f) = ((a, d), (b, e), (c, f))
 emitMemberAccess :: AST.Expression -> String -> Codegen Operand
 emitMemberAccess expr member = mdo
   keyId <- askMemberIdByString
   let recordType = Type.ArrayType 0 Type.i64
-  op <- demand =<< emitExpr expr
-  record <- inttoptr =<< L.extractValue op [1]
+  record <- getDataAsPtr =<< emitExpr expr
   L.br before
   before <- block
   L.br loop
@@ -238,6 +273,65 @@ emitMemberAccess expr member = mdo
   v1 <- L.load Type.i64 p1 0
   v2 <- L.load Type.i64 p2 0
   valueFrom v1 v2
+
+-- | Meld intrinsic. Combines two records into one, with preference for members of RHS.
+-- Record members are stored in increasing order of member ids. Simple linear merge.
+meld :: Operand -> Operand -> Codegen Operand
+meld left' right' = mdo
+  left <- deconsRecord <$> getDataAsPtr left'
+  leftSize <- dcrSize left
+  right <- deconsRecord <$> getDataAsPtr right'
+  rightSize <- dcrSize right
+  -- TODO: Currently over-allocating. Better can be done.
+  -- basicSize <- L.sizeof 64 Type.i64
+  outPtr <- mallocRaw =<< L.mul (int64 8) =<< L.add (int64 1) =<< L.mul (int64 3) =<< L.add leftSize rightSize
+  let out = deconsRecord outPtr
+  let write = dcrWriteSlot out k
+  L.br before
+  before <- block
+  L.br loop
+
+  loop <- block
+  -- i tracks row index in left, j in right, k in out
+  i <- L.phi [(int64 0, before), (LocalReference Type.i64 "ims_0", "latch_0")]
+  j <- L.phi [(int64 0, before), (LocalReference Type.i64 "jms_0", "latch_0")]
+  k <- L.phi [(int64 0, before), (LocalReference Type.i64 "kms_0", "latch_0")]
+  isDone <- bindM2 L.and (L.icmp Predicate.EQ i leftSize) (L.icmp Predicate.EQ j rightSize)
+  i0 <- L.add i $ int64 0
+  j0 <- L.add j $ int64 0
+  k0 <- L.add k $ int64 0
+  iP1 <- L.add i0 $ int64 1
+  jP1 <- L.add j0 $ int64 1
+  L.condBr isDone done notDone
+  notDone <- block
+  readLHS@(idLHS, _, _) <- dcrReadSlot left i
+  readRHS@(idRHS, _, _) <- dcrReadSlot right j
+  shouldOverwrite <- L.icmp Predicate.EQ idLHS idRHS
+  L.condBr shouldOverwrite isEQ isNEQ
+  isNEQ <- block
+  shouldUniqueLHS <- L.icmp Predicate.ULT idLHS idRHS
+  L.condBr shouldUniqueLHS isUniqueLHS isUniqueRHS
+
+  isEQ <- block
+  write readRHS
+  L.br latch
+  isUniqueLHS <- block
+  write readLHS
+  L.br latch
+  isUniqueRHS <- block
+  write readRHS
+  L.br latch
+  latch <- block `named` "latch"
+  _ <- L.phi [(iP1, isEQ), (iP1, isUniqueLHS), (i0, isUniqueRHS)] `named` "ims"
+  _ <- L.phi [(jP1, isEQ), (j0, isUniqueLHS), (jP1, isUniqueRHS)] `named` "jms"
+  _ <- L.add k0 (int64 1) `named` "kms"
+  L.br loop
+
+  done <- block
+  dcrWriteSize out $ LocalReference Type.i64 "kms_0"
+  valueOf KindRecord =<< ptrtoint (dcrRecord out)
+  where
+    bindM2 fm ma mb = do { a <- ma; b <- mb; fm a b }
 
 thunkType = structure [Type.i1, Type.ptr, Type.ptr]
 getThunkStatusPtr thunk = L.gep thunkType thunk [int32 0, int32 0]
@@ -337,9 +431,17 @@ collectFreeVariablesExpr = \case
   _ -> Set.empty
   where collect = foldMap collectFreeVariablesExpr
 
+generateIntrinsics :: ModuleCodegen ()
+generateIntrinsics = mdo
+  meldRef <- function "meld" [(anyValueType, NoParameterName), (anyValueType, NoParameterName)] anyValueType $ \[lhs, rhs] -> do
+    L.ret =<< meld lhs rhs
+  deferGlobal "meld" $ emitFunction [] $ \lhs -> emitFunction [] $ \rhs ->
+    L.call (Type.FunctionType anyValueType [anyValueType, anyValueType] False) meldRef [(lhs, mempty), (rhs, mempty)]
+
 mkMainModule :: TillyModuleBuildable -> Module
 mkMainModule (_, outs) = flip evalState 0 . flip runReaderT readerContext . buildModuleT "main" $ do
   void $ extern "malloc" [Type.i64] Type.ptr
+  generateIntrinsics
   forM_ dataDeclarations $ \((fnIdent, arity), tag) -> do
     let names = ('_' :) . show <$> take arity [0..] :: [AST.ValidIdentifier]
     let sCaptures = inits names
@@ -366,7 +468,7 @@ mkMainModule (_, outs) = flip evalState 0 . flip runReaderT readerContext . buil
     exprs = fst <$> outs
     memberIdByKey = Map.fromList $ zipWithIndices (0 :: Integer) $ concatMap (toList . snd) outs
     readerContext = (globalIdents, (Map.fromList (first fst <$> dataDeclarations) Map.!), memberIdByKey)
-    globalIdents = Map.keysSet exprs <> Set.fromList (fst <$> dataDeclarationsNoTags)
+    globalIdents = Set.insert "meld" $ Map.keysSet exprs <> Set.fromList (fst <$> dataDeclarationsNoTags)
     dataIO = [("IOmap", 2), ("IOapply", 2), ("IOjoin", 1), ("getLine", 0), ("putStrLn", 1)]
     dataStandard = [("Unit", 0), ("Some", 1), ("None", 0), ("Cons", 2), ("Nil", 0)]
     dataDeclarationsNoTags = dataIO <> dataStandard :: [(AST.ValidIdentifier, Int)]

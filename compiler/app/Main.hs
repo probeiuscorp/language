@@ -7,6 +7,7 @@ import Compiler.Modules (buildModules, ModuleIdentifier (ModuleIdentifier))
 import Compiler.IR (mkMainModule)
 import LLVM.Context (withContext)
 import System.Directory (canonicalizePath)
+import LLVM.Analysis (verify)
 
 ($$) = ($)
 infixr 6 $$
@@ -45,6 +46,10 @@ main = do
   case modules of
     Left errs -> print errs
     Right llvmModule -> do
-      llvm <- withContext $ \context ->
-        withModuleFromAST context (mkMainModule llvmModule) moduleLLVMAssembly
+      llvm <- withContext $ \context -> do
+        withModuleFromAST context (mkMainModule llvmModule) $ \thing -> do
+          -- putStrLn "Verifying"
+          -- verify thing
+          putStrLn "Printing"
+          moduleLLVMAssembly thing
       BS.writeFile (optOutFile options) llvm

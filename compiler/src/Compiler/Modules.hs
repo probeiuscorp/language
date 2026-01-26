@@ -109,7 +109,7 @@ verifyModuleBuildable :: ModuleScope -> TillyModuleParsed -> Validation [AST.Par
 verifyModuleBuildable moduleScope m = ((),) <$> exprs
   where
     terms = view parModBindings m
-    knownVars = Map.keysSet moduleScope <> Set.fromList ["IOmap", "IOjoin", "getLine", "putStrLn", "Cons", "Nil"]
+    knownVars = Map.keysSet moduleScope <> Set.fromList ["IOmap", "IOjoin", "getLine", "putStrLn", "Cons", "Nil", "meld"]
     exprs = traverse (fromEither . semanticValue knownVars . ($ aboutOperators) . snd) terms
     aboutOperators = join . flip Map.lookup moduleScope
 

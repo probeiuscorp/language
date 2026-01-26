@@ -27,9 +27,67 @@ extern AnyValue demand(AnyValue);
 extern AnyValue evaluateClosure(AnyValue f, AnyValue x);
 extern AnyValue valueOfChar(long long codepoint);
 
+void dump_hex(const void* data, size_t size) {
+	char ascii[17];
+	size_t i, j;
+	ascii[16] = '\0';
+	for (i = 0; i < size; ++i) {
+		printf("%02X ", ((unsigned char*)data)[i]);
+		if (((unsigned char*)data)[i] >= ' ' && ((unsigned char*)data)[i] <= '~') {
+			ascii[i % 16] = ((unsigned char*)data)[i];
+		} else {
+			ascii[i % 16] = '.';
+		}
+		if ((i+1) % 8 == 0 || i+1 == size) {
+			printf(" ");
+			if ((i+1) % 16 == 0) {
+				printf("|  %s \n", ascii);
+			} else if (i+1 == size) {
+				ascii[(i+1) % 16] = '\0';
+				if ((i+1) % 16 <= 8) {
+					printf(" ");
+				}
+				for (j = (i+1) % 16; j < 16; ++j) {
+					printf("   ");
+				}
+				printf("|  %s \n", ascii);
+			}
+		}
+	}
+}
+void print_record(long long *record) {
+  printf("--- print_record ---\n");
+  fflush(stdout);
+  long long size = record[0];
+  printf("size: %lld\n", size);
+  fflush(stdout);
+  printf("--- fields ---\n");
+  for (int i = 0; i <= 3 * size; i++) {
+    printf("%lld  %p\n", record[i], record[i]);
+  }
+  printf("---\n");
+
+  for (int i = 0; i < size; i++) {
+    long long tag = record[i * 3 + 1];
+    long long kind = record[i * 3 + 2];
+    long long data = record[i * 3 + 3];
+    printf("row: %lld | %lld | %lld (%p)\n", tag, kind, data, data);
+  }
+  dump_hex(record, 1 + size * 3 * sizeof(long long));
+}
+
 AnyValue print_about(AnyValue value) {
-  printf("ABOUT kind: %lld   data: %lld\n", value.kind, value.data);
+  printf("ABOUT kind: %lld   data: %lld (%p)\n", value.kind, value.data, value.data);
   return value;
+}
+
+void print_int(long long value) {
+  printf("from LLVM: %lld (%p)\n", value, value);
+  fflush(stdout);
+}
+void print_debug(AnyValue value) {
+  printf("<< from LLVM:\n");
+  print_about(value);
 }
 
 AnyValue performIO(AnyValue zio) {
@@ -89,6 +147,10 @@ AnyValue performIO(AnyValue zio) {
 }
 
 int main() {
+  // AnyValue x = demand(u_main);
+  // printf("%p (%p)\n", &x, &x.data);
+  // print_about(x);
+  // print_record((long long*) x.data);
   performIO(u_main);
   return 0;
 }
