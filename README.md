@@ -46,6 +46,77 @@ In Tilly typeclasses are just types like any other.
 Simply letting a typeclass be the union of all its instances though [doesn't work](./spec/02-typeclassing.md#value),
 instead a typeclass must be the **XOR** (yes, Boolean XOR!) of all its instances.
 
+## Comparison with TypeScript
+
+This section is written for readers familiar with TypeScript but not Haskell.
+As such, many of the powerful ideas and features shown here are not unique to Tilly but come from Tilly's Haskell roots.
+Where they are unique to Tilly, it will be noted.
+
+- As a pure functional programming language,
+Tilly has no statements, evaluation order, or side effects
+(note that lacking _side effects_ does **not** mean Tilly can't have _external effects_).
+All code is expressions whose only utility is what they evaluate to — maximizing locality.
+
+- Function composition operator, pipe operator, and custom operators.
+
+- Tilly has pattern matching.
+In TypeScript if-else ladders are the most conservative, simple, and standard way to consume discriminated unions,
+however they are far from desirable for the reasons that follow.
+Proper pattern matching syntax is much friendlier to Git and other line operations.
+See [pattern matching](./spec/01-pattern-matching.md) for motivation and examples.
+  1) if-else ladders are statements, not expressions;
+  2) have to repeat the return keyword;
+  3) either extra lines are wasted on closing braces or the first condition is not aligned with the following conditions;
+  4) either the final clause goes in an else and so the condition is not shown in the code,
+or the final clause gets its own else-if and so
+either there is no else and any extensions to the union later will silently be ignored
+or a `never` check must be put in the else (bothersome).
+
+- Tilly has complement types.
+This means a function could require its input be anything but a number.
+That may not sound too useful but once you intersect that complement with a domain it becomes very useful indeed.
+
+  1) A simple use for complement types is error handling:
+start with data like `Either MyErrorType MyDesiredData` where `MyErrorType` is the union of a bunch of different error conditions.
+Now make a bunch of functions that handle individual error variants.
+Using complement types you can say that these functions will then
+give you an `Either` with the handled variants having been intersected _out_ of the type.
+Compose functions to handle every variant of error,
+and if you did it right you'll have intersected _out_ every error variant.
+You now have `Either never MyDesiredData`, where you can freely pluck out the `MyDesiredData`.
+  2) XOR types are another natural use for complement types.
+In TypeScript `a | b` will allow the types where the value is, well, both `a` and `b`.
+XOR types in Tilly (`a ^ b`) permit the value to be either an `a` or a `b`,
+but do not permit the value to be possibly either.
+This is an uncommon enough thing to do you may never have felt its absence in TypeScript,
+but when you do need XOR types, they are incredibly expressive.
+
+- Tilly has Higher Order Types.
+TypeScript's type system is itself a pure functional language,
+and generics are actually just functions between types (`type Id<T> = T`).
+Higher Order Types are akin to first-class functions, but for the type level.
+In languages that support Higher Order Types,
+generics (like that `Id` type) are valid types in and of themselves:
+I could write `Id<Id>` and get `Id`.
+Higher Order Types are useful for describing patterns like the functor and monad.
+
+- Tilly's records are comparable to but different from TypeScript objects.
+Notably records do not offer a way to inspect a record for all the fields it contains (no `Object.keys`)
+and do not allow arbitrary values to be inserted into records (can't be used like a dictionary).
+Tilly's records are more like named tuples.
+
+## Comparison with Haskell
+
+Syntax is the biggest way Tilly differentiates itself from Haskell.
+Tilly only has (anonymous) function expressions, so no moving parameters to the left hand side of an equal sign.
+Tilly also has only construct for pattern matching, `match` expressions (same as `\case`).
+There are no patterns in definitions, `if` expressions, or `case` expressions.
+
+- Anonymous function expressions.
+- Expressions-based declaration of nominal data types (ADTs)
+- Point free pattern matching
+- Subtyping
+
 # Status of the project
 
 Currently the compiler parses most of the language and will generate runtime code for a small number of features.
@@ -112,7 +183,7 @@ Put together, we can express any kind of external effect we want.
 prompt = promptMessage parse.
   promptAgain = >>
     getLine
-    validate > match
+    parse > match
       (Left errorMessage). *>
         putStrLn $ "Please enter a valid value: " <> errorMessage
         promptAgain
