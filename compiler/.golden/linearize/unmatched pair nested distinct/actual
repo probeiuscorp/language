@@ -1,0 +1,17 @@
+[1, 2, 3, 4}]
+───
+[
+  LinBrackets [
+    LinToken "1",
+    LinToken ",",
+    LinToken " ",
+    LinToken "2",
+    LinToken ",",
+    LinToken " ",
+    LinToken "3",
+    LinToken ",",
+    LinToken " ",
+    LinToken "4",
+    LinUnmatchedClosingPair "}",
+  ],
+]

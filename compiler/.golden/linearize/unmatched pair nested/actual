@@ -1,0 +1,12 @@
+(f x y))
+───
+[
+  LinParens [
+    LinToken "f",
+    LinToken " ",
+    LinToken "x",
+    LinToken " ",
+    LinToken "y",
+  ],
+  LinUnmatchedClosingPair ")",
+]

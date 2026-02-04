@@ -2,7 +2,7 @@ module Compiler.LinearizeSpec (spec) where
 
 import Test.Hspec
 import qualified Compiler.Zipper as Z
-import Compiler.Linearize (linearize, Linearized, Linearization, GLinearized (..))
+import Compiler.Linearize
 import Compiler.Tokenize (tokenize, content)
 import Compiler.SnapshotTesting (snapshot)
 
@@ -19,6 +19,7 @@ prettyPrintLinearization l = "[\n" ++ go "" l ++ "]"
     prettyPrintLinearized indent (LinBrackets lbody) = indent ++ "LinBrackets" ++ showLinearization indent lbody ++ ",\n"
     prettyPrintLinearized indent (LinWhere lbody lclauses) = indent ++ "LinWhere" ++ showLinearization indent lbody ++ (if null lclauses then " []" else showLinearization indent =<< lclauses) ++ ",\n"
     prettyPrintLinearized indent (LinMultilineOperator operator lclauses) = indent ++ "LinMultilineOperator(" ++ operator ++ ")" ++ (if null lclauses then " []" else showLinearization indent =<< lclauses) ++ ",\n"
+    prettyPrintLinearized indent (LinError (LinUnmatchedClosingPair t) _) = indent ++ "LinUnmatchedClosingPair " ++ show (content t) ++ ",\n"
     showLinearization :: String -> Linearization -> String
     showLinearization indent lbody = " [\n" ++ go indent lbody ++ indent ++ "]"
 
@@ -38,6 +39,9 @@ spec = describe "linearize" $ do
     "x = ({ w: 5 }) & ({\n\
     \x = (z. z + 10),\n\
     \y = 20,\n"
+  test "unmatched pair" "f x y)"
+  test "unmatched pair nested" "(f x y))"
+  test "unmatched pair nested distinct" "[1, 2, 3, 4}]"
   test "nested braces" "a {{b c} d} e"
   test "mixed nestings" "(a {b c}) d (e)"
   test "functions" "x y. x"

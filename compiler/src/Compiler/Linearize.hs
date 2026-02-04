@@ -1,7 +1,7 @@
 {-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE DeriveFunctor #-}
 
-module Compiler.Linearize (linearize, Linear, Linearized, Linearization, GLinearized(..)) where
+module Compiler.Linearize (linearize, Linear, Linearized, Linearization, GLinearized(..), LinearizedError(..)) where
 
 import Compiler.Tokenize
 import qualified Compiler.Zipper as Z
@@ -23,7 +23,11 @@ data GLinearized a
   | LinBraces (GLinearization a)
   | LinParens (GLinearization a)
   | LinToken a
+  | LinError LinearizedError a
   deriving (Eq, Show, Functor)
+data LinearizedError
+  = LinUnmatchedClosingPair Token
+  deriving (Eq, Show)
 
 fixOrder :: GLinearized a -> GLinearized a
 fixOrder (LinFunction params body) = LinFunction (fixOrder <$> params) . reverse $ fixOrder <$> body
@@ -51,6 +55,7 @@ type Continue = Linearization -> (Linearization, Tokens)
 type WithConfig a = (Token -> CloseAction) -> ((Linearization, Tokens) -> (Linearization, Tokens)) -> a
 matchHead :: WithConfig ((Token, Tokens) -> Continue)
 matchHead p handleEmpty (t, zr) l = let con = content t in if
+  | con `elem` [")", "}", "]"] -> go zr $ LinError (LinUnmatchedClosingPair t) t : l
   | con == "." && matchesFunction zr -> fn
   | con == "(" -> pair LinParens ")"
   | con == "{" -> pair LinBraces "}"
