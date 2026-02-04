@@ -76,7 +76,7 @@ parseBindingDeclaration = do
   liftState eatWhitespaceTokens
   guard =<< state (Z.eatIf $ is "=")
   gets $ \z -> ValueDeclaration (AST.DeclarationModule identifier isExported)
-    $ \ctx -> parseTerm ctx $ Z.start $ linearize z
+    $ \ctx -> parseTerm ctx $ Z.start $ linearize ctx z
 
 parseDataDeclaration :: StateT Tokens Maybe DeclarationNeedContext
 parseDataDeclaration = do
@@ -89,7 +89,7 @@ parseDataDeclaration = do
   liftState eatWhitespaceTokens
   hasBody <- state $ Z.eatIf $ is "="
   gets $ \z -> DataDeclaration (AST.DeclarationModule identifier isExported) $ if hasBody
-    then Just $ \ctx -> parseTerm ctx $ Z.start $ linearize z
+    then Just $ \ctx -> parseTerm ctx $ Z.start $ linearize ctx z
     else Nothing
 
 type ParseAttempt = StateT Tokens Maybe AST.ImportListing
@@ -113,7 +113,7 @@ parseImportDeclaration = do
     parseImportList :: StateT Tokens Maybe AST.Destructuring
     parseImportList = do
       z <- get
-      case linearize z of
+      case linearize (const Nothing) z of
         (LinBraces l:xs) -> guard (onlyWhitespaceLeft $ Z.start xs) $> parseRecordDestructure (Z.start l)
         _ -> mzero
     matchOnly :: ParseAttempt

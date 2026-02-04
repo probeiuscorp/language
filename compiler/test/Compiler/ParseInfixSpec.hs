@@ -7,12 +7,13 @@ import Compiler.Parse (parseOneTerm)
 import Compiler.Tokenize (tokenize)
 import Compiler.Linearize (linearize)
 import Compiler.ParseInfix (parseInfix)
-import Compiler.ParseSpec (prettyPrintTerm, testAboutOperators)
+import Compiler.ParseSpec (prettyPrintTerm)
 import Compiler.SnapshotTesting (snapshot)
+import Compiler.TestOperators (testOperators)
 
 spec :: SpecWith ()
 spec = describe "parseInfix" $ do
-  let prettyParseInfix = prettyPrintTerm "" . parseInfix (testAboutOperators, parseOneTerm testAboutOperators) . Z.start . linearize . Z.start . tokenize
+  let prettyParseInfix = prettyPrintTerm "" . parseInfix (testOperators, parseOneTerm testOperators) . Z.start . linearize testOperators . Z.start . tokenize
   let test = snapshot "parseInfix/" prettyParseInfix
   test "right associativity" "a $ b $ c $ d"
   test "left associativity" "a - b - c - d"

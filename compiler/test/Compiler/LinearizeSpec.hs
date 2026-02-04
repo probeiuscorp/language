@@ -5,6 +5,7 @@ import qualified Compiler.Zipper as Z
 import Compiler.Linearize
 import Compiler.Tokenize (tokenize, content)
 import Compiler.SnapshotTesting (snapshot)
+import Compiler.TestOperators (testOperators)
 
 prettyPrintLinearization :: [Linearized] -> String
 prettyPrintLinearization l = "[\n" ++ go "" l ++ "]"
@@ -25,7 +26,7 @@ prettyPrintLinearization l = "[\n" ++ go "" l ++ "]"
 
 spec :: SpecWith ()
 spec = describe "linearize" $ do
-  let prettyParseLinearization = prettyPrintLinearization . linearize . Z.start . tokenize
+  let prettyParseLinearization = prettyPrintLinearization . linearize testOperators . Z.start . tokenize
   let test = snapshot "linearize/" prettyParseLinearization
   test "parens" "a (b c d) e"
   test "unclosed parens" "a b (c d e"

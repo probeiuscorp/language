@@ -1,4 +1,4 @@
-module Compiler.ParseSpec (spec, prettyPrintTerm, testAboutOperators) where
+module Compiler.ParseSpec (spec, prettyPrintTerm) where
 
 import Test.Hspec
 import Compiler.Parse
@@ -7,6 +7,7 @@ import qualified Compiler.Zipper as Z
 import Compiler.Tokenize (tokenize)
 import Compiler.Linearize (linearize)
 import Compiler.SnapshotTesting (snapshot, prettyShow)
+import Compiler.TestOperators (testOperators)
 import Control.Monad.State (evalState)
 
 parens str = "(" ++ str ++ ")"
@@ -40,33 +41,9 @@ prettyPrintTerm _ term = show term
 
 prettyPrintDeclaration :: TopLevelDeclaration -> String
 prettyPrintDeclaration (Left x) = prettyShow x
-prettyPrintDeclaration (Right (DataDeclaration decl mt)) = prettyShow ("DataDeclaration", decl, ($ testAboutOperators) <$> mt)
-prettyPrintDeclaration (Right (ValueDeclaration decl t)) = prettyShow ("ValueDeclaration", decl, t testAboutOperators)
-prettyPrintDeclaration (Right (TypeDeclaration decl t)) = prettyShow ("TypeDeclaration", decl, t testAboutOperators)
-
-opFixity :: String -> AST.Fixity
-opFixity "¬" = AST.FixityPrefix
-opFixity "~" = AST.FixityPrefix
-opFixity "!" = AST.FixityPostfix
-opFixity "?" = AST.FixityPostfix
-opFixity ident = AST.FixityInfix $ AST.Infix (getOpPrecedence ident) (getOpAssociativity ident)
-
-getOpPrecedence :: String -> Double
-getOpPrecedence "$" = 1
-getOpPrecedence "-" = 4
-getOpPrecedence "^" = 8
-getOpPrecedence "^^" = 8
-getOpPrecedence _ = 6
-
-getOpAssociativity :: String -> AST.Associativity
-getOpAssociativity "$" = AST.RightAssociative
-getOpAssociativity "-" = AST.LeftAssociative
-getOpAssociativity "*" = AST.LeftAssociative
-getOpAssociativity "/" = AST.LeftAssociative
-getOpAssociativity "\\" = AST.NonAssociative
-getOpAssociativity _ = AST.RightAssociative
-
-testAboutOperators = Just . opFixity
+prettyPrintDeclaration (Right (DataDeclaration decl mt)) = prettyShow ("DataDeclaration", decl, ($ testOperators) <$> mt)
+prettyPrintDeclaration (Right (ValueDeclaration decl t)) = prettyShow ("ValueDeclaration", decl, t testOperators)
+prettyPrintDeclaration (Right (TypeDeclaration decl t)) = prettyShow ("TypeDeclaration", decl, t testOperators)
 
 spec :: SpecWith ()
 spec = describe "Compiler.Parse" $ do
@@ -100,7 +77,7 @@ spec = describe "Compiler.Parse" $ do
     test "no body exported" "export data None"
     test "body" "data Maybe = a. Some a + None"
     test "body exported" "export data Maybe = a. Some a + None"
-  let source = Z.start . linearize . Z.start . tokenize
+  let source = Z.start . linearize testOperators . Z.start . tokenize
   describe "infix declarations" $ do
     let test = snapshot "parse/declaration infix/" prettyParseDeclaration
     test "left associative" "infixl 1 $$"
@@ -123,7 +100,7 @@ spec = describe "Compiler.Parse" $ do
     test "as pattern" "list@(Cons x xs)"
     test "as pattern record" "{ pos as pos@{ x, y } }"
   describe "parseTerm" $ do
-    let prettyParseTerm = prettyPrintTerm "" . parseTerm testAboutOperators . source
+    let prettyParseTerm = prettyPrintTerm "" . parseTerm testOperators . source
     let test = snapshot "parse/parseTerm/" prettyParseTerm
     test "identity function" "x. x"
     test "multiple bindings function" "x y. x"
