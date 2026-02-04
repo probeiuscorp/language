@@ -1,4 +1,4 @@
-combinator $ `>>
+combinator $ >>
   putStrLn "Who are you?"
   K $ getLine
   name. putStrLn $

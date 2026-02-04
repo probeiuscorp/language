@@ -1,4 +1,4 @@
-combinator $ >>
+>>
   putStrLn "Who are you?"
   K $ getLine
   name. putStrLn $
@@ -6,10 +6,6 @@ combinator $ >>
   K $ putStrLn "Wow, you have a long name!" <* guard $$ length name > 10
 ───
 [
-  LinToken "combinator",
-  LinToken " ",
-  LinToken "$",
-  LinToken " ",
   LinMultilineOperator(>>) [
     LinToken "putStrLn",
     LinToken " ",

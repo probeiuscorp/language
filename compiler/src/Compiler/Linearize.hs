@@ -6,7 +6,7 @@ module Compiler.Linearize (linearize, Linear, Linearized, Linearization, GLinear
 import Compiler.Tokenize
 import qualified Compiler.Zipper as Z
 import qualified Control.Monad.State as St
-import Compiler.AST (AboutOperators)
+import qualified Compiler.AST as AST
 
 type Tokens = Z.Zipper Token
 
@@ -40,11 +40,11 @@ fixOrder linearized = linearized
 -- | Linearizing sorts out productions which require seeking. Mostly it is for
 -- handling function expressions, but while it's here, it may as well handle
 -- closing pairs too.
-linearize :: AboutOperators -> Tokens -> Linearization
+linearize :: AST.AboutOperators -> Tokens -> Linearization
 linearize ops z0 = reverse $ fixOrder <$> fst (linearizeOrClose ops (const Continue) id z0 [])
 
 data CloseAction = Continue | Eat | Keep deriving (Eq, Show)
-linearizeOrClose :: AboutOperators -> WithConfig (Tokens -> Continue)
+linearizeOrClose :: AST.AboutOperators -> WithConfig (Tokens -> Continue)
 linearizeOrClose ops p handleEmpty z l = maybe (handleEmpty (l, z)) (\(t, zr) ->
   case p t of
     Continue -> matchHead ops p handleEmpty (t, zr) l
@@ -54,7 +54,7 @@ linearizeOrClose ops p handleEmpty z l = maybe (handleEmpty (l, z)) (\(t, zr) ->
 
 type Continue = Linearization -> (Linearization, Tokens)
 type WithConfig a = (Token -> CloseAction) -> ((Linearization, Tokens) -> (Linearization, Tokens)) -> a
-matchHead :: AboutOperators -> WithConfig ((Token, Tokens) -> Continue)
+matchHead :: AST.AboutOperators -> WithConfig ((Token, Tokens) -> Continue)
 matchHead ops p handleEmpty (t, zr) l = let con = content t in if
   | con `elem` [")", "}", "]"] -> go zr $ LinError (LinUnmatchedClosingPair t) t : l
   | con == "." && matchesFunction zr -> fn
@@ -63,15 +63,13 @@ matchHead ops p handleEmpty (t, zr) l = let con = content t in if
   | con == "[" -> pair LinBrackets "]"
   | con == "where" -> let (clauses, zrr) = St.runState offsides zr in
     (pure $ LinWhere (reverse l) (linearize ops <$> clauses), zrr)
-  | kind t == SymbolIdentifier, Just operator <- startsWith '`' con ->
+  | kind t == SymbolIdentifier, matchesMultilineOperator (Z.dropCursor z), Just (AST.FixityInfix _) <- ops (content t) ->
     let (clauses, zrr) = St.runState offsides zr in
-      (LinMultilineOperator operator (linearize ops <$> clauses) : l, zrr)
+      (LinMultilineOperator (content t) (linearize ops <$> clauses) : l, zrr)
   | otherwise -> go zr $ LinToken t : l
   where
+    z = Z.goLeft zr
     go = linearizeOrClose ops p handleEmpty
-    startsWith :: Eq a => a -> [a] -> Maybe [a]
-    startsWith _ [] = Nothing
-    startsWith a (x:xs) = if a == x then Just xs else Nothing
     pairlike construct lbefore (lcontents, tokensAfter) = go tokensAfter $ construct lcontents : lbefore
     tokenIs con t' = if content t' == con then Eat else Continue
     pair construct exitSeq = pairlike construct l $
@@ -88,6 +86,16 @@ matchHead ops p handleEmpty (t, zr) l = let con = content t in if
 matchesFunction :: Tokens -> Bool
 matchesFunction zr = (isWhitespace <$> (z >>= Z.peekl)) == Just False && (isWhitespace <$> Z.peek zr) == Just True
   where z = snd <$> Z.left zr
+
+-- | `z` should not feature the multiline operator token itself.
+-- The bt should have everything preceding and the ft should have everything that follows.
+matchesMultilineOperator :: Tokens -> Bool
+matchesMultilineOperator z = precededByThis && followedByThis
+  where
+    isInline = (== InlineWhitespace) . kind
+    -- TODO: Stop tokenizing )}] as symbol identifiers
+    precededByThis = all (\t -> ((== SymbolIdentifier) . kind) t && notElem (content t) [")", "}", "]"]) $ Z.peek $ Z.eat isInline $ Z.reverse z
+    followedByThis = all ((== EOL) . kind) $ Z.peek $ Z.eat isInline z
 
 shouldBeMadeParam :: Linearized -> Bool
 shouldBeMadeParam (LinToken t) = kind t /= SymbolIdentifier

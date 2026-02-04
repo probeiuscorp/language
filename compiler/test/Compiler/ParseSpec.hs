@@ -153,7 +153,7 @@ spec = describe "Compiler.Parse" $ do
       \    second = f x.\n\
       \      (fst x, f $ snd x)"
     test "multiline operator"
-      "combinator $ `>>\n\
+      "combinator $ >>\n\
       \  putStrLn \"Who are you?\"\n\
       \  K $ getLine\n\
       \  name. putStrLn $\n\

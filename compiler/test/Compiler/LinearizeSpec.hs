@@ -96,7 +96,21 @@ spec = describe "linearize" $ do
     "main = putStrLn\n\
     \  where"
   test "multiline operator"
-    "combinator $ `>>\n\
+    "combinator $ >>\n\
+    \  putStrLn \"Who are you?\"\n\
+    \  K $ getLine\n\
+    \  name. putStrLn $\n\
+    \    \"Hello, \" ++ name\n\
+    \  K $ putStrLn \"Wow, you have a long name!\" <* guard $$ length name > 10"
+  test "multiline operator function"
+    "x y. >>\n\
+    \  putStrLn \"Who are you?\"\n\
+    \  K $ getLine\n\
+    \  name. putStrLn $\n\
+    \    \"Hello, \" ++ name\n\
+    \  K $ putStrLn \"Wow, you have a long name!\" <* guard $$ length name > 10"
+  test "multiline operator, nothing before"
+    ">>\n\
     \  putStrLn \"Who are you?\"\n\
     \  K $ getLine\n\
     \  name. putStrLn $\n\

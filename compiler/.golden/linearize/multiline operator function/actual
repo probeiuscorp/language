@@ -1,0 +1,71 @@
+x y. >>
+  putStrLn "Who are you?"
+  K $ getLine
+  name. putStrLn $
+    "Hello, " ++ name
+  K $ putStrLn "Wow, you have a long name!" <* guard $$ length name > 10
+───
+[
+  LinFunction [
+    LinToken "x",
+    LinToken " ",
+    LinToken "y",
+  ] [
+    LinToken " ",
+    LinMultilineOperator(>>) [
+      LinToken "putStrLn",
+      LinToken " ",
+      LinToken "Who are you?",
+      LinToken "\n",
+      LinToken "  ",
+    ] [
+      LinToken "K",
+      LinToken " ",
+      LinToken "$",
+      LinToken " ",
+      LinToken "getLine",
+      LinToken "\n",
+      LinToken "  ",
+    ] [
+      LinFunction [
+        LinToken "name",
+      ] [
+        LinToken " ",
+        LinToken "putStrLn",
+        LinToken " ",
+        LinToken "$",
+        LinToken "\n",
+        LinToken "    ",
+        LinToken "Hello, ",
+        LinToken " ",
+        LinToken "++",
+        LinToken " ",
+        LinToken "name",
+        LinToken "\n",
+        LinToken "  ",
+      ],
+    ] [
+      LinToken "K",
+      LinToken " ",
+      LinToken "$",
+      LinToken " ",
+      LinToken "putStrLn",
+      LinToken " ",
+      LinToken "Wow, you have a long name!",
+      LinToken " ",
+      LinToken "<*",
+      LinToken " ",
+      LinToken "guard",
+      LinToken " ",
+      LinToken "$$",
+      LinToken " ",
+      LinToken "length",
+      LinToken " ",
+      LinToken "name",
+      LinToken " ",
+      LinToken ">",
+      LinToken " ",
+      LinToken "10",
+    ],
+  ],
+]
