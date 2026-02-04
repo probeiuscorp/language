@@ -99,8 +99,8 @@ goTokenize currentPos (ch:rest) = Token tokenKind tokenContent (PosRange current
         parsed -- FIXME: this should contain the source of the string
       ))
       | shouldTokenizeAlone ch = ((SymbolIdentifier, pure ch), rest)
-      | otherwise = if snd token == "//"
-        then first ((Comment LineComment,) . ("//" ++)) $ span (/= '\n') after
+      | otherwise = if snd token == "--"
+        then first ((Comment LineComment,) . ("--" ++)) $ span (/= '\n') after
         else match
         where match@(token, after) = matchSpan SymbolIdentifier isSymbol str
     isInlineWhitespaceCh :: Char -> Bool
@@ -125,8 +125,8 @@ matchInlineComment = matchStart *> StateT (Just . runState (go []))
         Nothing -> gets Z.right >>= \case
           Just (_, zr) -> put zr *> go k
           Nothing -> error "unclosed inline comment"
-    matchStart = eatenIs '/' *> eatenIs '*'
-    matchEnd = eatenIs '*' *> eatenIs '/'
+    matchStart = eatenIs '{' *> eatenIs '-'
+    matchEnd = eatenIs '-' *> eatenIs '}'
     eatenIs :: Char -> StateT (Z.Zipper Char) Maybe ()
     eatenIs ch = StateT Z.right >>= guard . (ch ==)
 

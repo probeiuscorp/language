@@ -1,5 +1,5 @@
-"a // fix me"
+"a -- fix me"
 ───
 Token {kind = LetterIdentifier, content = "a", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 1}, posRangeEnd = FilePos {lineno = 1, colno = 2}}}
 Token {kind = InlineWhitespace, content = " ", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 2}, posRangeEnd = FilePos {lineno = 1, colno = 3}}}
-Token {kind = Comment LineComment, content = "// fix me", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 3}, posRangeEnd = FilePos {lineno = 1, colno = 12}}}
+Token {kind = Comment LineComment, content = "-- fix me", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 3}, posRangeEnd = FilePos {lineno = 1, colno = 12}}}

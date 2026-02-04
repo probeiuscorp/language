@@ -1,8 +1,8 @@
-"a // fix me\ndifferent line"
+"a -- fix me\ndifferent line"
 ───
 Token {kind = LetterIdentifier, content = "a", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 1}, posRangeEnd = FilePos {lineno = 1, colno = 2}}}
 Token {kind = InlineWhitespace, content = " ", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 2}, posRangeEnd = FilePos {lineno = 1, colno = 3}}}
-Token {kind = Comment LineComment, content = "// fix me", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 3}, posRangeEnd = FilePos {lineno = 1, colno = 12}}}
+Token {kind = Comment LineComment, content = "-- fix me", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 3}, posRangeEnd = FilePos {lineno = 1, colno = 12}}}
 Token {kind = EOL, content = "\n", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 12}, posRangeEnd = FilePos {lineno = 2, colno = 1}}}
 Token {kind = LetterIdentifier, content = "different", posRange = PosRange {posRangeStart = FilePos {lineno = 2, colno = 1}, posRangeEnd = FilePos {lineno = 2, colno = 10}}}
 Token {kind = InlineWhitespace, content = " ", posRange = PosRange {posRangeStart = FilePos {lineno = 2, colno = 10}, posRangeEnd = FilePos {lineno = 2, colno = 11}}}
