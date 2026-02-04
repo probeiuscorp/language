@@ -124,7 +124,7 @@ matchInlineComment = matchStart *> StateT (Just . runState (go []))
           (_:ks) -> go ks
         Nothing -> gets Z.right >>= \case
           Just (_, zr) -> put zr *> go k
-          Nothing -> error "unclosed inline comment"
+          Nothing -> pure $ Comment InlineComment
     matchStart = eatenIs '{' *> eatenIs '-'
     matchEnd = eatenIs '-' *> eatenIs '}'
     eatenIs :: Char -> StateT (Z.Zipper Char) Maybe ()

@@ -1,0 +1,9 @@
+"start of line {- the comment"
+───
+Token {kind = LetterIdentifier, content = "start", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 1}, posRangeEnd = FilePos {lineno = 1, colno = 6}}}
+Token {kind = InlineWhitespace, content = " ", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 6}, posRangeEnd = FilePos {lineno = 1, colno = 7}}}
+Token {kind = LetterIdentifier, content = "of", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 7}, posRangeEnd = FilePos {lineno = 1, colno = 9}}}
+Token {kind = InlineWhitespace, content = " ", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 9}, posRangeEnd = FilePos {lineno = 1, colno = 10}}}
+Token {kind = LetterIdentifier, content = "line", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 10}, posRangeEnd = FilePos {lineno = 1, colno = 14}}}
+Token {kind = InlineWhitespace, content = " ", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 14}, posRangeEnd = FilePos {lineno = 1, colno = 15}}}
+Token {kind = Comment InlineComment, content = "{- the comment", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 15}, posRangeEnd = FilePos {lineno = 1, colno = 29}}}

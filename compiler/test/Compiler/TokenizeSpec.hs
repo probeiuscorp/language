@@ -43,3 +43,4 @@ spec = describe "Compiler.Tokenize" $ do
     test "inline comment" "of $ {- nothing of note here -} ()"
     test "inline comments nested" "{- {- -} {- {- -} -} -} outside {- inside again -}"
     test "inline comments" "{- {- -} {- {- -} -} -} outside {- inside again -}"
+    test "inline comment unterminated" "start of line {- the comment"
