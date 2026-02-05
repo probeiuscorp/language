@@ -43,7 +43,7 @@ baseOfRadix RadixHex = 16
 data CommentKind = LineComment | InlineComment deriving (Eq, Show, Ord)
 data TokenKind
   = InlineWhitespace | EOL
-  | LetterIdentifier | SymbolIdentifier
+  | LetterIdentifier | SymbolIdentifier | ControlSymbol
   | StringLiteral String
   | NumberLiteral NumberContents
   | Comment CommentKind
@@ -98,7 +98,7 @@ goTokenize currentPos (ch:rest) = Token tokenKind tokenContent (PosRange current
         StringLiteral parsed,
         parsed -- FIXME: this should contain the source of the string
       ))
-      | shouldTokenizeAlone ch = ((SymbolIdentifier, pure ch), rest)
+      | shouldTokenizeAlone ch = ((ControlSymbol, pure ch), rest)
       | otherwise = if snd token == "--"
         then first ((Comment LineComment,) . ("--" ++)) $ span (/= '\n') after
         else match

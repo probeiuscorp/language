@@ -6,5 +6,5 @@ Token {kind = SymbolIdentifier, content = "$", posRange = PosRange {posRangeStar
 Token {kind = InlineWhitespace, content = " ", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 5}, posRangeEnd = FilePos {lineno = 1, colno = 6}}}
 Token {kind = Comment InlineComment, content = "{- nothing of note here -}", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 6}, posRangeEnd = FilePos {lineno = 1, colno = 32}}}
 Token {kind = InlineWhitespace, content = " ", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 32}, posRangeEnd = FilePos {lineno = 1, colno = 33}}}
-Token {kind = SymbolIdentifier, content = "(", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 33}, posRangeEnd = FilePos {lineno = 1, colno = 34}}}
-Token {kind = SymbolIdentifier, content = ")", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 34}, posRangeEnd = FilePos {lineno = 1, colno = 35}}}
+Token {kind = ControlSymbol, content = "(", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 33}, posRangeEnd = FilePos {lineno = 1, colno = 34}}}
+Token {kind = ControlSymbol, content = ")", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 34}, posRangeEnd = FilePos {lineno = 1, colno = 35}}}

@@ -1,8 +1,8 @@
 "}::{)}{"
 ───
-Token {kind = SymbolIdentifier, content = "}", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 1}, posRangeEnd = FilePos {lineno = 1, colno = 2}}}
+Token {kind = ControlSymbol, content = "}", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 1}, posRangeEnd = FilePos {lineno = 1, colno = 2}}}
 Token {kind = SymbolIdentifier, content = "::", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 2}, posRangeEnd = FilePos {lineno = 1, colno = 4}}}
-Token {kind = SymbolIdentifier, content = "{", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 4}, posRangeEnd = FilePos {lineno = 1, colno = 5}}}
-Token {kind = SymbolIdentifier, content = ")", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 5}, posRangeEnd = FilePos {lineno = 1, colno = 6}}}
-Token {kind = SymbolIdentifier, content = "}", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 6}, posRangeEnd = FilePos {lineno = 1, colno = 7}}}
-Token {kind = SymbolIdentifier, content = "{", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 7}, posRangeEnd = FilePos {lineno = 1, colno = 8}}}
+Token {kind = ControlSymbol, content = "{", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 4}, posRangeEnd = FilePos {lineno = 1, colno = 5}}}
+Token {kind = ControlSymbol, content = ")", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 5}, posRangeEnd = FilePos {lineno = 1, colno = 6}}}
+Token {kind = ControlSymbol, content = "}", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 6}, posRangeEnd = FilePos {lineno = 1, colno = 7}}}
+Token {kind = ControlSymbol, content = "{", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 7}, posRangeEnd = FilePos {lineno = 1, colno = 8}}}

@@ -93,8 +93,7 @@ matchesMultilineOperator :: Tokens -> Bool
 matchesMultilineOperator z = precededByThis && followedByThis
   where
     isInline = (== InlineWhitespace) . kind
-    -- TODO: Stop tokenizing )}] as symbol identifiers
-    precededByThis = all (\t -> ((== SymbolIdentifier) . kind) t && notElem (content t) [")", "}", "]"]) $ Z.peek $ Z.eat isInline $ Z.reverse z
+    precededByThis = all ((== SymbolIdentifier) . kind) $ Z.peek $ Z.eat isInline $ Z.reverse z
     followedByThis = all ((== EOL) . kind) $ Z.peek $ Z.eat isInline z
 
 shouldBeMadeParam :: Linearized -> Bool

@@ -103,7 +103,7 @@ pair = a. (
       }
     }
   , Token
-    { kind = SymbolIdentifier
+    { kind = ControlSymbol
     , content = "("
     , posRange = PosRange
       { posRangeStart = FilePos
@@ -217,7 +217,7 @@ pair = a. (
       }
     }
   , Token
-    { kind = SymbolIdentifier
+    { kind = ControlSymbol
     , content = ")"
     , posRange = PosRange
       { posRangeStart = FilePos

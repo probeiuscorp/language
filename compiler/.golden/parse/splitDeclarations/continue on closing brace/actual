@@ -89,7 +89,7 @@ import react/hooks {
       }
     }
   , Token
-    { kind = SymbolIdentifier
+    { kind = ControlSymbol
     , content = "{"
     , posRange = PosRange
       { posRangeStart = FilePos
@@ -161,7 +161,7 @@ import react/hooks {
       }
     }
   , Token
-    { kind = SymbolIdentifier
+    { kind = ControlSymbol
     , content = "}"
     , posRange = PosRange
       { posRangeStart = FilePos
