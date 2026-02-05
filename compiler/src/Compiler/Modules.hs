@@ -18,7 +18,7 @@ import Control.Lens
 import Data.Bool (bool)
 import Data.Validation(fromEither, Validation (Success, Failure), toEither)
 import Data.Foldable (foldrM, Foldable (toList))
-import Data.Maybe (isJust)
+import Data.Maybe (isJust, fromMaybe)
 import Control.Monad (join)
 
 newtype ModuleSpecifier = ModuleSpecifier { unModuleSpecifier :: String }
@@ -109,8 +109,8 @@ verifyModuleBuildable moduleScope m = ((),) <$> exprs
   where
     terms = view parModBindings m
     knownVars = Map.keysSet moduleScope <> Set.fromList ["IOmap", "IOjoin", "getLine", "putStrLn", "Cons", "Nil"]
-    exprs = traverse (fromEither . semanticValue knownVars . ($ aboutOperators) . snd) terms
-    aboutOperators = join . flip Map.lookup moduleScope
+    exprs = traverse (fromEither . semanticValue aboutOperators knownVars . ($ aboutOperators) . snd) terms
+    aboutOperators = fromMaybe AST.defaultFixity . join . flip Map.lookup moduleScope
 
 buildModules :: ModuleIdentifier -> IO (Either [AST.ParseError] TillyModuleBuildable)
 buildModules modid = do

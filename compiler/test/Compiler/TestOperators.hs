@@ -2,12 +2,12 @@ module Compiler.TestOperators (testOperators) where
 
 import qualified Compiler.AST as AST
 
-opFixity :: String -> AST.Fixity
-opFixity "¬" = AST.FixityPrefix
-opFixity "~" = AST.FixityPrefix
-opFixity "!" = AST.FixityPostfix
-opFixity "?" = AST.FixityPostfix
-opFixity ident = AST.FixityInfix $ AST.Infix (getOpPrecedence ident) (getOpAssociativity ident)
+testOperators :: AST.AboutOperators
+testOperators "¬" = AST.FixityPrefix
+testOperators "~" = AST.FixityPrefix
+testOperators "!" = AST.FixityPostfix
+testOperators "?" = AST.FixityPostfix
+testOperators ident = AST.FixityInfix $ AST.Infix (getOpPrecedence ident) (getOpAssociativity ident)
 
 getOpPrecedence :: String -> Double
 getOpPrecedence "$" = 1
@@ -23,6 +23,3 @@ getOpAssociativity "*" = AST.LeftAssociative
 getOpAssociativity "/" = AST.LeftAssociative
 getOpAssociativity "\\" = AST.NonAssociative
 getOpAssociativity _ = AST.RightAssociative
-
-testOperators :: AST.AboutOperators
-testOperators = Just . opFixity

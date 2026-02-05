@@ -53,7 +53,9 @@ data DeclarationModule = DeclarationModule
 data Associativity = NonAssociative | LeftAssociative | RightAssociative deriving (Eq, Show, Ord)
 data Infix = Infix { infPrecedence :: Double, infAssociativity :: Associativity } deriving (Eq, Ord, Show)
 data Fixity = FixityInfix Infix | FixityPrefix | FixityPostfix deriving (Eq, Ord, Show)
-type AboutOperators = ValidIdentifier -> Maybe Fixity
+type AboutOperators = ValidIdentifier -> Fixity
+defaultFixity :: Fixity
+defaultFixity = FixityInfix $ Infix 9 LeftAssociative
 
 data ParseError
   = ErrUnknownIdentifier String

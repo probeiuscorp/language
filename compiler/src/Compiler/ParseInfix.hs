@@ -46,7 +46,7 @@ treeificateLinear :: ParseOneTerm -> ParseState -> ParseState
 treeificateLinear pt@(info, parseOne) s@(z, state) = maybe s (\(term, zr) -> treeificateLinear pt (zr, addTerm term)) $ parseOne z
   where
     addTerm :: AST.Term -> InfixStack
-    addTerm term = case (state, (\op -> (op, opFixity info op)) <$> isInfixOp term) of
+    addTerm term = case (state, (\op -> (op, info op)) <$> isInfixOp term) of
       -- ADDING OPERANDS
       (OperatorStack stack, Nothing) -> ValRegular term `addTo` stack
       (OperatorStack stack, Just (_, AST.FixityPrefix)) -> ValPrefix (NE.singleton term) `addTo` stack
@@ -112,9 +112,6 @@ peekOperator _ = Nothing
 isInfixOp :: AST.Term -> Maybe String
 isInfixOp (AST.TermIdentifier ident) | not $ all isAlphaNum ident = Just ident
 isInfixOp _ = Nothing
-
-opFixity :: AST.AboutOperators -> String -> AST.Fixity
-opFixity = (fromMaybe (AST.FixityInfix $ AST.Infix 6 AST.RightAssociative) .)
 
 opPrecedence :: Op -> Double
 opPrecedence (OpFn _ inf) = AST.infPrecedence inf

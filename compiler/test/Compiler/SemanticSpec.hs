@@ -11,7 +11,7 @@ import Compiler.Semantic (semanticValue)
 
 spec :: SpecWith ()
 spec = describe "Compiler.Semantic" $ do
-  let test = snapshot "semantic/" $ prettyShow . semanticValue mempty . parseTerm testOperators . Z.start . linearize testOperators . Z.start . tokenize
+  let test = snapshot "semantic/" $ prettyShow . semanticValue testOperators mempty . parseTerm testOperators . Z.start . linearize testOperators . Z.start . tokenize
   test "finding free variables" "x y z. x z (y z)"
   test "erroring unknown variables" "x y. w"
   test "int" "-144"

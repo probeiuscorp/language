@@ -113,7 +113,7 @@ parseImportDeclaration = do
     parseImportList :: StateT Tokens Maybe AST.Destructuring
     parseImportList = do
       z <- get
-      case linearize (const Nothing) z of
+      case linearize (const AST.defaultFixity) z of
         (LinBraces l:xs) -> guard (onlyWhitespaceLeft $ Z.start xs) $> parseRecordDestructure (Z.start l)
         _ -> mzero
     matchOnly :: ParseAttempt
