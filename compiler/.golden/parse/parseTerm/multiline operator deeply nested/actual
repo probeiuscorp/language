@@ -1,0 +1,21 @@
+combinator $ >>
+  getLine
+  x. getLine
+  y. putStrLn $ x <> y
+
+───
+$
+⤷ combinator
+⤷ >>
+  ⤷ getLine
+  ⤷ TermFunction [DestructBind "x"] (
+      >>
+      ⤷ getLine
+      ⤷ TermFunction [DestructBind "y"] (
+          $
+          ⤷ putStrLn
+          ⤷ <>
+            ⤷ x
+            ⤷ y
+        )
+    )

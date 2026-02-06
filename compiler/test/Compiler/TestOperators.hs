@@ -18,6 +18,7 @@ getOpPrecedence _ = 6
 
 getOpAssociativity :: String -> AST.Associativity
 getOpAssociativity "$" = AST.RightAssociative
+getOpAssociativity "|" = AST.LeftAssociative
 getOpAssociativity "-" = AST.LeftAssociative
 getOpAssociativity "*" = AST.LeftAssociative
 getOpAssociativity "/" = AST.LeftAssociative

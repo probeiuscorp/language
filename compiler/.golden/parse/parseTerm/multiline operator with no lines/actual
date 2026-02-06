@@ -1,0 +1,5 @@
+combinator $ >>
+───
+$
+⤷ combinator
+⤷ TermParseError ErrEmptyMultilineFold

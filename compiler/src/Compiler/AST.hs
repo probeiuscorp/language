@@ -17,13 +17,13 @@ data Term
   | TermApplication Term Term
   | TermIdentifier ValidIdentifier
   | TermWhere Term [(Destructuring, Term)]
-  | TermMultilineOperator Term [Term]
   | TermNumberLiteral NumberContents
   | TermStringLiteral String
   | TermRecord [(String, Maybe Term)]
   | TermTuple [Maybe Term]
   | TermList [Maybe Term]
   | TermMatch [([Destructuring], Term)]
+  | TermParseError ParseError
   deriving (Eq, Show, Ord)
 
 type VarSet = Set.Set ValidIdentifier
@@ -59,6 +59,7 @@ defaultFixity = FixityInfix $ Infix 9 LeftAssociative
 
 data ParseError
   = ErrUnknownIdentifier String
+  | ErrEmptyMultilineFold
   | ErrFixityDeclarationSubjectNotLocal String
   | ErrFixityDeclarationOverwriting String
   deriving (Eq, Show, Ord)

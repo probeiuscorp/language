@@ -221,7 +221,18 @@ parseOneTerm ctx z = Z.right z >>= \(lin, zr) -> let ok term = Just (term, zr) i
   (LinWhere body clauses) -> ok $ AST.TermWhere (parseTerm ctx $ Z.start body) $ clauses <&> \l ->
     let (Just zBody, zDestruct) = breakWhen (is "=") $ Z.start l in
       (evalState parseDestructuring zDestruct, parseTerm ctx zBody)
-  (LinMultilineOperator op ls) -> ok $ AST.TermMultilineOperator (AST.TermIdentifier op) $ parseTerm ctx . Z.start <$> ls
+  (LinMultilineOperator opToken possiblyEmptyLs) -> ok $ case (NE.nonEmpty possiblyEmptyLs, ctx (content opToken)) of
+    (Nothing, _) -> AST.TermParseError AST.ErrEmptyMultilineFold
+    (Just ls, AST.FixityInfix (AST.Infix _ AST.LeftAssociative)) ->
+      foldl1 (AST.TermApplication . AST.TermApplication (AST.TermIdentifier (content opToken))) $ parseTerm ctx . Z.start <$> ls
+    (Just ls, AST.FixityInfix (AST.Infix _ AST.RightAssociative)) ->
+      parseTerm ctx . Z.start . (`foldr1` ls) $ \above below -> let
+        lMelded start = [LinParens start, LinToken opToken, LinParens below]
+        in case above of
+          [LinFunction params body] -> pure $ LinFunction params $ lMelded body
+          _ -> lMelded above
+    (_, AST.FixityInfix (AST.Infix _ AST.NonAssociative)) -> error "cannot use non associative operator for multiline fold"
+    _ -> error "cannot use unary operator for multiline fold"
   (LinParens l) -> ok $ parseParens ctx $ Z.start l
   (LinBrackets l) -> ok $ AST.TermList $ either (pure . Just) id $ parseCommaSeparated ctx $ Z.start l
   (LinBraces l) -> ok $ parseRecordLiteral ctx $ Z.start l

@@ -19,7 +19,7 @@ type GLinearization a = [GLinearized a]
 data GLinearized a
   = LinFunction (GLinearization a) (GLinearization a)
   | LinWhere (GLinearization a) [GLinearization a]
-  | LinMultilineOperator String [GLinearization a]
+  | LinMultilineOperator a [GLinearization a]
   | LinBrackets (GLinearization a)
   | LinBraces (GLinearization a)
   | LinParens (GLinearization a)
@@ -65,7 +65,7 @@ matchHead ops p handleEmpty (t, zr) l = let con = content t in if
     (pure $ LinWhere (reverse l) (linearize ops <$> clauses), zrr)
   | kind t == SymbolIdentifier, matchesMultilineOperator (Z.dropCursor z), AST.FixityInfix _ <- ops (content t) ->
     let (clauses, zrr) = St.runState offsides zr in
-      (LinMultilineOperator (content t) (linearize ops <$> clauses) : l, zrr)
+      (LinMultilineOperator t (linearize ops <$> clauses) : l, zrr)
   | otherwise -> go zr $ LinToken t : l
   where
     z = Z.goLeft zr

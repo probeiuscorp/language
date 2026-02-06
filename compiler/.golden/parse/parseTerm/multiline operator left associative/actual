@@ -1,0 +1,30 @@
+combinator $ |
+  144
+  it. it * 12
+  it. it * cos $
+    it
+  it. asin it / 2
+───
+$
+⤷ combinator
+⤷ |
+  ⤷ |
+  │ ⤷ |
+  │ │ ⤷ TermNumberLiteral (NumberContents {numIsPos = True, numRadix = RadixDec, numIntegral = [1,4,4], numFractional = Nothing, numExponent = Nothing})
+  │ │ ⤷ TermFunction [DestructBind "it"] (
+  │ │     *
+  │ │     ⤷ it
+  │ │     ⤷ TermNumberLiteral (NumberContents {numIsPos = True, numRadix = RadixDec, numIntegral = [1,2], numFractional = Nothing, numExponent = Nothing})
+  │ │   )
+  │ ⤷ TermFunction [DestructBind "it"] (
+  │     $
+  │     ⤷ *
+  │     │ ⤷ it
+  │     │ ⤷ cos
+  │     ⤷ it
+  │   )
+  ⤷ TermFunction [DestructBind "it"] (
+      /
+      ⤷ (asin it)
+      ⤷ TermNumberLiteral (NumberContents {numIsPos = True, numRadix = RadixDec, numIntegral = [2], numFractional = Nothing, numExponent = Nothing})
+    )

@@ -20,21 +20,20 @@ prettyPrintTerm lastIndent (AST.TermApplication (AST.TermApplication fn arg1) ar
 prettyPrintTerm indent (AST.TermApplication fn arg) = "(" ++ prettyPrintTerm indent fn ++ " " ++ prettyPrintTerm indent arg ++ ")"
 prettyPrintTerm _ (AST.TermIdentifier ident) = ident
 prettyPrintTerm lastIndent (AST.TermFunction params body) = "TermFunction " ++ show params ++ " (\n" ++ indent ++ prettyPrintTerm indent body ++ "\n" ++ lastIndent ++ ")"
-  where indent = "  " ++ lastIndent
+  where indent = lastIndent ++ "  "
 prettyPrintTerm lastIndent (AST.TermWhere body clauses) = "TermWhere (\n" ++ indent ++ prettyPrintTerm indent body ++ "\n" ++ lastIndent ++ ") [\n" ++ (clauses >>= showEntry) ++ lastIndent ++ "]"
   where
     showEntry (destruct, clause) = indent ++ show destruct ++ " = " ++ prettyPrintTerm indent clause ++ "\n"
-    indent = "  " ++ lastIndent
-prettyPrintTerm lastIndent (AST.TermMultilineOperator op lines) = "TermMultilineOperator " ++ parens (show op) ++ "\n" ++ (lines >>= ((lastIndent ++ "\x2014 ") ++) . (++ "\n") . prettyPrintTerm ("  " ++ lastIndent))
+    indent = lastIndent ++ "  "
 prettyPrintTerm indent (AST.TermRecord fields) = "TermRecord {\n" ++ (fields >>= showField) ++ indent ++ "}"
   where
-    nextIndent = "  " ++ indent
+    nextIndent = indent ++ "  "
     showValue Nothing = "Nothing"
     showValue (Just term) = prettyPrintTerm nextIndent term
     showField (name, value) = nextIndent ++ name ++ " = " ++ showValue value ++ "\n"
 prettyPrintTerm indent (AST.TermMatch clauses) = "TermMatch [\n" ++ (clauses >>= showField) ++ indent ++ "]"
   where
-    nextIndent = "  " ++ indent
+    nextIndent = indent ++ "  "
     showField (destructurings, term) = nextIndent ++ show destructurings ++ " = " ++ prettyPrintTerm nextIndent term ++ "\n"
 prettyPrintTerm _ term@(AST.TermStringLiteral _) = parens $ show term
 prettyPrintTerm _ term = show term
@@ -159,3 +158,32 @@ spec = describe "Compiler.Parse" $ do
       \  name. putStrLn $\n\
       \    \"Hello, \" ++ name\n\
       \  K $ putStrLn \"Wow, you have a long name!\" <* guard $$ length name > 10"
+    test "multiline operator equivalency short"
+      "combinator $ >>\n\
+      \  putStrLn \"Who are you?\"\n\
+      \  K getLine\n\
+      \  name. putStrLn (\n\
+      \    \"Hello, \" ++ name)\n\
+      \  K (putStrLn \"Wow, you have a long name!\" <* guard $$ length name > 10)"
+    test "multiline operator equivalency normal"
+      "combinator $\n\
+      \  >> putStrLn \"Who are you?\"\n\
+      \  >> K getLine\n\
+      \  >> name. putStrLn (\n\
+      \    \"Hello, \" ++ name)\n\
+      \  >> K (putStrLn \"Wow, you have a long name!\" <* guard $$ length name > 10)"
+    test "multiline operator deeply nested"
+      "combinator $ >>\n\
+      \  getLine\n\
+      \  x. getLine\n\
+      \  y. putStrLn $ x <> y\n\
+      \"
+    test "multiline operator with no lines"
+      "combinator $ >>"
+    test "multiline operator left associative"
+      "combinator $ |\n\
+      \  144\n\
+      \  it. it * 12\n\
+      \  it. it * cos $\n\
+      \    it\n\
+      \  it. asin it / 2"

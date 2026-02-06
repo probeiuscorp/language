@@ -19,7 +19,7 @@ prettyPrintLinearization l = "[\n" ++ go "" l ++ "]"
     prettyPrintLinearized indent (LinBraces lbody)   = indent ++ "LinBraces" ++   showLinearization indent lbody ++ ",\n"
     prettyPrintLinearized indent (LinBrackets lbody) = indent ++ "LinBrackets" ++ showLinearization indent lbody ++ ",\n"
     prettyPrintLinearized indent (LinWhere lbody lclauses) = indent ++ "LinWhere" ++ showLinearization indent lbody ++ (if null lclauses then " []" else showLinearization indent =<< lclauses) ++ ",\n"
-    prettyPrintLinearized indent (LinMultilineOperator operator lclauses) = indent ++ "LinMultilineOperator(" ++ operator ++ ")" ++ (if null lclauses then " []" else showLinearization indent =<< lclauses) ++ ",\n"
+    prettyPrintLinearized indent (LinMultilineOperator operator lclauses) = indent ++ "LinMultilineOperator(" ++ content operator ++ ")" ++ (if null lclauses then " []" else showLinearization indent =<< lclauses) ++ ",\n"
     prettyPrintLinearized indent (LinError (LinUnmatchedClosingPair t) _) = indent ++ "LinUnmatchedClosingPair " ++ show (content t) ++ ",\n"
     showLinearization :: String -> Linearization -> String
     showLinearization indent lbody = " [\n" ++ go indent lbody ++ indent ++ "]"
