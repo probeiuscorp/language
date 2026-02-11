@@ -2,6 +2,7 @@
 
 module Compiler.Modules where
 
+import Compiler.Prelude
 import qualified Compiler.AST as AST
 import qualified Compiler.Zipper as Z
 import Compiler.Tokenize (tokenize)
@@ -17,9 +18,8 @@ import Control.Monad.Trans.Writer (WriterT (WriterT, runWriterT))
 import Control.Lens
 import Data.Bool (bool)
 import Data.Validation(fromEither, Validation (Success, Failure), toEither)
-import Data.Foldable (foldrM, Foldable (toList))
-import Data.Maybe (isJust, fromMaybe)
-import Control.Monad (join)
+import Data.Foldable (foldrM)
+import Data.Maybe (isJust)
 
 newtype ModuleSpecifier = ModuleSpecifier { unModuleSpecifier :: String }
   deriving (Eq, Ord, Show)

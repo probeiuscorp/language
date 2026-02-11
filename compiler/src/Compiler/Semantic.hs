@@ -1,11 +1,11 @@
 module Compiler.Semantic where
 
+import Compiler.Prelude
 import qualified Compiler.AST as AST
 import qualified Compiler.Tokenize as Tok
 import qualified Data.Set as Set
 import Control.Monad.Reader (Reader, MonadReader (ask, local), runReader, ReaderT (runReaderT))
 import Control.Monad.Writer (tell, Writer, runWriter)
-import Data.Function (on)
 
 tryIntFromDouble :: Double -> Maybe Int
 tryIntFromDouble double = if ceiled == floor double

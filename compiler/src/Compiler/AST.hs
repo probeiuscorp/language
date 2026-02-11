@@ -1,4 +1,6 @@
 module Compiler.AST where
+
+import Compiler.Prelude
 import Compiler.Tokenize (NumberContents)
 import qualified Data.Set as Set
 

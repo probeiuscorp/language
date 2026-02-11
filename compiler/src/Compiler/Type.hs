@@ -2,9 +2,9 @@
 
 module Compiler.Type where
 
+import Compiler.Prelude
 import qualified Data.Set as Set
 import qualified Data.Map.Strict as Map
-import Data.Function (on)
 
 data NominalType = NominalType
   deriving (Eq, Ord, Show)

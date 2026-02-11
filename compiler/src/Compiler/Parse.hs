@@ -2,25 +2,17 @@
 
 module Compiler.Parse where
 
+import Compiler.Prelude
 import Compiler.Tokenize
 import qualified Compiler.AST as AST
 import qualified Compiler.Zipper as Z
 import Compiler.Linearize (Linear, GLinearized (..), linearize)
 import Compiler.ParseInfix (parseInfix)
-import Control.Monad (guard, msum, MonadPlus (mzero))
+import Control.Monad (MonadPlus (mzero))
 import Control.Monad.State (State, MonadState (state, get, put), gets, evalState, modify, runState, StateT (StateT, runStateT), execState, evalStateT)
-import Data.Functor ((<&>), ($>))
-import Data.Maybe (fromMaybe)
 import qualified Data.List.NonEmpty as NE
-import Control.Applicative ((<|>))
-import Data.Bifunctor (Bifunctor(first, bimap, second))
-import Compiler.Zipper (filterMaybe)
 
 type Tokens = Z.Zipper Token
-
-(<<$>>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)
-(<<$>>) f = (fmap f <$>)
-infixl 4 <<$>>
 
 splitDeclarations :: Tokens -> [[Token]]
 splitDeclarations z = filter (not . all isWhitespace) $ case Z.eatOne $ Z.eat ((/= EOL) . kind) z of
@@ -49,7 +41,7 @@ parseDeclaration = do
   gets Z.isDone >>= \case
     True -> pure Nothing
     False -> do
-      maybeBinding <- gets . evalStateT $ msum [Right <$> parseBindingDeclaration, Right <$> parseDataDeclaration, Left <$> parseInfixDeclaration]
+      maybeBinding <- gets . evalStateT $ asum [Right <$> parseBindingDeclaration, Right <$> parseDataDeclaration, Left <$> parseInfixDeclaration]
       specialDeclaration <- parseSpecialDeclaration
       pure . Just $ fromMaybe (Left specialDeclaration) maybeBinding
   where
@@ -100,7 +92,7 @@ parseImportDeclaration = do
   eatWhitespaceTokens
   specifier <- catTokens <$> state (Z.match . filterMaybe $ not . isWhitespace)
   eatWhitespaceTokens
-  importListing <- gets . runStateT $ msum [matchAs, matchHiding, matchOnly, matchAll]
+  importListing <- gets . runStateT $ asum [matchAs, matchHiding, matchOnly, matchAll]
   pure . ImportDeclaration specifier $ maybe undefined fst importListing
   where
     matchAs :: ParseAttempt
@@ -132,8 +124,8 @@ parseImportDeclaration = do
 
 parseInfixDeclaration :: StateT Tokens Maybe DeclarationContextFree
 parseInfixDeclaration = do
-  fixity <- msum [ifIs "prefix" AST.FixityPrefix, ifIs "postfix" AST.FixityPostfix] <|> do
-    associativity <- msum [ifIs "infixl" AST.LeftAssociative, ifIs "infixr" AST.RightAssociative, ifIs "infix" AST.NonAssociative]
+  fixity <- asum [ifIs "prefix" AST.FixityPrefix, ifIs "postfix" AST.FixityPostfix] <|> do
+    associativity <- asum [ifIs "infixl" AST.LeftAssociative, ifIs "infixr" AST.RightAssociative, ifIs "infix" AST.NonAssociative]
     liftState eatWhitespaceTokens
     Token { kind = NumberLiteral numContents } <- liftState right
     pure $ AST.FixityInfix $ AST.Infix (parsePrecedence numContents) associativity

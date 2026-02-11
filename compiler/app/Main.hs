@@ -1,5 +1,6 @@
 module Main (main) where
 
+import Compiler.Prelude
 import Options.Applicative
 import LLVM.Module
 import qualified Data.ByteString as BS
@@ -8,9 +9,6 @@ import Compiler.IR (mkMainModule)
 import LLVM.Context (withContext)
 import System.Directory (canonicalizePath)
 
-($$) = ($)
-infixr 6 $$
-
 data Options = Options
   { optMainFile :: FilePath
   , optOutFile :: FilePath
@@ -18,11 +16,11 @@ data Options = Options
 
 parseOptions :: Parser Options
 parseOptions = Options
-  <$> argument str $$ mconcat
+  <$> argument str $: mconcat
     [ metavar placeholderFileName
     , help "Input file"
     ]
-  <*> strOption $$ mconcat
+  <*> strOption $: mconcat
     [ long "out"
     , short 'o'
     , metavar placeholderFileName
@@ -40,7 +38,7 @@ opts = info (helper <*> parseOptions) $ mconcat
 main :: IO ()
 main = do
   options <- execParser opts
-  mainIdentifier <- ModuleIdentifier <$> canonicalizePath $$ optMainFile options
+  mainIdentifier <- ModuleIdentifier <$> canonicalizePath $: optMainFile options
   modules <- buildModules mainIdentifier
   case modules of
     Left errs -> print errs

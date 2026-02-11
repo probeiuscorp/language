@@ -3,6 +3,7 @@
 
 module Compiler.IR where
 
+import Compiler.Prelude
 import qualified Compiler.AST as AST
 import Compiler.Modules (TillyModuleBuildable)
 import LLVM.AST.Operand (Operand(ConstantOperand, LocalReference))
@@ -14,16 +15,14 @@ import LLVM.IRBuilder.Constant (int32, int64, double)
 import qualified LLVM.IRBuilder.Instruction as L
 import qualified LLVM.AST.Type as Type
 import LLVM.AST (Module, Name (Name))
-import Control.Monad (foldM, forM_, void)
+import Control.Monad (foldM, forM_)
 import Control.Monad.Reader (ReaderT, runReaderT, asks)
 import Control.Monad.State.Strict (MonadTrans (lift), State, evalState, MonadState (state))
-import Data.Foldable (Foldable(toList))
 import GHC.Num (integerFromInt)
 import Data.String (IsString(fromString))
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import Data.List (inits)
-import Data.Bifunctor (Bifunctor(first))
 import Compiler.Semantic (collectBindings)
 
 -- | The state is the next global name. The supply of freshUnName is not preserved

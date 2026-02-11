@@ -3,6 +3,7 @@
 
 module Compiler.Linearize (linearize, Linear, Linearized, Linearization, GLinearized(..), LinearizedError(..)) where
 
+import Compiler.Prelude
 import Compiler.Tokenize
 import qualified Compiler.Zipper as Z
 import qualified Control.Monad.State as St

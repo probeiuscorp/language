@@ -1,14 +1,11 @@
 module Compiler.TypeCheck where
 
+import Compiler.Prelude
 import qualified Compiler.AST as AST
 import Compiler.Type
-import Control.Applicative (Applicative(liftA2))
 import qualified Data.Set as Set
 import qualified Data.Map.Strict as Map
-import Data.Function (on)
-import Control.Monad (join, liftM2)
 import Data.Maybe (isNothing)
-import Compiler.Zipper (filterMaybe)
 
 inferType :: AST.Expression -> Type
 inferType = undefined
@@ -32,7 +29,7 @@ differenceNominals = compose2 TypeNominal Set.difference
 
 intersectRecords :: TypeRecord -> TypeRecord -> TypeRecord
 intersectRecords (TypeRecord as) (TypeRecord bs) =
-  TypeRecord $ join (liftM2 intersectPositiveRecords as bs)
+  TypeRecord $ join (liftA2 intersectPositiveRecords as bs)
 intersectRecords (TypeRecordComplement as) (TypeRecordComplement bs) =
   TypeRecordComplement $ as ++ bs
 intersectRecords (TypeRecord as) (TypeRecordComplement bs) = intersectPositiveWithNegative as bs

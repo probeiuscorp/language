@@ -4,9 +4,10 @@ module Compiler.Zipper (
   Zipper(..), todo, done, start, restart, Compiler.Zipper.reverse, rewind, cat,
   peek, peekl, left, right, goLeft, goRight,
   eat, eatOne, eatIf, dropCursor, Compiler.Zipper.drop,
-  isDone, match, matchCond, filterMaybe
+  isDone, match, matchCond,
 ) where
-import Data.Bifunctor (Bifunctor(first))
+
+import Compiler.Prelude
 
 data Zipper a = Zipper [a] [a] deriving (Eq, Show, Functor)
 
@@ -90,9 +91,6 @@ matchLoop _ m = m
 
 match :: (a -> Maybe b) -> Zipper a -> ([b], Zipper a)
 match f z = first Prelude.reverse $ matchLoop f ([], z)
-
-filterMaybe :: (a -> Bool) -> a -> Maybe a
-filterMaybe f a = if f a then Just a else Nothing
 
 matchCond :: (a -> Bool) -> Zipper a -> ([a], Zipper a)
 matchCond f z = first Prelude.reverse $ matchLoop (filterMaybe f) ([], z)

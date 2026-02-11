@@ -4,17 +4,12 @@ module Compiler.Tokenize (
   isWhitespace, catTokens
 ) where
 
+import Compiler.Prelude
 import qualified Compiler.Zipper as Z
 import Data.Char (isDigit, isAlphaNum, isSpace, digitToInt, isHexDigit, isOctDigit)
-import Data.Function ((&))
 import Data.List.NonEmpty (NonEmpty((:|)))
 import qualified Data.List.NonEmpty as NE
-import Data.Maybe (fromMaybe)
 import Control.Monad.State (MonadState (state, put), gets, StateT (runStateT, StateT), State, runState)
-import Control.Monad (guard)
-import Data.Functor ((<&>))
-import Data.Bifunctor (Bifunctor(first))
-import Control.Applicative (asum)
 
 data Radix = RadixBin | RadixOct | RadixDec | RadixHex
   deriving (Eq, Show, Ord)

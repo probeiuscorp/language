@@ -1,11 +1,10 @@
 module Compiler.ParseInfix (parseInfix) where
 
+import Compiler.Prelude
 import qualified Compiler.AST as AST
 import Compiler.Linearize (Linear)
 import qualified Data.List.NonEmpty as NE
 import Data.Char (isAlphaNum)
-import Data.Function (on)
-import Data.Maybe (fromMaybe)
 
 data Op = OpFn String AST.Infix | OpApplication
   deriving (Eq, Show)
