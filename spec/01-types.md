@@ -12,9 +12,9 @@ that they are given.
 
 Union and difference can be defined with `&` and `\`:
 ```
-// Union
+-- Union
 (+) = a b. ¬(¬a & ¬b)
-// Difference
+-- Difference
 (\) = a b. a & ¬b
 ```
 
@@ -54,10 +54,10 @@ A supertype of all functions is
 Type constructors are valid types themselves.
 ```
 type Maybe = a. {
-  type: 'some'
+  type: Some
   data: a
 } + {
-  type: 'none'
+  type: None
 }
 type MaybeAlias = Maybe
 ```
@@ -68,7 +68,7 @@ type FunctionNodeArgument = {
   Body: *
   Constraint: *
 }
-// For demonstration purposes. Unconstrained destructured type members would default to `*`.
+-- For demonstration purposes. Unconstrained destructured type members would default to `*`.
 type FunctionNode = { Body, Constraint }: FunctionNodeArgument. {
   parameterName: String
   constraint: Constraint

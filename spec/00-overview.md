@@ -80,18 +80,18 @@ Otherwise, match normally (which will probably end as composition)
 
 ### Examples
 ```
-x. x // function (f)
-x.x // member access (a)
-x . x // composition (c)
+x. x -- function (f)
+x.x -- member access (a)
+x . x -- composition (c)
 
-// f
+-- f
 main = none | x.
   (x, x)
 
-// a
+-- a
 fmap (.x)
 
-// c
+-- c
 fmap (. x)
 ```
 
@@ -114,14 +114,14 @@ inline whitespace, that infix function will be ignored.
 
 ```
 type StructuralMaybe = a.
-  + { type: 'some', data: a }
-  + { type: 'none' }
+  + { type: Some, data: a }
+  + { type: None }
 ```
 
 is equal to
 
 ```
-type StructuralMaybe = a. ((+) { type: 'some', data: a } { type: 'none' })
+type StructuralMaybe = a. ((+) { type: Some, data: a } { type: None })
 ```
 
 ## Destructuring
@@ -177,12 +177,41 @@ main = >>
     "Hello " ++ ln ++ "!"
 ```
 
+This substitute for `do`-notation does make things like this much uglier:
+```hs
+main = do
+  firstName <- getLine
+  lastName <- getLine
+  putStrLn $ firstName <> " " <> lastName
+```
+
+Compared the Haskell code with Tilly:
+```
+main = >>
+  getLine
+  firstName. getLine
+  lastName. putStrLn $ firstName <> " " <> lastName
+```
+
+Notice that the code is now not line rearrangeable!
+However, I think making that previous code ugly is not bad --
+there is no reason to block the second `getLine` behind the first.
+Authors are encouraged to parallelize using applicative functors:
+
+```
+main = >>
+  sequence $ replicate 2 getLine
+  -- note I want this to be type safe, eg that you get from replicate the type:
+  -- (a. Cons a (Cons a Nil)) $ IO String
+  [firstName, lastName]. putStrLn $ firstName <> " " <> lastName
+```
+
 **TODO**: How does this work with expressions? The simplest would be allowing backtick infixed,
 and it *would* allow arbtrary expressions, but that leaves a *lot* of diff churn
 and clumsiness.
 
 ```
 type StructuralMaybe = a. (a b. ¬(¬a & ¬b)) | union. `union`
-  { type: 'some', data: a }
-  { type: 'none' }
+  { type: Some, data: a }
+  { type: None }
 ```
