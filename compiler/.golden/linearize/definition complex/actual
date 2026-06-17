@@ -1,0 +1,65 @@
+combinator $
+  reduce = acc. match
+    (Cons x xs). x + length xs
+    Nil. 0
+  reduce [20, 10, 0]
+───
+[
+  LinToken "combinator",
+  LinToken " ",
+  LinToken "$",
+  LinDefinitions [
+    LinToken "reduce",
+    LinToken " ",
+    LinToken "=",
+    LinFunction [
+      LinToken " ",
+      LinToken "acc",
+    ] [
+      LinFunction [
+        LinToken " ",
+        LinToken "match",
+        LinToken "\n",
+        LinToken "    ",
+        LinParens [
+          LinToken "Cons",
+          LinToken " ",
+          LinToken "x",
+          LinToken " ",
+          LinToken "xs",
+        ],
+      ] [
+        LinToken " ",
+        LinToken "x",
+        LinToken " ",
+        LinToken "+",
+        LinFunction [
+          LinToken " ",
+          LinToken "length",
+          LinToken " ",
+          LinToken "xs",
+          LinToken "\n",
+          LinToken "    ",
+          LinToken "Nil",
+        ] [
+          LinToken " ",
+          LinToken "0",
+          LinToken "\n",
+          LinToken "  ",
+        ],
+      ],
+    ],
+  ] [
+    LinToken "reduce",
+    LinToken " ",
+    LinBrackets [
+      LinToken "20",
+      LinToken ",",
+      LinToken " ",
+      LinToken "10",
+      LinToken ",",
+      LinToken " ",
+      LinToken "0",
+    ],
+  ],
+]

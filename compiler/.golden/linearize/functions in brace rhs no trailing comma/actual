@@ -6,43 +6,46 @@
 ───
 [
   LinBraces [
-    LinToken "\n",
-    LinToken "  ",
-    LinToken "a",
-    LinToken " ",
-    LinToken "=",
-    LinFunction [
+    LinDefinitions [
+      LinToken "a",
       LinToken " ",
-      LinToken "x",
-      LinToken " ",
-      LinToken "y",
-    ] [
-      LinToken " ",
-      LinToken "x",
-    ],
-    LinToken ",",
-    LinToken "\n",
-    LinToken "  ",
-    LinToken "b",
-    LinToken " ",
-    LinToken "=",
-    LinToken " ",
-    LinToken "undefined",
-    LinToken ",",
-    LinToken "\n",
-    LinToken "  ",
-    LinToken "c",
-    LinToken " ",
-    LinToken "=",
-    LinFunction [
-      LinToken " ",
-      LinToken "x",
-      LinToken " ",
-      LinToken "y",
-    ] [
-      LinToken " ",
-      LinToken "y",
+      LinToken "=",
+      LinFunction [
+        LinToken " ",
+        LinToken "x",
+        LinToken " ",
+        LinToken "y",
+      ] [
+        LinToken " ",
+        LinToken "x",
+      ],
+      LinToken ",",
       LinToken "\n",
+      LinToken "  ",
+    ] [
+      LinToken "b",
+      LinToken " ",
+      LinToken "=",
+      LinToken " ",
+      LinToken "undefined",
+      LinToken ",",
+      LinToken "\n",
+      LinToken "  ",
+    ] [
+      LinToken "c",
+      LinToken " ",
+      LinToken "=",
+      LinFunction [
+        LinToken " ",
+        LinToken "x",
+        LinToken " ",
+        LinToken "y",
+      ] [
+        LinToken " ",
+        LinToken "y",
+        LinToken "\n",
+        LinUnmatchedClosingPair "}",
+      ],
     ],
   ],
 ]

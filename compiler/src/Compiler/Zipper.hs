@@ -4,6 +4,7 @@ module Compiler.Zipper (
   Zipper(..), todo, done, start, restart, Compiler.Zipper.reverse, rewind, cat,
   peek, peekl, left, right, goLeft, goRight,
   eat, eatOne, eatIf, dropCursor, Compiler.Zipper.drop,
+  expect, try,
   isDone, match, matchCond,
 ) where
 
@@ -69,6 +70,14 @@ eatIf :: (a -> Bool) -> Zipper a -> (Bool, Zipper a)
 eatIf p z = case right z of
   Just (x, zr) | p x -> (True, zr)
   _ -> (False, z)
+
+expect :: (a -> Bool) -> Zipper a -> Maybe (Zipper a)
+expect p (Zipper bt (x:xs)) | p x = Just (Zipper (x : bt) xs)
+expect _ _ = Nothing
+
+try :: (a -> Maybe b) -> Zipper a -> Maybe (b, Zipper a)
+try p (Zipper bt (x:xs)) | Just b <- p x = Just (b, Zipper (x : bt) xs)
+try _ _ = Nothing
 
 dropCursor :: Zipper a -> Zipper a
 dropCursor (Zipper bt (_:ft)) = Zipper bt ft

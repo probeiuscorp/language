@@ -8,6 +8,7 @@ import Compiler.Tokenize
 import qualified Compiler.Zipper as Z
 import qualified Control.Monad.State as St
 import qualified Compiler.AST as AST
+import Data.Maybe (isJust)
 
 type Tokens = Z.Zipper Token
 
@@ -20,6 +21,7 @@ type GLinearization a = [GLinearized a]
 data GLinearized a
   = LinFunction (GLinearization a) (GLinearization a)
   | LinWhere (GLinearization a) [GLinearization a]
+  | LinDefinitions [GLinearization a]
   | LinMultilineOperator a [GLinearization a]
   | LinBrackets (GLinearization a)
   | LinBraces (GLinearization a)
@@ -58,12 +60,15 @@ type WithConfig a = (Token -> CloseAction) -> ((Linearization, Tokens) -> (Linea
 matchHead :: AST.AboutOperators -> WithConfig ((Token, Tokens) -> Continue)
 matchHead ops p handleEmpty (t, zr) l = let con = content t in if
   | con `elem` [")", "}", "]"] -> go zr $ LinError (LinUnmatchedClosingPair t) t : l
-  | con == "." && matchesFunction zr -> fn
+  | con == ".", matchesFunction zr -> fn
   | con == "(" -> pair LinParens ")"
   | con == "{" -> pair LinBraces "}"
   | con == "[" -> pair LinBrackets "]"
   | con == "where" -> let (clauses, zrr) = St.runState offsides zr in
     (pure $ LinWhere (reverse l) (linearize ops <$> clauses), zrr)
+  | con == "\n", matchesDefinition zr -> let
+      (clauses, zrr) = St.runState offsides z
+    in go zrr $ LinDefinitions (linearize ops <$> clauses) : l
   | kind t == SymbolIdentifier, matchesMultilineOperator (Z.dropCursor z), AST.FixityInfix _ <- ops (content t) ->
     let (clauses, zrr) = St.runState offsides zr in
       (LinMultilineOperator t (linearize ops <$> clauses) : l, zrr)
@@ -96,6 +101,12 @@ matchesMultilineOperator z = precededByThis && followedByThis
     isInline = (== InlineWhitespace) . kind
     precededByThis = all ((== SymbolIdentifier) . kind) $ Z.peek $ Z.eat isInline $ Z.reverse z
     followedByThis = all ((== EOL) . kind) $ Z.peek $ Z.eat isInline z
+
+-- | `z` should be pointing at the start of a line
+matchesDefinition :: Tokens -> Bool
+matchesDefinition z = isJust $: do
+  afterIdentifier <- Z.expect ((== LetterIdentifier) . kind) $ Z.eat ((== InlineWhitespace) . kind) z
+  Z.expect ((== "=") . content) $ Z.eat isWhitespace afterIdentifier
 
 shouldBeMadeParam :: Linearized -> Bool
 shouldBeMadeParam (LinToken t) = kind t /= SymbolIdentifier

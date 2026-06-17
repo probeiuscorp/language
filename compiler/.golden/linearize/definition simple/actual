@@ -1,0 +1,38 @@
+combinator $
+  n = 10
+  (n, n + 2)
+  q = 20
+───
+[
+  LinToken "combinator",
+  LinToken " ",
+  LinToken "$",
+  LinDefinitions [
+    LinToken "n",
+    LinToken " ",
+    LinToken "=",
+    LinToken " ",
+    LinToken "10",
+    LinToken "\n",
+    LinToken "  ",
+  ] [
+    LinParens [
+      LinToken "n",
+      LinToken ",",
+      LinToken " ",
+      LinToken "n",
+      LinToken " ",
+      LinToken "+",
+      LinToken " ",
+      LinToken "2",
+    ],
+    LinToken "\n",
+    LinToken "  ",
+  ] [
+    LinToken "q",
+    LinToken " ",
+    LinToken "=",
+    LinToken " ",
+    LinToken "20",
+  ],
+]

@@ -18,11 +18,13 @@ prettyPrintLinearization l = "[\n" ++ go "" l ++ "]"
     prettyPrintLinearized indent (LinParens lbody)   = indent ++ "LinParens" ++   showLinearization indent lbody ++ ",\n"
     prettyPrintLinearized indent (LinBraces lbody)   = indent ++ "LinBraces" ++   showLinearization indent lbody ++ ",\n"
     prettyPrintLinearized indent (LinBrackets lbody) = indent ++ "LinBrackets" ++ showLinearization indent lbody ++ ",\n"
-    prettyPrintLinearized indent (LinWhere lbody lclauses) = indent ++ "LinWhere" ++ showLinearization indent lbody ++ (if null lclauses then " []" else showLinearization indent =<< lclauses) ++ ",\n"
+    prettyPrintLinearized indent (LinWhere lbody lclauses) = indent ++ "LinWhere" ++ showLinearization indent lbody ++ showClauses indent lclauses ++ ",\n"
+    prettyPrintLinearized indent (LinDefinitions lclauses) = indent ++ "LinDefinitions" ++ showClauses indent lclauses ++ ",\n"
     prettyPrintLinearized indent (LinMultilineOperator operator lclauses) = indent ++ "LinMultilineOperator(" ++ content operator ++ ")" ++ (if null lclauses then " []" else showLinearization indent =<< lclauses) ++ ",\n"
     prettyPrintLinearized indent (LinError (LinUnmatchedClosingPair t) _) = indent ++ "LinUnmatchedClosingPair " ++ show (content t) ++ ",\n"
     showLinearization :: String -> Linearization -> String
     showLinearization indent lbody = " [\n" ++ go indent lbody ++ indent ++ "]"
+    showClauses indent lclauses = if null lclauses then " []" else showLinearization indent =<< lclauses
 
 spec :: SpecWith ()
 spec = describe "linearize" $ do
@@ -95,6 +97,17 @@ spec = describe "linearize" $ do
   test "where clause no clauses"
     "main = putStrLn\n\
     \  where"
+  test "definition simple"
+    "combinator $\n\
+    \  n = 10\n\
+    \  (n, n + 2)\n\
+    \  q = 20"
+  test "definition complex"
+    "combinator $\n\
+    \  reduce = acc. match\n\
+    \    (Cons x xs). x + length xs\n\
+    \    Nil. 0\n\
+    \  reduce [20, 10, 0]"
   test "multiline operator"
     "combinator $ >>\n\
     \  putStrLn \"Who are you?\"\n\
