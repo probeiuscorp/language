@@ -46,7 +46,6 @@
       LinToken "undefined",
       LinToken ",",
       LinToken "\n",
-      LinUnmatchedClosingPair "}",
     ],
   ],
 ]

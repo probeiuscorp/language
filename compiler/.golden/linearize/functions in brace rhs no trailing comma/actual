@@ -44,7 +44,6 @@
         LinToken " ",
         LinToken "y",
         LinToken "\n",
-        LinUnmatchedClosingPair "}",
       ],
     ],
   ],

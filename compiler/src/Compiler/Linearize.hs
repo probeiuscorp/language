@@ -120,6 +120,7 @@ offsides = goNew Nothing
     go :: Maybe Int -> St.State Tokens [Tokens]
     go runningCol = do
       St.modify $ Z.eat isWhitespace
+      z <- St.get
       St.gets Z.right >>= \case
         (Just (t, zr)) -> let col = colno $ posRangeStart $ posRange t in
           case maybe EQ (compare col) runningCol of
@@ -133,7 +134,7 @@ offsides = goNew Nothing
               pure $ case runningCol of
                 Nothing -> xs  -- no clause yet, should not record
                 Just _ -> x : xs
-            LT -> St.put zr *> stop
+            LT -> St.put z *> stop
         _ -> stop
       where
         stop = do
