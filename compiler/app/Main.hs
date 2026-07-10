@@ -2,11 +2,8 @@ module Main (main) where
 
 import Compiler.Prelude
 import Options.Applicative
-import LLVM.Module
 import qualified Data.ByteString as BS
 import Compiler.Modules (buildModules, ModuleIdentifier (ModuleIdentifier))
-import Compiler.IR (mkMainModule)
-import LLVM.Context (withContext)
 import System.Directory (canonicalizePath)
 
 data Options = Options
@@ -39,10 +36,4 @@ main :: IO ()
 main = do
   options <- execParser opts
   mainIdentifier <- ModuleIdentifier <$> canonicalizePath $: optMainFile options
-  modules <- buildModules mainIdentifier
-  case modules of
-    Left errs -> print errs
-    Right llvmModule -> do
-      llvm <- withContext $ \context ->
-        withModuleFromAST context (mkMainModule llvmModule) moduleLLVMAssembly
-      BS.writeFile (optOutFile options) llvm
+  print mainIdentifier

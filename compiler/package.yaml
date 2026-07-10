@@ -30,8 +30,6 @@ dependencies:
 - text
 - QuickCheck
 - HUnit
-- llvm-hs
-- llvm-hs-pure
 - bytestring
 - optparse-applicative
 - validation
