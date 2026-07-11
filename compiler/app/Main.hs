@@ -4,6 +4,7 @@ import Compiler.Prelude
 import Options.Applicative
 import qualified Data.ByteString as BS
 import Compiler.Modules (buildModules, ModuleIdentifier (ModuleIdentifier))
+import Compiler.Interpret (interpretMainFile)
 import System.Directory (canonicalizePath)
 
 data Options = Options
@@ -36,4 +37,7 @@ main :: IO ()
 main = do
   options <- execParser opts
   mainIdentifier <- ModuleIdentifier <$> canonicalizePath $: optMainFile options
-  print mainIdentifier
+  modules <- buildModules mainIdentifier
+  case modules of
+    Left errs -> print errs
+    Right tlModule -> interpretMainFile tlModule
