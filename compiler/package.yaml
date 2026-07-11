@@ -39,6 +39,7 @@ default-extensions:
 - TupleSections
 - TemplateHaskell
 - FlexibleContexts
+- ViewPatterns
 
 ghc-options:
 - -Wall
