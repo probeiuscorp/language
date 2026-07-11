@@ -41,6 +41,8 @@ intrinsicsModule = Map.fromList
   , ("io_join", VFunction $ \mma -> VData ioJoin [mma])
   , ("io_putStrLn", VFunction $ \str -> VData ioPutStrLn [str])
   , ("io_getLine", VData ioGetLine [])
+  , ("io_readFile", VFunction $ \filePath -> VData ioReadFile [filePath])
+  , ("io_writeFile", VFunction $ \filePath -> VFunction $ \contents -> VData ioWriteFile [filePath, contents])
   ]
   where
     hom :: Prism' Value a -> (a -> a -> a) -> Value
@@ -55,6 +57,7 @@ evaluate ctx scope0 = \case
   (AST.ExprApplication f body) -> expectType _VFunction (go f) (go body)
   (AST.ExprDouble double) -> VDouble double
   (AST.ExprIntegral integer) -> VInteger $ fromIntegral integer
+  (AST.ExprStringLiteral string) -> toTillyString string
   (AST.ExprList list) -> toTillyList $ go <$> list
   (AST.ExprTuple slots) -> tuple $ go <$> slots
   (AST.ExprRecord record) -> VRecord $ Map.fromList $ second go <$> record
@@ -96,6 +99,8 @@ ioMap = 1
 ioJoin = 2
 ioPutStrLn = 3
 ioGetLine = 4
+ioReadFile = 5
+ioWriteFile = 6
 tagCons = 5
 tagNil = 6
 -- | Executes the Tilly IO, assuming it is an IO
@@ -103,18 +108,22 @@ execute :: Value -> IO Value
 execute (VData 0 [value]) = pure value
 execute (VData 1 [f, ma]) = expectType _VFunction f <$> execute ma
 execute (VData 2 [mma]) = execute =<< execute mma
-execute (VData 3 [str]) = tuple [] <$ putStrLn (expectType _VChar <$> fromTillyList str)
-execute (VData 4 []) = toTillyList . fmap VChar <$> getLine
+execute (VData 3 [str]) = tuple [] <$ putStrLn (fromTillyString str)
+execute (VData 4 []) = toTillyString <$> getLine
+execute (VData 5 [filePath]) = toTillyString <$> readFile $: fromTillyString filePath
+execute (VData 6 [filePath, contents]) = tuple [] <$ writeFile (fromTillyString filePath) (fromTillyString contents)
 execute value = typeError "IO" value
 
 fromTillyList :: Value -> [Value]
 fromTillyList (VData 5 [char, xs]) = char : fromTillyList xs
 fromTillyList (VData 6 []) = []
 fromTillyList value = typeError "List" value
+fromTillyString = fmap (expectType _VChar) . fromTillyList
 
 toTillyList :: [Value] -> Value
 toTillyList (x : xs) = VData tagCons [x, toTillyList xs]
 toTillyList [] = VData tagNil []
+toTillyString = toTillyList . fmap VChar
 
 interpretMainFile :: TillyBuildOutputs -> IO ()
 interpretMainFile (mainModuleId, givenModules) = do
