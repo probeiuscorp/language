@@ -36,6 +36,7 @@ data Expression
   | ExprIdentifier ValidIdentifier
   | ExprIntegral Int
   | ExprDouble Double
+  | ExprStringLiteral String
   | ExprRecord [(String, Expression)]
   | ExprTuple [Expression]
   | ExprList [Expression]

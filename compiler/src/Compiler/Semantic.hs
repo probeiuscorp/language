@@ -34,6 +34,7 @@ semanticValue ops knownVars term = case runWriter $ runReaderT (go term) knownVa
       if Set.member ident scope
         then ok $ AST.ExprIdentifier ident
         else tellErr $ AST.ErrUnknownIdentifier ident
+    go (AST.TermStringLiteral string) = ok $ AST.ExprStringLiteral string
     go (AST.TermNumberLiteral numContents@(Tok.NumberContents
       { Tok.numIntegral = integral
       , Tok.numFractional = mFractional
