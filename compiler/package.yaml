@@ -42,6 +42,7 @@ default-extensions:
 
 ghc-options:
 - -Wall
+- -Wno-missing-signatures
 - -Wcompat
 - -Widentities
 - -Wincomplete-record-updates
