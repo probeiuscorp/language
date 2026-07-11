@@ -2,8 +2,8 @@ module Main (main) where
 
 import Compiler.Prelude
 import Options.Applicative
-import qualified Data.ByteString as BS
-import Compiler.Modules (buildModules, ModuleIdentifier (ModuleIdentifier))
+import Compiler.ModuleTypes (ModuleIdentifier (LocalFileModule))
+import Compiler.Modules (buildModules)
 import Compiler.Interpret (interpretMainFile)
 import System.Directory (canonicalizePath)
 
@@ -35,7 +35,7 @@ opts = info (helper <*> parseOptions) $ mconcat
 main :: IO ()
 main = do
   options <- execParser opts
-  mainIdentifier <- ModuleIdentifier <$> canonicalizePath $: optMainFile options
+  mainIdentifier <- LocalFileModule <$> canonicalizePath $: optMainFile options
   modules <- buildModules mainIdentifier
   case modules of
     Left errs -> print errs

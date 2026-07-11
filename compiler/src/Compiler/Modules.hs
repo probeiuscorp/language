@@ -5,9 +5,11 @@ module Compiler.Modules where
 import Compiler.Prelude
 import qualified Compiler.AST as AST
 import qualified Compiler.Zipper as Z
+import Compiler.ModuleTypes
 import Compiler.Tokenize (tokenize)
 import Compiler.Semantic (semanticValue, collectBindings)
 import Compiler.Parse (splitDeclarations, parseDeclaration, TopLevelDeclaration, ParseContext)
+import Compiler.Interpret (intrinsicsModule)
 import qualified Compiler.Parse as AST
 import System.FilePath (takeDirectory, normalise, (</>))
 import qualified Data.Set as Set
@@ -20,48 +22,41 @@ import Data.Bool (bool)
 import Data.Validation(fromEither, Validation (Success, Failure), toEither)
 import Data.Foldable (foldrM)
 import Data.Maybe (isJust)
-
-newtype ModuleSpecifier = ModuleSpecifier { unModuleSpecifier :: String }
-  deriving (Eq, Ord, Show)
-newtype ModuleIdentifier = ModuleIdentifier { unModuleIdentifier :: FilePath }
-  deriving (Eq, Ord, Show)
-readModule = readFile . unModuleIdentifier
+import Data.List (isPrefixOf)
 
 type Validated = Writer [AST.ParseError]
 type ValidatedT = WriterT [AST.ParseError]
 data TillyModuleAccum = TillyModuleAccum
-  { _accModImports :: [(ModuleSpecifier, AST.ImportListing)]
+  { _accModIdentifier :: ModuleIdentifier
+  , _accModImports :: [(ModuleSpecifier, AST.ImportListing)]
   , _accModExposed :: Set.Set AST.ValidIdentifier
   , _accModBindings :: Map.Map AST.ValidIdentifier (ParseContext -> AST.Term)
   , _accModFixities :: [(AST.ValidIdentifier, AST.Fixity)]
   }
 makeLenses ''TillyModuleAccum
-data TillyModuleParsed = TillyModuleParsed
-  { _parModImports :: [(ModuleSpecifier, AST.ImportListing)]
-  , _parModExposed :: Set.Set AST.ValidIdentifier
-  , _parModBindings :: Map.Map AST.ValidIdentifier (Maybe AST.Fixity, ParseContext -> AST.Term)
-  }
-makeLenses ''TillyModuleParsed
-type TillyModuleBuildable = ((), Map.Map AST.ValidIdentifier AST.Expression)
 
 identifierFromSpecifier :: ModuleIdentifier -> ModuleSpecifier -> ModuleIdentifier
-identifierFromSpecifier baseModule specifier = ModuleIdentifier . normalise $ takeDirectory (unModuleIdentifier baseModule) </> unModuleSpecifier specifier
+identifierFromSpecifier baseModule specifier
+  | "." `isPrefixOf` unModuleSpecifier specifier = LocalFileModule . normalise $ takeDirectory (unModuleIdentifier baseModule) </> unModuleSpecifier specifier
+  | otherwise = NamedModule $ unModuleSpecifier specifier
 
 findModules :: ModuleIdentifier -> Map.Map ModuleIdentifier TillyModuleParsed -> ValidatedT IO (Map.Map ModuleIdentifier TillyModuleParsed)
-findModules identifier foundModules = do
-  parsed <- WriterT $ runWriter . parseModule <$> readModule identifier
-  let imports = view parModImports parsed
-  let withModule = Map.insert identifier parsed foundModules
-  (\f -> foldrM f withModule imports) $ \(specifier, _) acc -> let modId = identifierFromSpecifier identifier specifier in
-    if Map.member modId acc
-      then pure acc
-      else findModules modId acc
+findModules identifier foundModules = case tryReadModule identifier of
+  Nothing -> pure foundModules  -- The intrinsics module is already found
+  Just ioContents -> do
+    parsed <- WriterT $ runWriter . parseModule identifier <$> ioContents
+    let imports = view parModImports parsed
+    let withModule = Map.insert identifier parsed foundModules
+    (\f -> foldrM f withModule imports) $ \(specifier, _) acc -> let modId = identifierFromSpecifier identifier specifier in
+      if Map.member modId acc
+        then pure acc
+        else findModules modId acc
 
-parseModule :: String -> Validated TillyModuleParsed
-parseModule source = processModule $ foldr (maybe id $ flip foldDeclaration) m0 declarations
+parseModule :: ModuleIdentifier -> String -> Validated TillyModuleParsed
+parseModule modid source = processModule $ foldr (maybe id $ flip foldDeclaration) m0 declarations
   where
     m0 :: TillyModuleAccum
-    m0 = TillyModuleAccum mempty mempty mempty mempty
+    m0 = TillyModuleAccum modid mempty mempty mempty mempty
     declarations = evalState parseDeclaration . Z.start <$> (splitDeclarations . Z.start . tokenize $ source)
     foldDeclaration :: TillyModuleAccum -> TopLevelDeclaration -> TillyModuleAccum
     foldDeclaration m = ($ m) . \case
@@ -74,7 +69,7 @@ parseModule source = processModule $ foldr (maybe id $ flip foldDeclaration) m0 
       _ -> error "unsupported declaration"
 
 processModule :: TillyModuleAccum -> Validated TillyModuleParsed
-processModule m = TillyModuleParsed (view accModImports m) (view accModExposed m) <$> addFixities (view accModFixities m)
+processModule m = TillyModuleParsed (m^.accModIdentifier) (view accModImports m) (view accModExposed m) <$> addFixities (view accModFixities m)
   where
     bindings = view accModBindings m
     addFixities :: [(AST.ValidIdentifier, AST.Fixity)] -> Validated (Map.Map AST.ValidIdentifier (Maybe AST.Fixity, ParseContext -> AST.Term))
@@ -87,18 +82,17 @@ processModule m = TillyModuleParsed (view accModImports m) (view accModExposed m
           ])
 
 type ModuleScope = Map.Map AST.ValidIdentifier (Maybe AST.Fixity)
-getModuleScope :: Map.Map ModuleIdentifier TillyModuleParsed -> ModuleIdentifier -> ModuleScope
-getModuleScope modules identifier = ownScope <> foldMap scopeFromListing imports
+getModuleScope :: TillyModuleParsed -> Map.Map ModuleIdentifier TillyModule -> ModuleScope
+getModuleScope parsedModule modules = ownScope <> foldMap scopeFromListing imports
   where
-    getmap m = fst <$> view parModBindings m
+    getmap m = fst <$> m^.parModBindings
     ownScope = getmap parsedModule
-    parsedModule = modules Map.! identifier
     imports = view parModImports parsedModule
     scopeFromListing (specifier, listing) = let
-      modId = identifierFromSpecifier identifier specifier
+      modId = identifierFromSpecifier (parsedModule^.parModIdentifier) specifier
       m = modules Map.! modId
-      exposed = view parModExposed m
-      in Map.fromSet (getmap m Map.!) $ case listing of
+      exposed = getExposed m
+      in Map.fromSet (getFixityForBinding m) $ case listing of
         AST.ImportAll -> exposed
         AST.ImportAs as -> Set.singleton as
         AST.ImportOnly destruct -> collectBindings destruct
@@ -108,12 +102,15 @@ verifyModuleBuildable :: ModuleScope -> TillyModuleParsed -> Validation [AST.Par
 verifyModuleBuildable moduleScope m = TillyModuleBuildable <$> exprs
   where
     terms = view parModBindings m
-    knownVars = Map.keysSet moduleScope <> Set.fromList ["IOmap", "IOjoin", "getLine", "putStrLn", "Cons", "Nil", "io_pure", "io_join", "io_map", "io_getLine", "io_putStrLn"]
+    knownVars = Map.keysSet moduleScope
     exprs = traverse (fromEither . semanticValue aboutOperators knownVars . ($ aboutOperators) . snd) terms
     aboutOperators = fromMaybe AST.defaultFixity . join . flip Map.lookup moduleScope
 
+theIntrinsicsModule = IntrinsicModule (Map.keysSet intrinsicsModule)
 buildModules :: ModuleIdentifier -> IO (Either [AST.ParseError] TillyModuleBuildable)
 buildModules modid = do
-  (modules, errs) <- runWriterT $ findModules modid mempty
-  let vBuildable = verifyModuleBuildable (getModuleScope modules modid) $ modules Map.! modid
+  (userModules, errs) <- runWriterT $ findModules modid mempty
+  let mainModule = userModules Map.! modid
+  let modules = Map.insert intrinsicsModuleIdentifier theIntrinsicsModule $ ParsedModule <$> userModules
+  let vBuildable = verifyModuleBuildable (getModuleScope mainModule modules) mainModule
   pure . toEither $ vBuildable <* (if null errs then Success () else Failure errs)

@@ -1,10 +1,10 @@
 {-# LANGUAGE RankNTypes #-}
 
-module Compiler.Interpret (interpretMainFile) where
+module Compiler.Interpret (interpretMainFile, intrinsicsModule) where
 
 import Compiler.Prelude
 import Control.Lens
-import Compiler.Modules
+import Compiler.ModuleTypes
 import qualified Compiler.AST as AST
 import qualified Data.Map as Map
 import Data.List (intercalate)
