@@ -16,6 +16,8 @@ import Control.Applicative (asum, (<|>))
 import Control.Monad (void, guard, join, (>=>), (<=<))
 import Data.Maybe (fromMaybe)
 import Data.Foldable (Foldable (toList))
+import Text.Pretty.Simple (OutputOptions (outputOptionsIndentAmount), defaultOutputOptionsNoColor, pShowOpt)
+import Data.Text.Lazy (unpack)
 
 filterMaybe :: (a -> Bool) -> a -> Maybe a
 filterMaybe f a = if f a then Just a else Nothing
@@ -26,3 +28,7 @@ infixr 6 $:
 
 ($$$) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)
 ($$$) = fmap . fmap
+
+prettyShow :: Show a => a -> String
+prettyShow = unpack . pShowOpt
+  (defaultOutputOptionsNoColor { outputOptionsIndentAmount = 2 })
