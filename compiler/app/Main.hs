@@ -36,7 +36,7 @@ main :: IO ()
 main = do
   options <- execParser opts
   mainIdentifier <- LocalFileModule <$> canonicalizePath $: optMainFile options
-  modules <- buildModules mainIdentifier
-  case modules of
+  sBuild <- buildModules mainIdentifier
+  case sBuild of
     Left errs -> print errs
-    Right tlModule -> interpretMainFile tlModule
+    Right build -> interpretMainFile build

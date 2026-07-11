@@ -116,13 +116,18 @@ toTillyList :: [Value] -> Value
 toTillyList (x : xs) = VData tagCons [x, toTillyList xs]
 toTillyList [] = VData tagNil []
 
-interpretMainFile :: TillyModuleBuildable -> IO ()
-interpretMainFile tlModule = do
-  putStrLn "began evaluation..."
-  let exposedExprs = tlModule^.tlExposedExprs
+interpretMainFile :: TillyBuildOutputs -> IO ()
+interpretMainFile (mainModuleId, givenModules) = do
   let
-    evaluateWithScope = evaluate mempty mainModuleScope
-    mainModuleScope = intrinsicsModule <> (evaluateWithScope <$> exposedExprs)
-  case Map.lookup "main" mainModuleScope of
+    insertIntrinsics = Map.insert intrinsicsModuleIdentifier intrinsicsModule
+    modulesEvaluated = insertIntrinsics $ (<$> givenModules) $ \m -> let
+        evaluateWithScope = evaluate mempty moduleScope
+        fromOtherModules = (`foldMap` (Map.assocs $ m^.tlNeededScope)) $ \(modid, requestedVars) ->
+          Map.restrictKeys (modulesEvaluated Map.! modid) requestedVars
+        moduleScope = fromOtherModules <> (evaluateWithScope <$> m^.tlExposedExprs)
+      in moduleScope
+  case Map.lookup "main" =<< Map.lookup mainModuleId modulesEvaluated of
     Nothing -> putStrLn "Add a `main` to your main module"
-    Just mainIO -> void $ execute mainIO
+    Just mainIO -> do
+      putStrLn "evaluated!"
+      void $ execute mainIO

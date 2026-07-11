@@ -40,7 +40,7 @@ data Expression
   | ExprTuple [Expression]
   | ExprList [Expression]
   | ExprMatch [(Destructuring, Expression)]
-  deriving (Eq, Show)
+  deriving (Eq, Ord, Show)
 
 data ImportListing
   = ImportAll

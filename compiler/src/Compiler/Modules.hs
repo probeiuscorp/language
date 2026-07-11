@@ -81,36 +81,42 @@ processModule m = TillyModuleParsed (m^.accModIdentifier) (view accModImports m)
           , x (AST.ErrFixityDeclarationOverwriting ident) (isJust $ fst =<< ident `Map.lookup` acc)
           ])
 
-type ModuleScope = Map.Map AST.ValidIdentifier (Maybe AST.Fixity)
+type ModuleScope = Map.Map AST.ValidIdentifier (ModuleIdentifier, Maybe AST.Fixity)
 getModuleScope :: TillyModuleParsed -> Map.Map ModuleIdentifier TillyModule -> ModuleScope
 getModuleScope parsedModule modules = ownScope <> foldMap scopeFromListing imports
   where
     getmap m = fst <$> m^.parModBindings
-    ownScope = getmap parsedModule
+    ownIdentifier = parsedModule^.parModIdentifier
+    ownScope = (ownIdentifier,) <$> getmap parsedModule
     imports = view parModImports parsedModule
     scopeFromListing (specifier, listing) = let
-      modId = identifierFromSpecifier (parsedModule^.parModIdentifier) specifier
-      m = modules Map.! modId
+      modid = identifierFromSpecifier ownIdentifier specifier
+      m = modules Map.! modid
       exposed = getExposed m
-      in Map.fromSet (getFixityForBinding m) $ case listing of
+      in Map.fromSet (\ident -> (modid, getFixityForBinding m ident)) $ case listing of
         AST.ImportAll -> exposed
         AST.ImportAs as -> Set.singleton as
         AST.ImportOnly destruct -> collectBindings destruct
         AST.ImportHiding destruct -> exposed Set.\\ collectBindings destruct
 
+reverseMap :: (Ord k, Ord a) => Map.Map k a -> Map.Map a (Set.Set k)
+reverseMap inputMap = (\f -> Map.foldrWithKey f mempty inputMap) $ \value key -> flip Map.alter key $
+  Just . maybe (Set.singleton value) (Set.insert value)
+
 verifyModuleBuildable :: ModuleScope -> TillyModuleParsed -> Validation [AST.ParseError] TillyModuleBuildable
-verifyModuleBuildable moduleScope m = TillyModuleBuildable <$> exprs
+verifyModuleBuildable moduleScope m = TillyModuleBuildable neededScope <$> exprs
   where
+    neededScope = Map.delete (m^.parModIdentifier) $ reverseMap $ fst <$> moduleScope
     terms = view parModBindings m
     knownVars = Map.keysSet moduleScope
     exprs = traverse (fromEither . semanticValue aboutOperators knownVars . ($ aboutOperators) . snd) terms
-    aboutOperators = fromMaybe AST.defaultFixity . join . flip Map.lookup moduleScope
+    aboutOperators = fromMaybe AST.defaultFixity . (snd <=< flip Map.lookup moduleScope)
 
 theIntrinsicsModule = IntrinsicModule (Map.keysSet intrinsicsModule)
-buildModules :: ModuleIdentifier -> IO (Either [AST.ParseError] TillyModuleBuildable)
-buildModules modid = do
-  (userModules, errs) <- runWriterT $ findModules modid mempty
-  let mainModule = userModules Map.! modid
+buildModules :: ModuleIdentifier -> IO (Either [AST.ParseError] TillyBuildOutputs)
+buildModules mainModuleId = do
+  (userModules, errs) <- runWriterT $ findModules mainModuleId mempty
   let modules = Map.insert intrinsicsModuleIdentifier theIntrinsicsModule $ ParsedModule <$> userModules
-  let vBuildable = verifyModuleBuildable (getModuleScope mainModule modules) mainModule
-  pure . toEither $ vBuildable <* (if null errs then Success () else Failure errs)
+  let buildables = (`traverse` userModules) $ \userModule -> verifyModuleBuildable (getModuleScope userModule modules) userModule
+  let built = (mainModuleId,) <$> buildables
+  pure . toEither $ built <* (if null errs then Success () else Failure errs)

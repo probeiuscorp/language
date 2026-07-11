@@ -6,7 +6,7 @@ import qualified Compiler.AST as AST
 import Control.Lens
 import qualified Data.Map as Map
 import qualified Data.Set as Set
-import System.FilePath ((</>))
+import System.FilePath ((</>), (-<.>))
 
 newtype ModuleSpecifier = ModuleSpecifier { unModuleSpecifier :: String }
   deriving (Eq, Ord, Show)
@@ -22,7 +22,7 @@ tryReadModule :: ModuleIdentifier -> Maybe (IO String)
 tryReadModule = \case
   (LocalFileModule filepath) -> Just $ readFile filepath
   ((== intrinsicsModuleIdentifier) -> True) -> Nothing
-  (NamedModule name) -> Just $ readFile $ "/home/caleb/language/compiler/packages/" </> name
+  (NamedModule name) -> Just $ readFile $ "packages/" </> name -<.> "tl"
 
 data TillyModuleParsed = TillyModuleParsed
   { _parModIdentifier :: ModuleIdentifier
@@ -41,6 +41,11 @@ getFixityForBinding (ParsedModule m) ident = fst =<< Map.lookup ident $: m^.parM
 getFixityForBinding _ _ = Nothing
 
 data TillyModuleBuildable = TillyModuleBuildable
-  { _tlExposedExprs :: Map.Map AST.ValidIdentifier AST.Expression
-  }
+  { _tlNeededScope :: Map.Map ModuleIdentifier AST.VarSet
+  , _tlExposedExprs :: Map.Map AST.ValidIdentifier AST.Expression
+  } deriving (Eq, Ord, Show)
 makeLenses ''TillyModuleBuildable
+type TillyBuildOutputs =
+  ( ModuleIdentifier  -- | The main module
+  , Map.Map ModuleIdentifier TillyModuleBuildable  -- | Every other built module
+  )
