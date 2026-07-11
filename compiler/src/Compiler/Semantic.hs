@@ -50,6 +50,9 @@ semanticValue ops knownVars term = case runWriter $ runReaderT (go term) knownVa
       where
         visitClause ([destruct], term') = fmap (destruct, ) <$> local (<> collectBindings destruct) (go term')
         visitClause _ = undefined
+    go (AST.TermTuple slots) = let
+        x = go . fromMaybe (error "todo: support sections") <$> slots
+      in fmap AST.ExprTuple . sequence <$> sequence x
     go _ = undefined
 
 collectFreeVariables :: AST.Term -> AST.VarSet

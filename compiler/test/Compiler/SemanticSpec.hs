@@ -21,3 +21,5 @@ spec = describe "Compiler.Semantic" $ do
     "Some None. match {\n\
     \  (Some x) = x\n\
     \  (None) = None\n}"
+  test "tuple fail" "x y. (x, y, z)"
+  test "tuple success" "x y. (x, y, x)"

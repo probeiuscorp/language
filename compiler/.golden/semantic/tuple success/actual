@@ -1,0 +1,17 @@
+x y. (x, y, x)
+───
+Right
+  ( ExprFunction
+    ( fromList [] )
+    ( DestructBind "x" )
+    ( ExprFunction
+      ( fromList [] )
+      ( DestructBind "y" )
+      ( ExprTuple
+        [ ExprIdentifier "x"
+        , ExprIdentifier "y"
+        , ExprIdentifier "x"
+        ]
+      )
+    )
+  )
