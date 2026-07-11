@@ -105,10 +105,10 @@ getModuleScope modules identifier = ownScope <> foldMap scopeFromListing imports
         AST.ImportHiding destruct -> exposed Set.\\ collectBindings destruct
 
 verifyModuleBuildable :: ModuleScope -> TillyModuleParsed -> Validation [AST.ParseError] TillyModuleBuildable
-verifyModuleBuildable moduleScope m = ((),) <$> exprs
+verifyModuleBuildable moduleScope m = TillyModuleBuildable <$> exprs
   where
     terms = view parModBindings m
-    knownVars = Map.keysSet moduleScope <> Set.fromList ["IOmap", "IOjoin", "getLine", "putStrLn", "Cons", "Nil"]
+    knownVars = Map.keysSet moduleScope <> Set.fromList ["IOmap", "IOjoin", "getLine", "putStrLn", "Cons", "Nil", "io_pure", "io_join", "io_map", "io_getLine", "io_putStrLn"]
     exprs = traverse (fromEither . semanticValue aboutOperators knownVars . ($ aboutOperators) . snd) terms
     aboutOperators = fromMaybe AST.defaultFixity . join . flip Map.lookup moduleScope
 

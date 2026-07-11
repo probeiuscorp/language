@@ -4,13 +4,10 @@ module Compiler.Interpret (interpretMainFile) where
 
 import Compiler.Prelude
 import Control.Lens
-import Compiler.Modules (TillyModuleBuildable)
+import Compiler.Modules
 import qualified Compiler.AST as AST
 import qualified Data.Map as Map
 import Data.List (intercalate)
-
-interpretMainFile :: TillyModuleBuildable -> IO ()
-interpretMainFile tlModule = undefined
 
 data Value
   = VIntrinsic String
@@ -49,8 +46,8 @@ intrinsicsModule = Map.fromList
     hom :: Prism' Value a -> (a -> a -> a) -> Value
     hom ty f = VFunction $ \v1 -> VFunction $ \v2 -> review ty $ expectType ty v1 `f` expectType ty v2
 
-type ModuleEvaluationContext = Map.Map String Integer
-type ValueScope = Map.Map String Value
+type ModuleEvaluationContext = Map.Map AST.ValidIdentifier Integer
+type ValueScope = Map.Map AST.ValidIdentifier Value
 -- | Evaluates to NF
 evaluate :: ModuleEvaluationContext -> ValueScope -> AST.Expression -> Value
 evaluate ctx scope0 = \case
@@ -71,8 +68,7 @@ evaluate ctx scope0 = \case
           else Nothing
       tryMatch (destruct, body) = Just (r (collectBindings subject scope0 destruct) body)
       triedMatches = tryMatch <$> clauses
-    in
-    case asum triedMatches of
+    in case asum triedMatches of
       Just matchingValue -> matchingValue
       Nothing -> error $ "pattern match against " <> showValue subject <> " failed"
   where
@@ -119,3 +115,14 @@ fromTillyList value = typeError "List" value
 toTillyList :: [Value] -> Value
 toTillyList (x : xs) = VData tagCons [x, toTillyList xs]
 toTillyList [] = VData tagNil []
+
+interpretMainFile :: TillyModuleBuildable -> IO ()
+interpretMainFile tlModule = do
+  putStrLn "began evaluation..."
+  let exposedExprs = tlModule^.tlExposedExprs
+  let
+    evaluateWithScope = evaluate mempty mainModuleScope
+    mainModuleScope = intrinsicsModule <> (evaluateWithScope <$> exposedExprs)
+  case Map.lookup "main" mainModuleScope of
+    Nothing -> putStrLn "Add a `main` to your main module"
+    Just mainIO -> void $ execute mainIO

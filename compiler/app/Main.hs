@@ -9,7 +9,6 @@ import System.Directory (canonicalizePath)
 
 data Options = Options
   { optMainFile :: FilePath
-  , optOutFile :: FilePath
   } deriving (Eq, Ord, Show)
 
 parseOptions :: Parser Options
@@ -18,12 +17,12 @@ parseOptions = Options
     [ metavar placeholderFileName
     , help "Input file"
     ]
-  <*> strOption $: mconcat
-    [ long "out"
-    , short 'o'
-    , metavar placeholderFileName
-    , help "Output file"
-    ]
+  -- <*> strOption $: mconcat
+  --   [ long "out"
+  --   , short 'o'
+  --   , metavar placeholderFileName
+  --   , help "Output file"
+  --   ]
   where
     placeholderFileName = "<filename>"
 
