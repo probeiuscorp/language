@@ -3,8 +3,8 @@ module Compiler.ParseInfix (parseInfix) where
 import Compiler.Prelude
 import qualified Compiler.AST as AST
 import Compiler.Linearize (Linear)
+import Compiler.Tokenize (isIdentifierOperator)
 import qualified Data.List.NonEmpty as NE
-import Data.Char (isAlphaNum)
 
 data Op = OpFn String AST.Infix | OpApplication
   deriving (Eq, Show)
@@ -109,7 +109,7 @@ peekOperator (Operand _ (Operator op _)) = Just op
 peekOperator _ = Nothing
 
 isInfixOp :: AST.Term -> Maybe String
-isInfixOp (AST.TermIdentifier ident) | not $ all isAlphaNum ident = Just ident
+isInfixOp (AST.TermIdentifier ident) | isIdentifierOperator ident = Just ident
 isInfixOp _ = Nothing
 
 opPrecedence :: Op -> Double

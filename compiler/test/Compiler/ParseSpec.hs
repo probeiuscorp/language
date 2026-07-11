@@ -105,6 +105,7 @@ spec = describe "Compiler.Parse" $ do
     test "multiple bindings function" "x y. x"
     test "single group" "(this)"
     test "tree group" "(this that there)"
+    test "unusual identifier" "io_pure ()"
     test "tuple unit" "()"
     test "tuple unit whitespace" "(  )"
     test "tuple 2" "(this, that)"

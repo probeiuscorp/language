@@ -1,7 +1,7 @@
 module Compiler.Tokenize (
   tokenize, Token(..), FilePos(..), PosRange(..), TokenKind(..),
   NumberContents(..), Radix(..), parseIntegral, parseFractional, numScalar, baseOfRadix,
-  isWhitespace, catTokens
+  isWhitespace, isIdentifierOperator, catTokens
 ) where
 
 import Compiler.Prelude
@@ -69,6 +69,8 @@ shouldTokenizeAlone ch =
   ch == '[' || ch == ']' ||
   ch == '{' || ch == '}'
 
+isIdentifierOperator :: String -> Bool
+isIdentifierOperator = not . all isIdentifier
 isIdentifier :: Char -> Bool
 isIdentifier ch = ch == '_' || isAlphaNum ch
 isSymbol :: Char -> Bool
