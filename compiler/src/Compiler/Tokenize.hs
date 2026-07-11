@@ -69,6 +69,8 @@ shouldTokenizeAlone ch =
   ch == '[' || ch == ']' ||
   ch == '{' || ch == '}'
 
+isIdentifier :: Char -> Bool
+isIdentifier ch = ch == '_' || isAlphaNum ch
 isSymbol :: Char -> Bool
 isSymbol ch = not $ isDigit ch || isAlphaNum ch || isSpace ch || shouldTokenizeAlone ch
 
@@ -86,7 +88,7 @@ goTokenize currentPos (ch:rest) = Token tokenKind tokenContent (PosRange current
       ((numKind, reverse consumed), zr)
     tokenMatch :: (TokenMatch, String)
     tokenMatch
-      | isAlphaNum ch = matchSpan LetterIdentifier isAlphaNum str
+      | isIdentifier ch = matchSpan LetterIdentifier isIdentifier str
       | '\n' == ch    = ((EOL, pure ch), rest)
       | isSpace ch    = matchSpan InlineWhitespace isInlineWhitespaceCh str
       | '"' == ch     = matchStringLiteral rest & first (\parsed -> (

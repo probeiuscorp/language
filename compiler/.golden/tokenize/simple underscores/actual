@@ -1,0 +1,10 @@
+"main = io_pure ()"
+───
+Token {kind = LetterIdentifier, content = "main", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 1}, posRangeEnd = FilePos {lineno = 1, colno = 5}}}
+Token {kind = InlineWhitespace, content = " ", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 5}, posRangeEnd = FilePos {lineno = 1, colno = 6}}}
+Token {kind = SymbolIdentifier, content = "=", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 6}, posRangeEnd = FilePos {lineno = 1, colno = 7}}}
+Token {kind = InlineWhitespace, content = " ", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 7}, posRangeEnd = FilePos {lineno = 1, colno = 8}}}
+Token {kind = LetterIdentifier, content = "io_pure", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 8}, posRangeEnd = FilePos {lineno = 1, colno = 15}}}
+Token {kind = InlineWhitespace, content = " ", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 15}, posRangeEnd = FilePos {lineno = 1, colno = 16}}}
+Token {kind = ControlSymbol, content = "(", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 16}, posRangeEnd = FilePos {lineno = 1, colno = 17}}}
+Token {kind = ControlSymbol, content = ")", posRange = PosRange {posRangeStart = FilePos {lineno = 1, colno = 17}, posRangeEnd = FilePos {lineno = 1, colno = 18}}}

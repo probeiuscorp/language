@@ -21,6 +21,8 @@ spec = describe "Compiler.Tokenize" $ do
     test "braces" "}::{)}{"
     test "math symbols" "∀x. x + x==2x"
     test "newlines in whitespace" "  \n  "
+    test "simple underscores" "main = io_pure ()"
+    test "many underscores" "main = _io__pure ()"
   describe "numbers" $ do
     let test' = mkTest "tokenize/number/"
     forM_ [("decimal", "1728"), ("hex", "0x12B0"), ("octal", "0o27"), ("binary", "0b01101001")] $ \(name, value) -> do
