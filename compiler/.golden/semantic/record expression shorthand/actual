@@ -1,0 +1,18 @@
+y. { x = 5, y }
+───
+Right
+  ( ExprFunction
+    ( fromList [] )
+    ( DestructBind "y" )
+    ( ExprRecord
+      [
+        ( "x"
+        , ExprIntegral 5
+        )
+      ,
+        ( "y"
+        , ExprIdentifier "y"
+        )
+      ]
+    )
+  )

@@ -17,6 +17,9 @@ spec = describe "Compiler.Semantic" $ do
   test "int" "-144"
   test "basic double" "-12.25"
   test "double with no fractions" "10e-2"
+  test "record expression" "{ x = 5, y = x x }"
+  test "record expression shorthand" "y. { x = 5, y }"
+  test "record expression shorthand unknown" "{ x = 5, y }"
   test "match expression"
     "Some None. match {\n\
     \  (Some x) = x\n\

@@ -47,6 +47,12 @@ semanticValue ops knownVars term = case runWriter $ runReaderT (go term) knownVa
         dblScalar = Tok.numScalar numContents
         mScalar = maybe (Left dblScalar) Right $ tryIntFromDouble dblScalar
         integralPart = Tok.parseIntegral base integral
+    go (AST.TermRecord members) = local (<> Set.fromList newKnownVars) $ fmap AST.ExprRecord <$> sequenced
+      where
+        newKnownVars = members >>= \case { (key, Just _) -> [key]; (_, Nothing) -> [] }
+        traversed = (\(key, mTerm) -> (key, go $ fromMaybe (AST.TermIdentifier key) mTerm)) <$> members
+        sequenced = sequence <$> traverse distributeOut2ARight traversed
+        distributeOut2ARight (a, mb) = fmap (a,) <$> mb
     go (AST.TermMatch clauses) = fmap AST.ExprMatch . sequence <$> traverse visitClause clauses
       where
         visitClause ([destruct], term') = fmap (destruct, ) <$> local (<> collectBindings destruct) (go term')
