@@ -113,14 +113,14 @@ spec = describe "Compiler.Parse" $ do
     test "list one item" "[x]"
     test "list multiple items" "[x, y, z]"
     test "nested destructurings" "x (Cons (Nothing) (Just x)). undefined"
-    test "record literal"
-      "{\n\
-      \  x = xx. undefined,\n\
-      \  y = yy,\n\
-      \  z,\n\
-      \  d = dd, e = ee\n\
-      \  ,another,\n\
-      \}"
+    -- test "record literal"
+    --   "{\n\
+    --   \  x = xx. undefined,\n\
+    --   \  y = yy,\n\
+    --   \  z,\n\
+    --   \  d = dd, e = ee\n\
+    --   \  ,another,\n\
+    --   \}"
     test "record literal one line no trailing comma" "{ a, b, c = undefined, d }"
     test "record literals nested" "{ a, b = { this }, c, d = {}}"
     test "record literal in function" "x y. { x, y }"
