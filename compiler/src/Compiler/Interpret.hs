@@ -29,16 +29,19 @@ showValue (VDouble double) = "double(" <> show double <> ")"
 typeError expected value = error $ "type error: expected " <> expected <> " but got " <> showValue value
 expectType :: Prism' Value a -> Value -> a
 expectType ty value = case preview ty value of
-  Nothing -> typeError "double" value
+  Nothing -> typeError "???" value
   Just received -> received
 
 intrinsicsModule = Map.fromList
-  [ ("add_int", hom _VInteger (+))
-  , ("add_double", hom _VDouble (+))
+  [ ("int_add", hom _VInteger (+))
+  , ("int_show", VFunction $ \v -> toTillyString . show $ expectType _VInteger v)
+  , ("double_add", hom _VDouble (+))
+  , ("double_show", VFunction $ \v -> toTillyString . show $ expectType _VDouble v)
   , ("meld", hom _VRecord (flip Map.union))
   , ("io_pure", VFunction $ \v -> VData ioPure [v])
   , ("io_map", VFunction $ \f -> VFunction $ \ma -> VData ioMap [f, ma])
   , ("io_join", VFunction $ \mma -> VData ioJoin [mma])
+  , ("io_putStr", VFunction $ \str -> VData ioPutStr [str])
   , ("io_putStrLn", VFunction $ \str -> VData ioPutStrLn [str])
   , ("io_getLine", VData ioGetLine [])
   , ("io_readFile", VFunction $ \filePath -> VData ioReadFile [filePath])
@@ -60,6 +63,9 @@ evaluate ctx scope0 = \case
   (AST.ExprStringLiteral string) -> toTillyString string
   (AST.ExprList list) -> toTillyList $ go <$> list
   (AST.ExprTuple slots) -> tuple $ go <$> slots
+  (AST.ExprMemberAccess (go -> subject) member) -> case Map.lookup member $ expectType _VRecord subject of
+    Just value -> value
+    Nothing -> error $ "failed to find member " <> member <> " in " <> showValue subject
   (AST.ExprRecord record) -> VRecord $ Map.fromList $ second go <$> record
   (AST.ExprFunction _ destruct0 expr) -> VFunction $ \v -> r (collectBindings v scope0 destruct0) expr
   (AST.ExprMatch clauses) -> VFunction $ \subject -> let
@@ -97,26 +103,28 @@ tuple values = VData (tupleOfSize $ toInteger $ length values) values
 ioPure = 0
 ioMap = 1
 ioJoin = 2
-ioPutStrLn = 3
-ioGetLine = 4
-ioReadFile = 5
-ioWriteFile = 6
-tagCons = 5
-tagNil = 6
+ioPutStr = 3
+ioPutStrLn = 4
+ioGetLine = 5
+ioReadFile = 6
+ioWriteFile = 7
+tagCons = 8
+tagNil = 9
 -- | Executes the Tilly IO, assuming it is an IO
 execute :: Value -> IO Value
 execute (VData 0 [value]) = pure value
 execute (VData 1 [f, ma]) = expectType _VFunction f <$> execute ma
 execute (VData 2 [mma]) = execute =<< execute mma
-execute (VData 3 [str]) = tuple [] <$ putStrLn (fromTillyString str)
-execute (VData 4 []) = toTillyString <$> getLine
-execute (VData 5 [filePath]) = toTillyString <$> readFile $: fromTillyString filePath
-execute (VData 6 [filePath, contents]) = tuple [] <$ writeFile (fromTillyString filePath) (fromTillyString contents)
+execute (VData 3 [str]) = tuple [] <$ putStr (fromTillyString str)
+execute (VData 4 [str]) = tuple [] <$ putStrLn (fromTillyString str)
+execute (VData 5 []) = toTillyString <$> getLine
+execute (VData 6 [filePath]) = toTillyString <$> readFile $: fromTillyString filePath
+execute (VData 7 [filePath, contents]) = tuple [] <$ writeFile (fromTillyString filePath) (fromTillyString contents)
 execute value = typeError "IO" value
 
 fromTillyList :: Value -> [Value]
-fromTillyList (VData 5 [char, xs]) = char : fromTillyList xs
-fromTillyList (VData 6 []) = []
+fromTillyList (VData ((== tagCons) -> True) [char, xs]) = char : fromTillyList xs
+fromTillyList (VData ((== tagNil) -> True) []) = []
 fromTillyList value = typeError "List" value
 fromTillyString = fmap (expectType _VChar) . fromTillyList
 
