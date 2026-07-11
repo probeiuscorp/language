@@ -1,0 +1,10 @@
+x. x.y
+───
+Right
+  ( ExprFunction
+    ( fromList [] )
+    ( DestructBind "x" )
+    ( ExprMemberAccess
+      ( ExprIdentifier "x" ) "y"
+    )
+  )

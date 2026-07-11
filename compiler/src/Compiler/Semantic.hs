@@ -47,6 +47,7 @@ semanticValue ops knownVars term = case runWriter $ runReaderT (go term) knownVa
         dblScalar = Tok.numScalar numContents
         mScalar = maybe (Left dblScalar) Right $ tryIntFromDouble dblScalar
         integralPart = Tok.parseIntegral base integral
+    go (AST.TermMemberAccess subject member) = fmap (`AST.ExprMemberAccess` member) <$> go subject
     go (AST.TermRecord members) = local (<> Set.fromList newKnownVars) $ fmap AST.ExprRecord <$> sequenced
       where
         newKnownVars = members >>= \case { (key, Just _) -> [key]; (_, Nothing) -> [] }

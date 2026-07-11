@@ -40,6 +40,7 @@ data Expression
   | ExprIntegral Int
   | ExprDouble Double
   | ExprStringLiteral String
+  | ExprMemberAccess Expression ValidIdentifier
   | ExprRecord [(String, Expression)]
   | ExprTuple [Expression]
   | ExprList [Expression]
