@@ -4,7 +4,7 @@
 module Compiler.Prelude (
   module Compiler.Prelude,
   on, bimap, first, second,
-  asum, void, guard, join, (<|>),
+  asum, void, guard, join, (<|>), (>=>), (<=<),
   fromMaybe, toList,
   ($>), (&), (<&>),
 ) where
@@ -13,7 +13,7 @@ import Data.Function (on, (&))
 import Data.Functor ((<&>), ($>))
 import Data.Bifunctor (bimap, first, second)
 import Control.Applicative (asum, (<|>))
-import Control.Monad (void, guard, join)
+import Control.Monad (void, guard, join, (>=>), (<=<))
 import Data.Maybe (fromMaybe)
 import Data.Foldable (Foldable (toList))
 
