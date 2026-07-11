@@ -10,8 +10,7 @@ import qualified Data.Map as Map
 import Data.List (intercalate)
 
 data Value
-  = VIntrinsic String
-  | VRecord (Map.Map String Value)
+  = VRecord (Map.Map String Value)
   | VData Integer [Value]
   | VFunction (Value -> Value)
   | VChar Char
@@ -19,7 +18,6 @@ data Value
   | VDouble Double
 $(makePrisms ''Value)
 showValue :: Value -> String
-showValue (VIntrinsic ident) = "intrinsic(" <> ident <> ")"
 showValue (VRecord fields) = "record{" <> intercalate "," (Map.keys fields) <> "}"
 showValue (VData tag _) = "data[" <> show tag <> "]"
 showValue (VFunction _) = "function"
